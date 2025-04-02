@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -O3 -Wall -std=c++17
+CFLAGS = -O3 -Wall -std=c++17 -march=native
 LDFLAGS = -lpthread
 
 # Targets
