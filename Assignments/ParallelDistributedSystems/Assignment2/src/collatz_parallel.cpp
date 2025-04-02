@@ -44,24 +44,36 @@ ull collatz_steps(ull n) {
 
 // Static policy work such that we do the division upfront the calculation
 void static_distribution_policy(int num_threads, int chunk_size, ull start, ull end, std::vector<ull>& results) {
+    bool cyclic = false; // Set to true for cyclic distribution, false for block-based distribution
 
-    auto block_cyclic_distribution = [&](int thread_id) {
-
-        ull thread_start = start + thread_id * chunk_size;
-        ull thread_end = (thread_id == num_threads - 1) ? end : thread_start + chunk_size - 1;
-        // make cyclic distribution
-        for (ull i = thread_start; i <= thread_end; ++i) {
-            ull steps = collatz_steps(i);
-            results[i - start] = steps;
+    auto worker = [&](int thread_id) {
+        if (cyclic) {
+            // Cyclic distribution
+            for (ull i = start + thread_id; i <= end; i += num_threads) {
+                ull steps = collatz_steps(i);
+                results[i - start] = steps;
+            }
+        } else {
+            // Block-based distribution
+            ull chunk_start = start + thread_id * chunk_size;
+            while (chunk_start <= end) {
+                ull chunk_end = std::min(chunk_start + chunk_size - 1, end);
+                for (ull i = chunk_start; i <= chunk_end; ++i) {
+                    ull steps = collatz_steps(i);
+                    results[i - start] = steps;
+                }
+                chunk_start += num_threads * chunk_size;
+            }
         }
     };
 
     std::vector<std::thread> threads(num_threads);
     for (int i = 0; i < num_threads; ++i) {
-        threads[i] = std::thread(block_cyclic_distribution, i);
+        threads[i] = std::thread(worker, i);
     }
-    for (auto& thread : threads) {
-        thread.join();
+
+    for (auto& t : threads) {
+        t.join();
     }
 }
 
@@ -141,19 +153,19 @@ int main(int argc, char *argv[]) {
         std::chrono::duration<double> elapsed_time = end_time - start_time;
 
         std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" << std::endl;
-        std::cout << "Results: ";
-
         std::cout << std::endl;
-
         // the maximum number of steps
         auto max_steps = *std::max_element(results.begin(), results.end());
         auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
         std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
+        std::cout << std::endl;
     }
 
     // For all ranges
+    
     auto total_end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> total_elapsed_time = total_end_time - total_start_time;
+    std::cout << "--------------------------" << std::endl;
     std::cout << "Total Time: " << total_elapsed_time.count() << " seconds" << std::endl;
 
     return 0;
