@@ -47,39 +47,59 @@ ull collatz_steps(ull n) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " [start] [end]" << std::endl;
+
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " [start1] [end1] [start2] [end2] ... " << std::endl;
         return 1;
     }
 
+   std::vector<std::pair<ull, ull>> ranges;
 
-    int start = std::atoi(argv[1]);
-    int end = std::atoi(argv[2]);
-
-    if (start <= 0 || end <= 0 || start > end) {
-        std::cerr << "Invalid range. Please provide positive integers with start <= end." << std::endl;
-        return 1;
+   // Parse command line arguments
+    for (int i = 1; i < argc; ++i) {
+        ull start = std::stoull(argv[i++]);
+        ull end = std::stoull(argv[i]);
+        ranges.emplace_back(start, end);
     }
 
-    int max_steps = 0;
-    int number_with_max_steps = start;
 
-    auto start_time = std::chrono::high_resolution_clock::now();
+    // Start the timer for all ranges
+    auto total_start_time = std::chrono::high_resolution_clock::now();
 
-    for (int i = start; i <= end; ++i) {
-        int steps = collatz_steps(i);
-        if (steps > max_steps) {
-            max_steps = steps;
-            number_with_max_steps = i;
+    // Process each range
+    for (const auto& range : ranges) {
+        ull start = range.first;
+        ull end = range.second;
+
+        std::vector<ull> results(end - start + 1);
+
+        auto start_time = std::chrono::high_resolution_clock::now();
+
+        // Sequentially calculate the number of steps for each number in the range
+        for (ull i = start; i <= end; ++i) {
+            ull steps = collatz_steps(i);
+            results[i - start] = steps;
         }
+
+        auto end_time = std::chrono::high_resolution_clock::now();
+
+        std::chrono::duration<double> elapsed_time = end_time - start_time;
+
+        std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" << std::endl;
+        std::cout << std::endl;
+        // the maximum number of steps
+        auto max_steps = *std::max_element(results.begin(), results.end());
+        auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
+        std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
+        std::cout << std::endl;
     }
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double> elapsed_time = end_time - start_time;
-
-    std::cout << "Time taken: " << elapsed_time.count() << " seconds." << std::endl;
-    std::cout << "Number with maximum steps: " << number_with_max_steps << " with " << max_steps << " steps." << std::endl;
+    // For all ranges
+    
+    auto total_end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> total_elapsed_time = total_end_time - total_start_time;
+    std::cout << "--------------------------" << std::endl;
+    std::cout << "Total Time: " << total_elapsed_time.count() << " seconds" << std::endl;
 
     return 0;
 }
