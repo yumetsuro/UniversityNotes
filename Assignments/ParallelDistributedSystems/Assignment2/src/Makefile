@@ -1,5 +1,6 @@
 CC = g++
 CFLAGS = -O3 -Wall -std=c++17 -march=native
+INCLUDES	   = -I. -I./include
 LDFLAGS = -lpthread
 
 # Targets
@@ -9,7 +10,7 @@ collatz_naive: collatz_naive.cpp
 	$(CC) $(CFLAGS) -o $@ $<
 
 collatz_parallel: collatz_parallel.cpp
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 clean:
 	rm -f collatz_naive collatz_parallel *.o

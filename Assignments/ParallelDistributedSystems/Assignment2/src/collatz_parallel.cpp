@@ -24,6 +24,8 @@
 #include<atomic>
 #include<condition_variable>
 #include<cstring>
+#include<future>
+#include "threadPool.hpp" // Include the thread pool header
 
 using ull = unsigned long long;
 
@@ -79,17 +81,25 @@ void static_distribution_policy(int num_threads, int chunk_size, ull start, ull 
 
 // Dynamic policy work such that we divide during the execution, we can do it on demand by using thread pool for example
 void dynamic_distribution_policy(int num_threads, int chunk_size, ull start, ull end, std::vector<ull>& results) {
-    // How to implement dynamic distribution policy?
-    // use a global counter protected by a mutex
-    // read global value of a counter, increase atomically by chunk size
-    
-    // For the dynamic distribution we can just modify a little bit the static distribution
-    // such that we can use a global counter to keep track of the current number
-    // to be processed. We can use a condition variable to notify the threads when a new number is available.
+    ThreadPool TP(num_threads); // Use the specified number of threads
 
-    // This is a simple implementation of dynamic distribution policy
+    std::vector<std::future<void>> futures;
 
+    // Enqueue all tasks upfront
+    for (ull chunk_start = start; chunk_start <= end; chunk_start += chunk_size) {
+        ull chunk_end = std::min(chunk_start + chunk_size - 1, end);
+        futures.push_back(TP.enqueue([&, chunk_start, chunk_end] {
+            for (ull i = chunk_start; i <= chunk_end; ++i) {
+                ull steps = collatz_steps(i);
+                results[i - start] = steps;
+            }
+        }));
+    }
 
+    // Wait for all tasks to finish
+    for (auto& future : futures) {
+        future.get();
+    }
 }
 
 int main(int argc, char *argv[]) {
