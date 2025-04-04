@@ -48,7 +48,7 @@ ull collatz_steps(ull n) {
 void static_distribution_policy(int num_threads, int chunk_size, ull start, ull end, std::vector<ull>& results) {
     bool cyclic = false; // Set to true for cyclic distribution, false for block-based distribution
 
-    auto worker = [&](int thread_id) {
+    auto cyclic_work = [&](int thread_id) {
         if (cyclic) {
             // Cyclic distribution
             for (ull i = start + thread_id; i <= end; i += num_threads) {
@@ -71,7 +71,7 @@ void static_distribution_policy(int num_threads, int chunk_size, ull start, ull 
 
     std::vector<std::thread> threads(num_threads);
     for (int i = 0; i < num_threads; ++i) {
-        threads[i] = std::thread(worker, i);
+        threads[i] = std::thread(cyclic_work, i);
     }
 
     for (auto& t : threads) {
@@ -79,21 +79,23 @@ void static_distribution_policy(int num_threads, int chunk_size, ull start, ull 
     }
 }
 
-// Dynamic policy work such that we divide during the execution, we can do it on demand by using thread pool for example
 void dynamic_distribution_policy(int num_threads, int chunk_size, ull start, ull end, std::vector<ull>& results) {
     ThreadPool TP(num_threads); // Use the specified number of threads
-
     std::vector<std::future<void>> futures;
-
-    // Enqueue all tasks upfront
-    for (ull chunk_start = start; chunk_start <= end; chunk_start += chunk_size) {
+    
+    auto dynamic_work  = [start, &results](ull chunk_start, ull chunk_end) {
+        for (ull j = chunk_start; j <= chunk_end; ++j) {
+            ull steps = collatz_steps(j);
+            results[j - start] = steps;
+        }
+    };
+    
+    // Submit tasks in smaller chunks for better load balancing
+    for (ull i = start; i <= end; i += chunk_size) {
+        ull chunk_start = i;
         ull chunk_end = std::min(chunk_start + chunk_size - 1, end);
-        futures.push_back(TP.enqueue([&, chunk_start, chunk_end] {
-            for (ull i = chunk_start; i <= chunk_end; ++i) {
-                ull steps = collatz_steps(i);
-                results[i - start] = steps;
-            }
-        }));
+        
+        futures.push_back(TP.enqueue(dynamic_work, chunk_start, chunk_end));
     }
 
     // Wait for all tasks to finish
@@ -147,12 +149,11 @@ int main(int argc, char *argv[]) {
         ull end = range.second;
 
         std::vector<ull> results(end - start + 1);
-
         auto start_time = std::chrono::high_resolution_clock::now();
+        std::atomic<int> max_steps{0};
 
         if (dynamic) {
-            std::cout << "Dynamic distribution policy is used." << std::endl;
-            dynamic_distribution_policy(num_threads, batch_size, start, end, results);            
+            dynamic_distribution_policy(num_threads, batch_size, start, end, results);
         } else {
             std::cout << "Static distribution policy is used." << std::endl;
             static_distribution_policy(num_threads, batch_size, start, end, results);
@@ -165,9 +166,9 @@ int main(int argc, char *argv[]) {
         std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" << std::endl;
         std::cout << std::endl;
         // the maximum number of steps
-        auto max_steps = *std::max_element(results.begin(), results.end());
+        auto max_steps_2 = *std::max_element(results.begin(), results.end());
         auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
-        std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
+        std::cout << "Max Steps: " << max_steps_2 << " at index: " << max_index + start << std::endl;
         std::cout << std::endl;
     }
 
