@@ -15,14 +15,10 @@
 #include<iostream>
 #include<vector>
 #include<stdlib.h>
-#include<algorithm>
 #include<chrono>
 
 // For parallel version we add
 #include<thread>
-#include<mutex>
-#include<atomic>
-#include<condition_variable>
 #include<cstring>
 #include<future>
 #include "threadPool.hpp" // Include the thread pool header
@@ -112,9 +108,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::vector<std::pair<ull, ull>> ranges;
-    int num_threads = 16; // default number of threads
-    int batch_size = 1;   // default batch size
-    bool dynamic = false; // default scheduling is static
+    int num_threads = 16;
+    int batch_size = 1;  
+    bool dynamic = false; 
 
     // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
@@ -133,24 +129,19 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    // To run a program with multiple ranges write : .\program_name 1 100 2 200 -n 4 -c 10
-
     if (ranges.empty()) {
         std::cerr << "Error: At least one range must be specified." << std::endl;
         return 1;
     }
 
-    // Start the timer for all ranges
     auto total_start_time = std::chrono::high_resolution_clock::now();
 
-    // Process each range
     for (const auto& range : ranges) {
         ull start = range.first;
         ull end = range.second;
 
         std::vector<ull> results(end - start + 1);
         auto start_time = std::chrono::high_resolution_clock::now();
-        std::atomic<int> max_steps{0};
 
         if (dynamic) {
             dynamic_distribution_policy(num_threads, batch_size, start, end, results);
@@ -165,15 +156,13 @@ int main(int argc, char *argv[]) {
 
         std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" << std::endl;
         std::cout << std::endl;
-        // the maximum number of steps
-        auto max_steps_2 = *std::max_element(results.begin(), results.end());
+        
+        auto max_steps = *std::max_element(results.begin(), results.end());
         auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
-        std::cout << "Max Steps: " << max_steps_2 << " at index: " << max_index + start << std::endl;
+        std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
         std::cout << std::endl;
     }
 
-    // For all ranges
-    
     auto total_end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> total_elapsed_time = total_end_time - total_start_time;
     std::cout << "--------------------------" << std::endl;
