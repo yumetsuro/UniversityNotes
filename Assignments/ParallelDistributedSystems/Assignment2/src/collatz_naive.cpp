@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <chrono>
 
+#define DEBUG 0
+
 using ull = unsigned long long;
 
 ull collatz_steps(ull n) {
@@ -85,21 +87,25 @@ int main(int argc, char *argv[]) {
 
         std::chrono::duration<double> elapsed_time = end_time - start_time;
 
+
         std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" << std::endl;
-        std::cout << std::endl;
-        // the maximum number of steps
-        auto max_steps = *std::max_element(results.begin(), results.end());
-        auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
-        std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
-        std::cout << std::endl;
+        //std::cout << std::endl;
+        
+        #if DEBUG
+            // the maximum number of steps
+            auto max_steps = *std::max_element(results.begin(), results.end());
+            auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
+            std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
+            std::cout << std::endl;
+        #endif
     }
 
-    // For all ranges
+    #if DEBUG
+        auto total_end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> total_elapsed_time = total_end_time - total_start_time;
+        std::cout << "--------------------------" << std::endl;
+        std::cout << "Total Time: " << total_elapsed_time.count() << " seconds" << std::endl;
+    #endif
     
-    auto total_end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> total_elapsed_time = total_end_time - total_start_time;
-    std::cout << "--------------------------" << std::endl;
-    std::cout << "Total Time: " << total_elapsed_time.count() << " seconds" << std::endl;
-
     return 0;
 }

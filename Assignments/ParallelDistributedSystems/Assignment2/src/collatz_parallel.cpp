@@ -23,6 +23,11 @@
 #include<future>
 #include "threadPool.hpp" // Include the thread pool header
 
+
+// can you add a DEBUG macro 
+
+#define DEBUG 0
+
 using ull = unsigned long long;
 
 ull collatz_steps(ull n) {
@@ -146,7 +151,6 @@ int main(int argc, char *argv[]) {
         if (dynamic) {
             dynamic_distribution_policy(num_threads, batch_size, start, end, results);
         } else {
-            std::cout << "Static distribution policy is used." << std::endl;
             static_distribution_policy(num_threads, batch_size, start, end, results);
         }
 
@@ -154,19 +158,28 @@ int main(int argc, char *argv[]) {
 
         std::chrono::duration<double> elapsed_time = end_time - start_time;
 
-        std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" << std::endl;
+        // add num threads and batch size to the output
+        std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" 
+                  << " - Algorithm: " << (dynamic ? "Dynamic" : "Static") << " - Threads: " << num_threads
+                  << " - Batch Size: " << batch_size;
         std::cout << std::endl;
+
         
-        auto max_steps = *std::max_element(results.begin(), results.end());
-        auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
-        std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
-        std::cout << std::endl;
+        #if DEBUG
+            auto max_steps = *std::max_element(results.begin(), results.end());
+            auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
+            
+            std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
+            std::cout << std::endl;
+        #endif
     }
 
-    auto total_end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> total_elapsed_time = total_end_time - total_start_time;
-    std::cout << "--------------------------" << std::endl;
-    std::cout << "Total Time: " << total_elapsed_time.count() << " seconds" << std::endl;
-
+    #if DEBUG 
+        auto total_end_time = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> total_elapsed_time = total_end_time - total_start_time;
+        std::cout << "--------------------------" << std::endl;
+        std::cout << "Total Time: " << total_elapsed_time.count() << " seconds" << std::endl;
+    #endif
+    
     return 0;
 }
