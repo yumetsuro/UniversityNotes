@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -O3 -Wall -std=c++17 -march=native
+CFLAGS = -O3 -Wall -Wno-unused -std=c++17 -march=native
 INCLUDES	   = -I. -I./include
 LDFLAGS = -lpthread
 
