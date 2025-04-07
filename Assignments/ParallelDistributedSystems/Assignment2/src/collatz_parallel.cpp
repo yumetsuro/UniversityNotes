@@ -24,9 +24,8 @@
 #include "threadPool.hpp" // Include the thread pool header
 
 
-// can you add a DEBUG macro 
 
-#define DEBUG 0
+#define DEBUG 1
 
 using ull = unsigned long long;
 
@@ -47,32 +46,17 @@ ull collatz_steps(ull n) {
 
 // Static policy work such that we do the division upfront the calculation
 void static_distribution_policy(int num_threads, int chunk_size, ull start, ull end, std::vector<ull>& results) {
-    bool cyclic = false; // Set to true for cyclic distribution, false for block-based distribution
 
-    auto cyclic_work = [&](int thread_id) {
-        if (cyclic) {
-            // Cyclic distribution
-            for (ull i = start + thread_id; i <= end; i += num_threads) {
-                ull steps = collatz_steps(i);
-                results[i - start] = steps;
-            }
-        } else {
-            // Block-based distribution
-            ull chunk_start = start + thread_id * chunk_size;
-            while (chunk_start <= end) {
-                ull chunk_end = std::min(chunk_start + chunk_size - 1, end);
-                for (ull i = chunk_start; i <= chunk_end; ++i) {
-                    ull steps = collatz_steps(i);
-                    results[i - start] = steps;
-                }
-                chunk_start += num_threads * chunk_size;
-            }
+    auto worker = [&](int thread_id) {
+        for (ull i = start + thread_id; i <= end; i += num_threads) {
+            ull steps = collatz_steps(i);
+            results[i - start] = steps;
         }
     };
 
     std::vector<std::thread> threads(num_threads);
     for (int i = 0; i < num_threads; ++i) {
-        threads[i] = std::thread(cyclic_work, i);
+        threads[i] = std::thread(worker, i);
     }
 
     for (auto& t : threads) {
@@ -80,30 +64,39 @@ void static_distribution_policy(int num_threads, int chunk_size, ull start, ull 
     }
 }
 
+
 void dynamic_distribution_policy(int num_threads, int chunk_size, ull start, ull end, std::vector<ull>& results) {
-    ThreadPool TP(num_threads); // Use the specified number of threads
+    ThreadPool TP(num_threads);
     std::vector<std::future<void>> futures;
-    
-    auto dynamic_work  = [start, &results](ull chunk_start, ull chunk_end) {
-        for (ull j = chunk_start; j <= chunk_end; ++j) {
-            ull steps = collatz_steps(j);
-            results[j - start] = steps;
+    std::atomic<ull> next_index(start);
+
+    // Each thread pulls work in chunks until all work is done
+    auto dynamic_work = [&]() {
+        while (true) {
+            ull i = next_index.fetch_add(chunk_size);
+            if (i > end) break;
+
+            ull chunk_start = i;
+            ull chunk_end = std::min(i + chunk_size - 1, end);
+
+            for (ull j = chunk_start; j <= chunk_end; ++j) {
+                ull steps = collatz_steps(j);
+                results[j - start] = steps;
+            }
         }
     };
-    
-    // Submit tasks in smaller chunks for better load balancing
-    for (ull i = start; i <= end; i += chunk_size) {
-        ull chunk_start = i;
-        ull chunk_end = std::min(chunk_start + chunk_size - 1, end);
-        
-        futures.push_back(TP.enqueue(dynamic_work, chunk_start, chunk_end));
+
+    // Launch num_threads tasks
+    for (int t = 0; t < num_threads; ++t) {
+        futures.push_back(TP.enqueue(dynamic_work));
     }
 
-    // Wait for all tasks to finish
+    // Wait for all threads to finish
     for (auto& future : futures) {
         future.get();
     }
 }
+
 
 int main(int argc, char *argv[]) {
 

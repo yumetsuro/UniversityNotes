@@ -9,16 +9,14 @@
 
 // The conjecture is that no matter what value of n, the sequence will always reach 1.
 
-// The program takes [start] [end] and return for that the maximum count of steps found into that range.
-// We also return the time the algorithm took to run.
-
 #include <iostream>
 #include <vector>
 #include <stdlib.h>
 #include <algorithm>
 #include <chrono>
+#include <numeric>
 
-#define DEBUG 0
+#define DEBUG 1
 
 using ull = unsigned long long;
 
@@ -67,7 +65,7 @@ int main(int argc, char *argv[]) {
 
     // Start the timer for all ranges
     auto total_start_time = std::chrono::high_resolution_clock::now();
-
+    auto total_steps = 0ULL;
     // Process each range
     for (const auto& range : ranges) {
         ull start = range.first;
@@ -87,6 +85,7 @@ int main(int argc, char *argv[]) {
 
         std::chrono::duration<double> elapsed_time = end_time - start_time;
 
+        auto total_steps = std::accumulate(results.begin(), results.end(), 0ULL);
 
         std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" << std::endl;
         //std::cout << std::endl;
@@ -96,9 +95,12 @@ int main(int argc, char *argv[]) {
             auto max_steps = *std::max_element(results.begin(), results.end());
             auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
             std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
+            std::cout << "Total Steps: " << total_steps << std::endl;
             std::cout << std::endl;
+
         #endif
     }
+    
 
     #if DEBUG
         auto total_end_time = std::chrono::high_resolution_clock::now();
