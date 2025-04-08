@@ -1,4 +1,4 @@
-// Implement Naive sequential Collatz Conjecture
+// Implement Parallel sequential Collatz Conjecture
 
 // The Collatz Conjecture is a mathematical conjecture that states that for any positive integer n,
 // the sequence defined by the following rules will eventually reach 1:
@@ -8,22 +8,15 @@
 // 3. Repeat the process indefinitely.
 
 // The conjecture is that no matter what value of n, the sequence will always reach 1.
-
-// The program takes [start] [end] and return for that the maximum count of steps found into that range.
-// We also return the time the algorithm took to run.
-
 #include<iostream>
 #include<vector>
 #include<stdlib.h>
 #include<chrono>
 
-// For parallel version we add
 #include<thread>
 #include<cstring>
 #include<future>
-#include "threadPool.hpp" // Include the thread pool header
-
-
+#include "threadPool.hpp" 
 
 #define DEBUG 1
 
@@ -44,7 +37,6 @@ ull collatz_steps(ull n) {
     return steps;
 }
 
-// Static policy work such that we do the division upfront the calculation
 void static_distribution_policy(int num_threads, int chunk_size, ull start, ull end, std::vector<ull>& results) {
 
     auto worker = [&](int thread_id) {
@@ -86,12 +78,10 @@ void dynamic_distribution_policy(int num_threads, int chunk_size, ull start, ull
         }
     };
 
-    // Launch num_threads tasks
     for (int t = 0; t < num_threads; ++t) {
         futures.push_back(TP.enqueue(dynamic_work));
     }
 
-    // Wait for all threads to finish
     for (auto& future : futures) {
         future.get();
     }
@@ -110,7 +100,6 @@ int main(int argc, char *argv[]) {
     int batch_size = 1;  
     bool dynamic = false; 
 
-    // Parse command line arguments
     for (int i = 1; i < argc; ++i) {
         if (argv[i][0] == '-') {
             if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
@@ -151,7 +140,6 @@ int main(int argc, char *argv[]) {
 
         std::chrono::duration<double> elapsed_time = end_time - start_time;
 
-        // add num threads and batch size to the output
         std::cout << "Range: [" << start << ", " << end << "] - Time: " << elapsed_time.count() << " seconds" 
                   << " - Algorithm: " << (dynamic ? "Dynamic" : "Static") << " - Threads: " << num_threads
                   << " - Batch Size: " << batch_size;

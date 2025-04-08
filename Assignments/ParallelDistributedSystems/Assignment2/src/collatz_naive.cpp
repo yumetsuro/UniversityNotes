@@ -16,7 +16,7 @@
 #include <chrono>
 #include <numeric>
 
-#define DEBUG 1
+#define DEBUG 0
 
 using ull = unsigned long long;
 
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
             auto max_steps = *std::max_element(results.begin(), results.end());
             auto max_index = std::distance(results.begin(), std::max_element(results.begin(), results.end()));
             std::cout << "Max Steps: " << max_steps << " at index: " << max_index + start << std::endl;
-            std::cout << "Total Steps: " << total_steps << std::endl;
+            //std::cout << "Total Steps: " << total_steps << std::endl;
             std::cout << std::endl;
 
         #endif

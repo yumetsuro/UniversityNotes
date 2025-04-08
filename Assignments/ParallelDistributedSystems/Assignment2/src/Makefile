@@ -4,12 +4,15 @@ INCLUDES	   = -I. -I./include
 LDFLAGS = -lpthread
 
 # Targets
-all: collatz_naive collatz_parallel
+all: collatz_naive collatz_parallel collatz_debug
 
 collatz_naive: collatz_naive.cpp
 	$(CC) $(CFLAGS) -o $@ $<
 
 collatz_parallel: collatz_parallel.cpp
+	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) -o $@ $<
+
+collatz_debug: collatz_parallel_debug.cpp
 	$(CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 clean:
