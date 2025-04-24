@@ -17,6 +17,7 @@
 #include <config.hpp>
 #include <cmdline.hpp>
 #include <utility.hpp>
+#include <chrono>
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -27,6 +28,12 @@ int main(int argc, char *argv[]) {
     long start=parseCommandLine(argc, argv);
     if (start<0) return -1;
   
+	double start_time, end_time;
+	// use chrono
+	start_time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+	
+	
 	bool success = true;
 	while(argv[start]) {
 		size_t filesize=0;
@@ -41,6 +48,13 @@ int main(int argc, char *argv[]) {
 		printf("Exiting with (some) Error(s)\n");
 		return -1;
 	}
+
+	end_time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	// print in seconds
+	printf("[TIMING] Total: %.6f s\n", (end_time - start_time) / 1000000000.0);
+	//printf("[TIMING] Total: %.3f ms\n", (end_time - start_time) / 1000000.0);
+
+
 	printf("Exiting with Success\n");
 	return 0;
 }

@@ -23,7 +23,11 @@ int main(int argc, char *argv[]) {
     }
     // parse command line arguments and set some global variables
     long start=parseCommandLine(argc, argv);
-  
+	
+	double omp_time_start, omp_time_end;
+
+	omp_time_start = omp_get_wtime();	
+
 	// Initialize OpenMP
     int num_threads = omp_get_max_threads();
     if (QUITE_MODE >= 1) {
@@ -55,11 +59,18 @@ int main(int argc, char *argv[]) {
 						}
 					}
 				}
+				#pragma omp critical
+				{
 				start++;
+				}
+				//start++;
 			}
 			#pragma omp taskwait
 		}
 	}
+
+	omp_time_end = omp_get_wtime();
+	printf("Parallel execution time: %f seconds\n", omp_time_end - omp_time_start);
 
 	if (!success) {
 		printf("Exiting with (some) Error(s)\n");
