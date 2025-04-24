@@ -165,42 +165,56 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
     double setup_start = omp_get_wtime();
     // Determine optimal chunk size and number based on available threads and file size
     int num_threads = omp_get_max_threads();
-    size_t optimal_chunk_size = std::max(BUF_SIZE * 4, (int)(size / (num_threads * 2)));
+    
+    // Create more chunks than threads to improve load balancing
+    size_t min_chunk_size = BUF_SIZE; // Minimum 1MB chunks 
+    int target_chunks = num_threads * 4; // 4 chunks per thread for better load balancing
+    
+    // Calculate chunk size based on file size and target number of chunks
+    size_t optimal_chunk_size = std::max(min_chunk_size, size / target_chunks);
     int num_chunks = (size + optimal_chunk_size - 1) / optimal_chunk_size;
     
-    // Ensure we don't create too many tiny chunks or too few large chunks
-    if (num_chunks < num_threads) {
-        num_chunks = num_threads;
-        optimal_chunk_size = (size + num_chunks - 1) / num_chunks;
-    } else if (num_chunks > num_threads * 4) {
-        num_chunks = num_threads * 4;
-        optimal_chunk_size = (size + num_chunks - 1) / num_chunks;
+    if (QUITE_MODE >= 2) {
+        printf("Using %d threads for %d chunks (chunk size: %zu bytes)\n", 
+               num_threads, num_chunks, optimal_chunk_size);
     }
     
-    // Pre-allocate vectors with the right size to avoid reallocations
+    // Pre-allocate vectors with the right size to avoid reallocations within parallel region
     std::vector<std::vector<unsigned char>> compressed_chunks(num_chunks);
     std::vector<size_t> compressed_sizes(num_chunks);
+    
+    // Pre-allocate storage for each chunk's compressed data (outside parallel region)
+    for (int i = 0; i < num_chunks; i++) {
+        size_t chunk_offset = i * optimal_chunk_size;
+        size_t current_chunk_size = std::min(optimal_chunk_size, size - chunk_offset);
+        size_t bound = compressBound(current_chunk_size);
+        compressed_chunks[i].resize(bound);
+        compressed_sizes[i] = bound;  // Will be updated in parallel region
+    }
     setup_time = omp_get_wtime() - setup_start;
     
     bool success = true;
     
     double compression_start = omp_get_wtime();
     
-    // Here start parallel region
+    // This is now the only parallel region in the program for processing files
     #pragma omp parallel
     {
-        #pragma omp for schedule(dynamic)
+        #pragma omp for schedule(dynamic, 1)
         for (int i = 0; i < num_chunks; i++) {
-            // Calculate input and output positions for this chunk
-            size_t input_offset = i * optimal_chunk_size;
-            size_t current_chunk_size = std::min(optimal_chunk_size, inSize - input_offset);
+            size_t offset = i * optimal_chunk_size;
+            size_t current_chunk_size = std::min(optimal_chunk_size, size - offset);
             
-            // Allocate space for compressed data
-            compressed_chunks[i].resize(compressBound(current_chunk_size));
-            size_t output_size = compressed_chunks[i].size();
-            
-            // Compress this chunk
-            if (compress(compressed_chunks[i].data(), &output_size, inPtr + input_offset, current_chunk_size) != Z_OK) {
+            // Debug thread assignment
+            if (QUITE_MODE >= 2) {
+                int thread_id = omp_get_thread_num();
+                printf("Thread %d compressing chunk %d of %d, size %zu bytes\n", 
+                       thread_id, i, num_chunks, current_chunk_size);
+            }
+
+            // Compress the chunk using pre-allocated buffer
+            if (compress(compressed_chunks[i].data(), &compressed_sizes[i], 
+                         inPtr + offset, current_chunk_size) != Z_OK) {
                 #pragma omp critical
                 {
                     if (QUITE_MODE >= 1) {
@@ -209,21 +223,26 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
                     success = false;
                 }
             }
-            
-            // Store the actual size of the compressed data
-            compressed_sizes[i] = output_size;
         }
     }
-
     compression_time = omp_get_wtime() - compression_start;
     
     if (!success) {
         return false;
     }
-
+    
+    // After parallel region, resize buffers to actual compressed size
+    for (int i = 0; i < num_chunks; i++) {
+        compressed_chunks[i].resize(compressed_sizes[i]);
+    }
+    
+    // File writing section
     double file_writing_start = omp_get_wtime();
-    double total_compressed_size = 0;
-    //double file_writing_time = 0;
+    // Calculate total compressed size
+    size_t total_compressed_size = 0;
+    for (int i = 0; i < num_chunks; i++) {
+        total_compressed_size += compressed_sizes[i];
+    }
     
     // Write to output file - use buffered output for better performance
     std::string outfile = fname + SUFFIX;
@@ -258,7 +277,6 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
     if (REMOVE_ORIGIN) {
         unlink(fname.c_str());
     }
-
     file_writing_time = omp_get_wtime() - file_writing_start;
     
     double total_time = omp_get_wtime() - start_time;
@@ -320,6 +338,12 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
     
     // Calculate optimal chunk size for decompressed data
     size_t chunk_size = (decompressedSize + num_chunks - 1) / num_chunks;
+    
+    if (QUITE_MODE >= 2) {
+        int num_threads = omp_get_max_threads();
+        printf("Using %d threads to decompress %d chunks (avg chunk size: %zu bytes)\n", 
+               num_threads, num_chunks, chunk_size);
+    }
     header_parsing_time = omp_get_wtime() - header_start;
     
     // Allocate space for output file
@@ -341,7 +365,9 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
     double decompression_start = omp_get_wtime();
     #pragma omp parallel
     {
-        #pragma omp for schedule(dynamic)
+        // Use dynamic scheduling with chunk size of 1 for better load balancing
+        // Decompression time can vary significantly between chunks
+        #pragma omp for schedule(dynamic, 1)
         for (int i = 0; i < num_chunks; i++) {
             // Calculate output position for this chunk
             size_t output_offset = i * chunk_size;
@@ -354,12 +380,14 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
             size_t output_size = current_chunk_size;
             
             // Decompress this chunk
-            if (uncompress(decompressed_data + output_offset, &output_size, 
-                          compressed_chunk, compressed_sizes[i]) != Z_OK) {
+            int result = uncompress(decompressed_data + output_offset, &output_size, 
+                                   compressed_chunk, compressed_sizes[i]);
+            
+            if (result != Z_OK) {
                 #pragma omp critical
                 {
                     if (QUITE_MODE >= 1) {
-                        std::fprintf(stderr, "Failed to decompress chunk %d\n", i);
+                        std::fprintf(stderr, "Failed to decompress chunk %d (error code: %d)\n", i, result);
                     }
                     success = false;
                 }

@@ -34,40 +34,28 @@ int main(int argc, char *argv[]) {
         printf("Using %d threads for parallel compression/decompression\n", num_threads);
     }
 
-	bool success = true;
+    // Process files sequentially, but compress/decompress chunks of each file in parallel
+    bool success = true;
+    long current = start;
+    
+    while(argv[current]) {
+        size_t filesize = 0;
+        bool local_success = true;
 
-	#pragma omp parallel
-	{
-		#pragma omp single
-		{
-			while(argv[start]) {
-				#pragma omp task firstprivate(start)
-				{
-					size_t filesize=0;
-					bool local_success = true;
+        if (isDirectory(argv[current], filesize)) {
+            local_success = walkDir_par(argv[current], COMP);
+        } else {
+            local_success = doWork_par(argv[current], filesize, COMP);
+        }
 
-					if (isDirectory(argv[start], filesize)) {
-						local_success = walkDir_par(argv[start], COMP);
-					} else {
-						local_success = doWork_par(argv[start], filesize, COMP);
-					}
-
-					if (!local_success) {
-						#pragma omp critical
-						{
-							success = false;
-						}
-					}
-				}
-				#pragma omp critical
-				{
-				start++;
-				}
-				//start++;
-			}
-			#pragma omp taskwait
-		}
-	}
+        if (!local_success) {
+            success = false;
+            if (QUITE_MODE >= 1) {
+                printf("Error processing %s\n", argv[current]);
+            }
+        }
+        current++;
+    }
 
 	omp_time_end = omp_get_wtime();
 	printf("Parallel execution time: %f seconds\n", omp_time_end - omp_time_start);
@@ -79,4 +67,3 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
-	
