@@ -4,6 +4,11 @@
 #include <omp.h>
 #include <vector>
 
+// Forward declarations for functions so we can rearrange them
+static inline bool compressData_par(unsigned char *ptr, size_t size, const std::string &fname);
+static inline bool decompressData_par(unsigned char *ptr, size_t size, const std::string &fname);
+static inline bool doWork_par(const char fname[], size_t size, const bool comp);
+
 // Parallel version of walkDir
 // This function recursively processes directories in parallel using OpenMP tasks
 // It compresses/decompresses files found in directories based on the 'comp' parameter
@@ -82,26 +87,23 @@ static inline bool walkDir_par(const char dname[], const bool comp) {
     // Phase 2: Process files in parallel using tasks
     double processing_start_time = omp_get_wtime();
     
+    // Process files one by one but with parallel chunk compression inside
+    for(auto &file_info : files) {
+        if (!doWork_par(file_info.first.c_str(), file_info.second, comp)) {
+            error = true;
+            if (QUITE_MODE >= 1) {
+                printf("Error processing file: %s\n", file_info.first.c_str());
+            }
+        }
+    }
+    
+    // Process subdirectories using tasks for better parallelism across directories
     #pragma omp parallel
     {
-        #pragma omp single  // Only one thread creates the tasks
+        #pragma omp single
         {
-            // Process all collected files in parallel
-            for(auto &file_info : files) {
-                #pragma omp task firstprivate(file_info)  // Create a task for each file
-                {
-                    if (!doWork(file_info.first.c_str(), file_info.second, comp)) {
-                        #pragma omp critical  // Thread-safe update of error status
-                        {
-                            error = true;
-                        }
-                    }
-                }
-            }
-            
-            // Process subdirectories recursively in parallel
             for(auto &subdir : subdirs) {
-                #pragma omp task firstprivate(subdir)  // Create a task for each subdirectory
+                #pragma omp task firstprivate(subdir)
                 {
                     // Recursive call to process the subdirectory
                     bool subdir_result = walkDir_par(subdir.c_str(), comp);
@@ -124,8 +126,7 @@ static inline bool walkDir_par(const char dname[], const bool comp) {
                     }
                 }
             }
-            
-            #pragma omp taskwait  // Wait for all tasks to complete before continuing
+            #pragma omp taskwait
         }
     }
     
@@ -140,6 +141,43 @@ static inline bool walkDir_par(const char dname[], const bool comp) {
     }
     
     return !error;  // Return success status
+}
+
+// Parallel work function
+static inline bool doWork_par(const char fname[], size_t size, const bool comp) {
+    double start_time = omp_get_wtime();
+    double mapping_time = 0, processing_time = 0, unmapping_time = 0;
+    
+    double mapping_start = omp_get_wtime();
+    unsigned char *ptr = nullptr;
+    if (!mapFile(fname, size, ptr)) {
+        if (QUITE_MODE >= 1) 
+            std::fprintf(stderr, "mapFile %s failed\n", fname);
+        return false;
+    }
+    mapping_time = omp_get_wtime() - mapping_start;
+    
+    double processing_start = omp_get_wtime();
+    bool r = (comp) ? 
+        compressData_par(ptr, size, fname) :
+        decompressData_par(ptr, size, fname);
+    processing_time = omp_get_wtime() - processing_start;
+    
+    double unmapping_start = omp_get_wtime();
+    unmapFile(ptr, size);
+    unmapping_time = omp_get_wtime() - unmapping_start;
+    
+    double total_time = omp_get_wtime() - start_time;
+    
+    if (QUITE_MODE >= 2) {
+        std::printf("[TIMING] doWork_par(%s): Total: %.3f ms, File Mapping: %.3f ms (%.1f%%), %s: %.3f ms (%.1f%%), File Unmapping: %.3f ms (%.1f%%)\n",
+                 fname, total_time * 1000, 
+                 mapping_time * 1000, (mapping_time / total_time) * 100,
+                 comp ? "Compression" : "Decompression", processing_time * 1000, (processing_time / total_time) * 100,
+                 unmapping_time * 1000, (unmapping_time / total_time) * 100);
+    }
+    
+    return r;
 }
 
 // Parallel version for compressing data in chunks
@@ -163,6 +201,15 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
     }
     
     double setup_start = omp_get_wtime();
+    
+    // Save current OpenMP state
+    int prev_nested = omp_get_nested();
+    int prev_max_active_levels = omp_get_max_active_levels();
+    
+    // Enable nested parallelism
+    omp_set_nested(1);
+    omp_set_max_active_levels(2);
+    
     // Determine optimal chunk size and number based on available threads and file size
     int num_threads = omp_get_max_threads();
     
@@ -197,21 +244,30 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
     
     double compression_start = omp_get_wtime();
     
-    // This is now the only parallel region in the program for processing files
-    #pragma omp parallel
+    // Create a fresh parallel region with explicit thread count
+    #pragma omp parallel num_threads(num_threads)
     {
+        #pragma omp single
+        {
+            if (QUITE_MODE >= 2) {
+                // Print actual number of threads in this parallel region
+                printf("Compression region has %d active threads for file %s\n", 
+                       omp_get_num_threads(), fname.c_str());
+            }
+                   omp_get_num_threads(), fname.c_str();
+        }
+        
         #pragma omp for schedule(dynamic, 1)
         for (int i = 0; i < num_chunks; i++) {
             size_t offset = i * optimal_chunk_size;
             size_t current_chunk_size = std::min(optimal_chunk_size, size - offset);
             
-            // Debug thread assignment
+            // Always show thread assignment for debugging purposes
             if (QUITE_MODE >= 2) {
                 int thread_id = omp_get_thread_num();
                 printf("Thread %d compressing chunk %d of %d, size %zu bytes\n", 
                        thread_id, i, num_chunks, current_chunk_size);
             }
-
             // Compress the chunk using pre-allocated buffer
             if (compress(compressed_chunks[i].data(), &compressed_sizes[i], 
                          inPtr + offset, current_chunk_size) != Z_OK) {
@@ -225,6 +281,11 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
             }
         }
     }
+    
+    // Restore previous OpenMP state
+    omp_set_nested(prev_nested);
+    omp_set_max_active_levels(prev_max_active_levels);
+    
     compression_time = omp_get_wtime() - compression_start;
     
     if (!success) {
@@ -362,9 +423,30 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
     // Decompress chunks in parallel
     bool success = true;
     
+    // Save current OpenMP state
+    int prev_nested = omp_get_nested();
+    int prev_max_active_levels = omp_get_max_active_levels();
+    
+    // Enable nested parallelism
+    omp_set_nested(1);
+    omp_set_max_active_levels(2);
+    
+    // Get max number of threads
+    int num_threads = omp_get_max_threads();
+    
     double decompression_start = omp_get_wtime();
-    #pragma omp parallel
+    
+    #pragma omp parallel num_threads(num_threads)
     {
+        #pragma omp single
+        {
+            // Print actual number of threads in this parallel region
+            if (QUITE_MODE >= 2) {
+                printf("Decompression region has %d active threads for file %s\n", 
+                       omp_get_num_threads(), fname.c_str());
+            }
+        }
+        
         // Use dynamic scheduling with chunk size of 1 for better load balancing
         // Decompression time can vary significantly between chunks
         #pragma omp for schedule(dynamic, 1)
@@ -379,6 +461,13 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
             // Buffer for decompressed data
             size_t output_size = current_chunk_size;
             
+            if (QUITE_MODE >= 2) {
+    
+            int thread_id = omp_get_thread_num();
+            printf("Thread %d decompressing chunk %d of %d, size %zu bytes\n", 
+                   thread_id, i, num_chunks, current_chunk_size);
+            }
+
             // Decompress this chunk
             int result = uncompress(decompressed_data + output_offset, &output_size, 
                                    compressed_chunk, compressed_sizes[i]);
@@ -405,6 +494,11 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
             }
         }
     }
+    
+    // Restore previous OpenMP state
+    omp_set_nested(prev_nested);
+    omp_set_max_active_levels(prev_max_active_levels);
+    
     decompression_time = omp_get_wtime() - decompression_start;
     
     // Write to disk by unmapping the file
@@ -429,42 +523,5 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
     }
     
     return true;
-}
-
-// Parallel work function
-static inline bool doWork_par(const char fname[], size_t size, const bool comp) {
-    double start_time = omp_get_wtime();
-    double mapping_time = 0, processing_time = 0, unmapping_time = 0;
-    
-    double mapping_start = omp_get_wtime();
-    unsigned char *ptr = nullptr;
-    if (!mapFile(fname, size, ptr)) {
-        if (QUITE_MODE >= 1) 
-            std::fprintf(stderr, "mapFile %s failed\n", fname);
-        return false;
-    }
-    mapping_time = omp_get_wtime() - mapping_start;
-    
-    double processing_start = omp_get_wtime();
-    bool r = (comp) ? 
-        compressData_par(ptr, size, fname) :
-        decompressData_par(ptr, size, fname);
-    processing_time = omp_get_wtime() - processing_start;
-    
-    double unmapping_start = omp_get_wtime();
-    unmapFile(ptr, size);
-    unmapping_time = omp_get_wtime() - unmapping_start;
-    
-    double total_time = omp_get_wtime() - start_time;
-    
-    if (QUITE_MODE >= 2) {
-        std::printf("[TIMING] doWork_par(%s): Total: %.3f ms, File Mapping: %.3f ms (%.1f%%), %s: %.3f ms (%.1f%%), File Unmapping: %.3f ms (%.1f%%)\n",
-                 fname, total_time * 1000, 
-                 mapping_time * 1000, (mapping_time / total_time) * 100,
-                 comp ? "Compression" : "Decompression", processing_time * 1000, (processing_time / total_time) * 100,
-                 unmapping_time * 1000, (unmapping_time / total_time) * 100);
-    }
-    
-    return r;
 }
 

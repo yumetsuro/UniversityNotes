@@ -1,0 +1,20 @@
+# Ignore compression folders
+/compression/
+/compression2/
+/compression3/
+/moved/
+/onlysmall/
+
+# Ignore compressed files
+*.zip
+
+# Ignore build artifacts
+*.o
+*.out
+*.exe
+
+# Ignore editor files
+.vscode/
+.idea/
+*.swp
+*~
