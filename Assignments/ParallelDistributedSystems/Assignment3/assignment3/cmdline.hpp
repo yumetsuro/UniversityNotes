@@ -16,12 +16,13 @@ static inline void usage(const char *argv0) {
     std::printf(" -C compress: 0 preserves, 1 removes the original file (default C=%d)\n", REMOVE_ORIGIN && COMP ? 1 : 0);
     std::printf(" -D decompress: 0 preserves, 1 removes the original file (default D=%d)\n", REMOVE_ORIGIN && !COMP ? 1 : 0);
     std::printf(" -q 0 silent mode, 1 prints only error messages to stderr, 2 verbose (default q=%d)\n", QUITE_MODE);
+    std::printf(" -s sets chunk size multiplier for parallel compression (default s=%d, unit: %d bytes)\n", CHUNK_SIZE_MULT, BUF_SIZE);
     std::printf("--------------------\n");
 }
 
 int parseCommandLine(int argc, char *argv[]) {
     extern char *optarg;
-    const std::string optstr = "r:C:D:q:";
+    const std::string optstr = "r:C:D:q:s:";
     long opt, start = 1;
     bool cpresent = false, dpresent = false;
 
@@ -69,6 +70,16 @@ int parseCommandLine(int argc, char *argv[]) {
                     return -1;
                 }
                 QUITE_MODE = q;
+                start += 2;
+            } break;
+            case 's': {
+                long s = 0;
+                if (!isNumber(optarg, s) || s <= 0) {
+                    std::fprintf(stderr, "Error: wrong '-s' option, must be a positive integer\n");
+                    usage(argv[0]);
+                    return -1;
+                }
+                CHUNK_SIZE_MULT = s;
                 start += 2;
             } break;
             default:

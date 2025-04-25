@@ -187,17 +187,20 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
     
     unsigned char *inPtr = ptr;
     size_t inSize = size;
-    
+
     // For small files, use the sequential version - not worth the parallel overhead
-    if (size < BUF_SIZE * 4) {
+    // Use min BUF_SIZE or the user-specified chunk size as threshold
+    if (size < BUF_SIZE * CHUNK_SIZE_MULT) {
         if (QUITE_MODE >= 2) {
-            printf("Sequential Compressing %s of size %zu\n", fname.c_str(), size);
+            printf("Sequential Compressing %s of size %zu (below threshold of %zu bytes)\n", 
+                   fname.c_str(), size, BUF_SIZE * CHUNK_SIZE_MULT);
         }
         return compressData(ptr, size, fname);
     }
     
     if (QUITE_MODE >= 2) {
-        printf("Parallel compressing %s of size %zu\n", fname.c_str(), size);
+        printf("Parallel compressing %s of size %zu (using chunk size multiplier: %d)\n", 
+               fname.c_str(), size, CHUNK_SIZE_MULT);
     }
     
     double setup_start = omp_get_wtime();
