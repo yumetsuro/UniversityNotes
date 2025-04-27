@@ -190,9 +190,9 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
 
     // For small files, use the sequential version - not worth the parallel overhead
     // Use min BUF_SIZE or the user-specified chunk size as threshold
-    if (size < BUF_SIZE * CHUNK_SIZE_MULT) {
+    if ((int)size < BUF_SIZE * CHUNK_SIZE_MULT) {
         if (QUITE_MODE >= 2) {
-            printf("Sequential Compressing %s of size %zu (below threshold of %zu bytes)\n", 
+            printf("Sequential Compressing %s of size %lu (below threshold of %u bytes)\n", 
                    fname.c_str(), size, BUF_SIZE * CHUNK_SIZE_MULT);
         }
         return compressData(ptr, size, fname);
@@ -213,12 +213,13 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
     omp_set_nested(1);
     omp_set_max_active_levels(2);
     
-    // Determine optimal chunk size and number based on available threads and file size
-    int num_threads = omp_get_max_threads();
+    // Determine thread count to use
+    int max_threads = omp_get_max_threads();
+    int thread_count = (NUM_THREADS > 0) ? NUM_THREADS : max_threads;
     
-    // Create more chunks than threads to improve load balancing
+    // Determine optimal chunk size and number based on available threads and file size
     size_t min_chunk_size = BUF_SIZE; // Minimum 1MB chunks 
-    int target_chunks = num_threads * 4; // 4 chunks per thread for better load balancing
+    int target_chunks = thread_count * 4; // 4 chunks per thread for better load balancing
     
     // Calculate chunk size based on file size and target number of chunks
     size_t optimal_chunk_size = std::max(min_chunk_size, size / target_chunks);
@@ -226,7 +227,7 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
     
     if (QUITE_MODE >= 2) {
         printf("Using %d threads for %d chunks (chunk size: %zu bytes)\n", 
-               num_threads, num_chunks, optimal_chunk_size);
+               thread_count, num_chunks, optimal_chunk_size);
     }
     
     // Pre-allocate vectors with the right size to avoid reallocations within parallel region
@@ -248,7 +249,7 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
     double compression_start = omp_get_wtime();
     
     // Create a fresh parallel region with explicit thread count
-    #pragma omp parallel num_threads(num_threads)
+    #pragma omp parallel num_threads(thread_count)
     {
         #pragma omp single
         {
@@ -257,7 +258,6 @@ static inline bool compressData_par(unsigned char *ptr, size_t size, const std::
                 printf("Compression region has %d active threads for file %s\n", 
                        omp_get_num_threads(), fname.c_str());
             }
-                   omp_get_num_threads(), fname.c_str();
         }
         
         #pragma omp for schedule(dynamic, 1)
@@ -404,9 +404,10 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
     size_t chunk_size = (decompressedSize + num_chunks - 1) / num_chunks;
     
     if (QUITE_MODE >= 2) {
-        int num_threads = omp_get_max_threads();
+        int max_threads = omp_get_max_threads();
+        int thread_count = (NUM_THREADS > 0) ? NUM_THREADS : max_threads;
         printf("Using %d threads to decompress %d chunks (avg chunk size: %zu bytes)\n", 
-               num_threads, num_chunks, chunk_size);
+               thread_count, num_chunks, chunk_size);
     }
     header_parsing_time = omp_get_wtime() - header_start;
     
@@ -434,12 +435,13 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
     omp_set_nested(1);
     omp_set_max_active_levels(2);
     
-    // Get max number of threads
-    int num_threads = omp_get_max_threads();
+    // Determine thread count to use
+    int max_threads = omp_get_max_threads();
+    int thread_count = (NUM_THREADS > 0) ? NUM_THREADS : max_threads;
     
     double decompression_start = omp_get_wtime();
     
-    #pragma omp parallel num_threads(num_threads)
+    #pragma omp parallel num_threads(thread_count)
     {
         #pragma omp single
         {
@@ -465,10 +467,9 @@ static inline bool decompressData_par(unsigned char *ptr, size_t size, const std
             size_t output_size = current_chunk_size;
             
             if (QUITE_MODE >= 2) {
-    
-            int thread_id = omp_get_thread_num();
-            printf("Thread %d decompressing chunk %d of %d, size %zu bytes\n", 
-                   thread_id, i, num_chunks, current_chunk_size);
+                int thread_id = omp_get_thread_num();
+                printf("Thread %d decompressing chunk %d of %d, size %zu bytes\n", 
+                       thread_id, i, num_chunks, current_chunk_size);
             }
 
             // Decompress this chunk

@@ -29,9 +29,15 @@ int main(int argc, char *argv[]) {
 	omp_time_start = omp_get_wtime();	
 
 	// Initialize OpenMP
-    int num_threads = omp_get_max_threads();
+    int max_threads = omp_get_max_threads();
+    int num_threads = (NUM_THREADS > 0) ? NUM_THREADS : max_threads;
+    
+    // Set the number of threads to use
+    omp_set_num_threads(num_threads);
+    
     if (QUITE_MODE >= 1) {
-        printf("Using %d threads for parallel compression/decompression\n", num_threads);
+        printf("Using %d threads for parallel compression/decompression (max available: %d)\n", 
+               num_threads, max_threads);
     }
 
     // Process files sequentially, but compress/decompress chunks of each file in parallel
@@ -58,7 +64,9 @@ int main(int argc, char *argv[]) {
     }
 
 	omp_time_end = omp_get_wtime();
-	printf("Parallel execution time: %f seconds\n", omp_time_end - omp_time_start);
+	printf("Parallel execution time: %f seconds with %d threads\n", omp_time_end - omp_time_start, num_threads);
+
+    // Check if any errors occurred during processing
 
 	if (!success) {
 		printf("Exiting with (some) Error(s)\n");

@@ -13,6 +13,7 @@ static bool REMOVE_ORIGIN = false;                // Does it keep the origin fil
 static int  QUITE_MODE    = 1; 					  // 0 silent, 1 error messages, 2 verbose
 static bool RECUR         = false;                // do we have to process the contents of subdirs?
 static int  CHUNK_SIZE_MULT = 1;                  // chunk size multiplier (default: 1 * BUF_SIZE)
+static int  NUM_THREADS   = 0;                    // number of threads to use (0 = use maximum available)
 
 
 #endif // _CONFIG_HPP
