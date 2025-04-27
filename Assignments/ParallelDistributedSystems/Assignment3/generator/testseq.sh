@@ -42,16 +42,17 @@ for ((i=1; i<=n; i++)); do
   fi
   
   end_time=$(date +%s.%N)
-  elapsed_time=$(echo "$end_time - $start_time" | bc)
-  total_time=$(echo "$total_time + $elapsed_time" | bc)
+  # Use awk instead of bc for floating point calculations
+  elapsed_time=$(awk "BEGIN {printf \"%.5f\", $end_time - $start_time}")
+  total_time=$(awk "BEGIN {printf \"%.5f\", $total_time + $elapsed_time}")
   echo "Trial $i completed in $elapsed_time seconds"
   
   # Add individual trial result to CSV
   echo "$i,$elapsed_time" >> "$result_file"
 done
 
-# Calculate mean time in seconds with 5 significant digits
-mean_time=$(echo "scale=5; $total_time / $n" | bc)
+# Calculate mean time in seconds with 5 significant digits using awk
+mean_time=$(awk "BEGIN {printf \"%.5f\", $total_time / $n}")
 echo "Mean time over $n trials: $mean_time seconds"
 
 # Add mean time to CSV
