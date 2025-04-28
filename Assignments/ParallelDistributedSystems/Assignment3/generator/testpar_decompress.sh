@@ -8,7 +8,7 @@
 if [ "$#" -lt 2 ]; then
   echo "Usage: $0 {n} {path} [max_threads]"
   echo "  {n}: Number of times to run the command for each thread count"
-  echo "  {path}: Path to a file or directory to compress"
+  echo "  {path}: Path to a file or directory to decompress"
   echo "  [max_threads]: Maximum number of threads to test (optional, defaults to number of CPU cores)"
   exit 1
 fi

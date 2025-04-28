@@ -20,11 +20,11 @@ if [ ! -e "$path" ]; then
 fi
 
 # Create a CSV file to store results
-result_file="seq_benchmark_results.csv"
+result_file="seq_benchmark_results_decompression.csv"
 echo "Trial,Time(s)" > "$result_file"
 
 echo "====================================="
-echo "Running $n trials for sequential compression"
+echo "Running $n trials for sequential decompression"
 echo "====================================="
 
 total_time=0
