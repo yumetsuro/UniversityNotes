@@ -11,6 +11,7 @@
 *.pt
 *.csv
 *.Identifier
+*.ipynb
 *!"Presentation"*.html
 /UniversityNotes/Assignments/ContinualLearning/CourseRepo/
 /UniversityNotes/Animations/
