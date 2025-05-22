@@ -318,7 +318,7 @@ void distribute_data(Record* full_array, size_t array_size, size_t record_size, 
     std::vector<size_t> chunk_sizes(size);
     size_t base_size = array_size / size;
     for (int i = 0; i < size; i++) {
-        chunk_sizes[i] = base_size + (i < array_size % size ? 1 : 0);
+        chunk_sizes[i] = base_size + (static_cast<size_t>(i) < array_size % static_cast<size_t>(size) ? 1 : 0);
     }
     
     // Send chunks to other processes
@@ -468,7 +468,7 @@ int main(int argc, char* argv[]) {
     
     // Calculate local chunk size for this process
     size_t local_size = array_size / size;
-    if (rank < array_size % size) local_size++;
+    if (static_cast<size_t>(rank) < array_size % static_cast<size_t>(size)) local_size++;
     
     // Allocate local array
     Record* local_array = nullptr;

@@ -248,6 +248,9 @@ public:
     }
 };
 
+// Global variables for timing
+std::chrono::milliseconds collector_merge_time(0);
+
 // Collector for the sorting phase, emitter for merge phase
 class SortCollectorMergeEmitter : public ff_node {
 private:
@@ -270,6 +273,8 @@ public:
         // Sort chunks by left index to ensure correct order
         std::sort(sorted_chunks.begin(), sorted_chunks.end(),
             [](const SortTask* a, const SortTask* b) { return a->left < b->left; });
+        
+        auto merge_start = std::chrono::high_resolution_clock::now();
         
         // Sequential merge of all chunks
         if (sorted_chunks.size() > 1) {
@@ -295,6 +300,9 @@ public:
             
             delete[] reinterpret_cast<char*>(tmp);
         }
+        
+        auto merge_end = std::chrono::high_resolution_clock::now();
+        collector_merge_time = std::chrono::duration_cast<std::chrono::milliseconds>(merge_end - merge_start);
         
         // Free all chunks
         for (auto chunk : sorted_chunks) {
@@ -403,14 +411,20 @@ int main(int argc, char* argv[]) {
         tmp = reinterpret_cast<Record*>(new char[array_size * record_size]);
     }
     
-    // Time the sorting
+    // Time variables for different phases
     auto start_time = std::chrono::high_resolution_clock::now();
+    auto sort_start_time = start_time;
+    auto sort_end_time = start_time;
+    auto merge_start_time = start_time;
+    auto merge_end_time = start_time;
     
     if (sequential) {
         // Run sequential mergesort
         mergesort_seq(array, 0, array_size - 1, record_size, tmp);
     } else {
         // Run parallel mergesort using FastFlow
+        
+        // Start timing for sort phase
         
         // Phase 1: Sort chunks in parallel
         ff_farm sort_farm;
@@ -428,21 +442,42 @@ int main(int argc, char* argv[]) {
         sort_farm.add_workers(sort_workers);
         sort_farm.add_collector(collector);
         
+        sort_start_time = std::chrono::high_resolution_clock::now();
+        
         // Run the farm
         if (sort_farm.run_and_wait_end() < 0) {
             std::cerr << "Error running sort farm" << std::endl;
             return 1;
         }
+        
+        sort_end_time = std::chrono::high_resolution_clock::now();
+        merge_start_time = sort_end_time;
+        
+        // Note: In our current implementation, merging happens inside the collector
+        merge_end_time = std::chrono::high_resolution_clock::now();
     }
     
     auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    
+    // Calculate durations
+    auto total_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    auto sort_duration = std::chrono::duration_cast<std::chrono::milliseconds>(sort_end_time - sort_start_time);
     
     // Verify that the array is sorted
     bool sorted = verify_sorted(array, array_size, record_size);
     
     std::cout << "Sorting " << (sorted ? "successful" : "FAILED") << "\n"
-              << "Time: " << duration.count() << " ms" << std::endl;
+              << "Total time: " << total_duration.count() << " ms\n";
+              
+    if (!sequential) {
+        // Compute the actual sort time (excluding merging)
+        auto actual_sort_time = sort_duration - collector_merge_time;
+        
+        std::cout << "  Sort phase: " << actual_sort_time.count() << " ms (" 
+                  << (actual_sort_time.count() * 100.0 / total_duration.count()) << "%)\n"
+                  << "  Merge phase: " << collector_merge_time.count() << " ms ("
+                  << (collector_merge_time.count() * 100.0 / total_duration.count()) << "%)\n";
+    }
     
     // Clean up
     delete[] reinterpret_cast<char*>(array);
