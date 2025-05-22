@@ -7,9 +7,10 @@ LDFLAGS = -pthread
 FF_ROOT = fastflow
 
 # Target and source files
-TARGETS = mergesort_ff mergesort_ff_clean
+TARGETS = mergesort_ff mergesort_ff_clean mergesort_mpi_ff
 SRC1 = mergesort_ff.cpp
-SRC2 = mergesort_ff_clean.cpp
+SRC2 = mergesort_ff_clean.cppn
+SRC3 = mergesort_mpi_ff.cpp
 
 all: $(TARGETS)
 
@@ -17,6 +18,9 @@ mergesort_ff: $(SRC1)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 mergesort_ff_clean: $(SRC2)
+	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
+
+mergesort_mpi_ff: $(SRC3)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
