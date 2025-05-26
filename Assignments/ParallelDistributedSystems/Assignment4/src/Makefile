@@ -26,12 +26,6 @@ all: $(TARGETS)
 mergesort_ff: $(SRC1)
 	$(CXX) $(CXXFLAGS) -DMAX_PAYLOAD_SIZE=$(PAYLOAD_SIZE) -o $@ $< $(LDFLAGS)
 
-mergesort_mpi_ff: $(SRC2)
-	$(MPICXX) $(MPI_CXXFLAGS) -o $@ $< $(MPI_LDFLAGS)
-
-mergesort_ff_naive: $(SRC4)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
-
 mergesort_ff_modular: $(SRC5)
 	$(CXX) $(CXXFLAGS) -DMAX_PAYLOAD_SIZE=$(PAYLOAD_SIZE) -o $@ $< $(LDFLAGS)
 
