@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++17 -O3 -Wall -I$(FF_ROOT) -pthread
 LDFLAGS = -pthread
 
 # MPI configuration
-MPICXX = mpic++
+MPICXX = mpicxx
 MPI_CXXFLAGS = -std=c++17 -O3 -Wall -I$(FF_ROOT) -pthread
 MPI_LDFLAGS = -pthread
 
@@ -12,33 +12,25 @@ MPI_LDFLAGS = -pthread
 FF_ROOT = fastflow
 
 # Target and source files
-TARGETS = mergesort_ff mergesort_ff_clean mergesort_mpi_ff mergesort_ff_improved mergesort_ff_pipeline mergesort_mpi_simple
+TARGETS = mergesort_ff mergesort_mpi_ff mergesort_ff_naive mergesort_ff_modular
 SRC1 = mergesort_ff.cpp
-SRC2 = mergesort_ff_clean.cpp
-SRC3 = mergesort_mpi_ff.cpp
-SRC4 = mergesort_ff_improved.cpp
-SRC5 = mergesort_ff_pipeline.cpp
-SRC6 = mergesort_mpi_simple.cpp
+SRC2 = mergesort_mpi_ff.cpp
+SRC4 = mergesort_ff_naive.cpp
+SRC5 = main.cpp
 
 all: $(TARGETS)
 
 mergesort_ff: $(SRC1)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
-mergesort_ff_clean: $(SRC2)
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
-
-mergesort_mpi_ff: $(SRC3)
+mergesort_mpi_ff: $(SRC2)
 	$(MPICXX) $(MPI_CXXFLAGS) -o $@ $< $(MPI_LDFLAGS)
 
-mergesort_ff_improved: $(SRC4)
+mergesort_ff_naive: $(SRC4)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
 
-mergesort_ff_pipeline: $(SRC5)
+mergesort_ff_modular: $(SRC5)
 	$(CXX) $(CXXFLAGS) -o $@ $< $(LDFLAGS)
-
-mergesort_mpi_simple: $(SRC6)
-	$(MPICXX) $(MPI_CXXFLAGS) -o $@ $< $(MPI_LDFLAGS)
 
 clean:
 	rm -f $(TARGETS)

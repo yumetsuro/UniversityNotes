@@ -8,7 +8,6 @@
 #include <ff/ff.hpp>
 #include <ff/farm.hpp>
 #include <ff/pipeline.hpp>
-#include <ff/utils.hpp>
 #include <chrono>
 #include <getopt.h>
 
@@ -177,6 +176,7 @@ public:
         return task;
     }
 };
+
 // Worker for the merging phase
 class MergeWorker : public ff_node {
 private:
@@ -191,7 +191,29 @@ public:
         size_t n = mt->right - mt->left + 1;
         Record* tmp = reinterpret_cast<Record*>(new char[n * record_size]);
         
+        // Debug info
+        //std::cout << "Merging: left=" << mt->left << " mid=" << mt->mid << " right=" << mt->right << std::endl;
+        
         merge(mt->array, mt->left, mt->mid, mt->right, record_size, tmp);
+        
+        // Verify the merged segment is sorted
+        /*
+        bool segment_sorted = true;
+        for (size_t i = mt->left + 1; i <= mt->right; i++) {
+            Record* prev = reinterpret_cast<Record*>(reinterpret_cast<char*>(mt->array) + (i-1) * record_size);
+            Record* curr = reinterpret_cast<Record*>(reinterpret_cast<char*>(mt->array) + i * record_size);
+            if (prev->key > curr->key) {
+                std::cerr << "Merge failed at positions " << (i-1) << " and " << i 
+                          << " (task range " << mt->left << "-" << mt->right << ")"
+                          << ", keys: " << prev->key << " > " << curr->key << std::endl;
+                segment_sorted = false;
+                break;
+            }
+        }
+        if (!segment_sorted) {
+            std::cerr << "Segment not sorted after merge!" << std::endl;
+        }
+        */
         
         delete[] reinterpret_cast<char*>(tmp);
         delete mt;  // Free the task
@@ -226,8 +248,11 @@ public:
     }
 };
 
-// Collector for the sorting phase that also initiates the merge phase
-class SortCollector : public ff_node {
+// Global variables for timing
+std::chrono::milliseconds collector_merge_time(0);
+
+// Collector for the sorting phase, emitter for merge phase
+class SortCollectorMergeEmitter : public ff_node {
 private:
     Record* array;
     size_t n;
@@ -235,7 +260,7 @@ private:
     std::vector<SortTask*> sorted_chunks;
     
 public:
-    SortCollector(Record* arr, size_t size, size_t rs)
+    SortCollectorMergeEmitter(Record* arr, size_t size, size_t rs)
         : array(arr), n(size), record_size(rs) {}
     
     void* svc(void* task) {
@@ -249,68 +274,41 @@ public:
         std::sort(sorted_chunks.begin(), sorted_chunks.end(),
             [](const SortTask* a, const SortTask* b) { return a->left < b->left; });
         
-        // Free all chunks as we don't need them anymore
+        auto merge_start = std::chrono::high_resolution_clock::now();
+        
+        // Sequential merge of all chunks
+        if (sorted_chunks.size() > 1) {
+            // Create a temporary buffer for the entire array
+            Record* tmp = reinterpret_cast<Record*>(new char[n * record_size]);
+            
+            // Start with the first two chunks
+            size_t left = sorted_chunks[0]->left;
+            size_t mid = sorted_chunks[0]->right;
+            size_t right = sorted_chunks[1]->right;
+            
+            // Merge the first two chunks
+            merge(array, left, mid, right, record_size, tmp);
+            
+            // Now merge each subsequent chunk with the accumulated result
+            for (size_t i = 2; i < sorted_chunks.size(); i++) {
+                left = sorted_chunks[0]->left;  // Always start from the beginning
+                mid = right;                   // Previous right becomes the new mid
+                right = sorted_chunks[i]->right; // New right
+                
+                merge(array, left, mid, right, record_size, tmp);
+            }
+            
+            delete[] reinterpret_cast<char*>(tmp);
+        }
+        
+        auto merge_end = std::chrono::high_resolution_clock::now();
+        collector_merge_time = std::chrono::duration_cast<std::chrono::milliseconds>(merge_end - merge_start);
+        
+        // Free all chunks
         for (auto chunk : sorted_chunks) {
             delete chunk;
         }
         sorted_chunks.clear();
-    }
-};
-
-// Emitter for the merge phase - creates merge tasks in a tree-like fashion
-class MergeEmitter : public ff_node {
-private:
-    Record* array;
-    size_t n;
-    size_t num_chunks;
-    size_t record_size;
-    std::vector<std::pair<size_t, size_t>> current_ranges;
-    bool first_iteration;
-    
-public:
-    MergeEmitter(Record* arr, size_t size, size_t chunks, size_t rs)
-        : array(arr), n(size), num_chunks(chunks), record_size(rs), first_iteration(true) {
-        
-        // Initialize with the original chunk ranges
-        size_t chunk_size = n / num_chunks;
-        if (chunk_size == 0) chunk_size = 1;
-        
-        for (size_t i = 0; i < n; i += chunk_size) {
-            size_t right = std::min(i + chunk_size - 1, n - 1);
-            current_ranges.push_back({i, right});
-        }
-    }
-    
-    void* svc(void* task) {
-        if (first_iteration) {
-            first_iteration = false;
-            
-            // Start the merge process
-            for (size_t i = 0; i < current_ranges.size(); i += 2) {
-                if (i + 1 < current_ranges.size()) {
-                    // Create a merge task for adjacent ranges
-                    size_t left = current_ranges[i].first;
-                    size_t mid = current_ranges[i].second;
-                    size_t right = current_ranges[i + 1].second;
-                    
-                    MergeTask* mt = new MergeTask(array, left, mid, right, record_size);
-                    ff_send_out(mt);
-                }
-            }
-            
-            return GO_ON;
-        }
-        
-        return nullptr; // EOS after first iteration
-    }
-};
-
-// Collector for the merge phase
-class MergeCollector : public ff_node {
-public:
-    void* svc(void* task) {
-        // Just consume the completed merge tasks
-        return GO_ON;
     }
 };
 
@@ -332,23 +330,6 @@ size_t parse_size(const char* str) {
     
     return size;
 }
-
-// Create a simple emitter that sends all tasks
-class SimpleMergeEmitter : public ff_node {
-    private:
-        std::vector<MergeTask*>& tasks;
-        size_t current_task;
-
-    public:
-        SimpleMergeEmitter(std::vector<MergeTask*>& t) : tasks(t), current_task(0) {}
-
-            void* svc(void* task) {
-                if (current_task < tasks.size()) {
-                    return tasks[current_task++];
-                }
-                return nullptr; // EOS
-            }
-};
 
 // Display usage information
 void usage(const char* progname) {
@@ -438,14 +419,14 @@ int main(int argc, char* argv[]) {
     auto merge_end_time = start_time;
     
     if (sequential) {
-        // Run sequential mergesort using std:sort
+        // Run sequential mergesort
         mergesort(array, 0, array_size - 1, record_size, tmp);
     } else {
-        // Run parallel mergesort using FastFlow with optimized parallel merge
+        // Run parallel mergesort using FastFlow
         
-        // Phase 1: Sort chunks in parallel using a farm
-        sort_start_time = std::chrono::high_resolution_clock::now();
+        // Start timing for sort phase
         
+        // Phase 1: Sort chunks in parallel
         ff_farm sort_farm;
         
         // Create workers for the sorting phase
@@ -454,92 +435,33 @@ int main(int argc, char* argv[]) {
             sort_workers.push_back(new SortWorker(record_size));
         }
         
-        // Set emitter and collector for sort farm
-        SortEmitter* sort_emitter = new SortEmitter(array, array_size, num_threads, record_size);
-        SortCollector* sort_collector = new SortCollector(array, array_size, record_size);
-        sort_farm.add_emitter(sort_emitter);
+        // Set emitter and workers
+        SortEmitter* emitter = new SortEmitter(array, array_size, num_threads, record_size);
+        SortCollectorMergeEmitter* collector = new SortCollectorMergeEmitter(array, array_size, record_size);
+        sort_farm.add_emitter(emitter);
         sort_farm.add_workers(sort_workers);
-        sort_farm.add_collector(sort_collector);
+        sort_farm.add_collector(collector);
         
-        // Run the sort farm
+        sort_start_time = std::chrono::high_resolution_clock::now();
+        
+        // Run the farm
         if (sort_farm.run_and_wait_end() < 0) {
             std::cerr << "Error running sort farm" << std::endl;
             return 1;
         }
         
         sort_end_time = std::chrono::high_resolution_clock::now();
+        merge_start_time = sort_end_time;
         
-        // Phase 2: Tree-like parallel merge using multiple levels
-        merge_start_time = std::chrono::high_resolution_clock::now();
-        
-        // Initialize ranges for merging
-        std::vector<std::pair<size_t, size_t>> current_ranges;
-        size_t chunk_size = array_size / num_threads;
-        if (chunk_size == 0) chunk_size = 1;
-        
-        for (size_t i = 0; i < array_size; i += chunk_size) {
-            size_t right = std::min(i + chunk_size - 1, array_size - 1);
-            current_ranges.push_back({i, right});
-        }
-        
-        // Merge level by level until we have a single sorted array
-        while (current_ranges.size() > 1) {
-            std::vector<std::pair<size_t, size_t>> next_ranges;
-            std::vector<MergeTask*> merge_tasks;
-            
-            // Create merge tasks for this level
-            for (size_t i = 0; i < current_ranges.size(); i += 2) {
-                if (i + 1 < current_ranges.size()) {
-                    size_t left = current_ranges[i].first;
-                    size_t mid = current_ranges[i].second;
-                    size_t right = current_ranges[i + 1].second;
-                    
-                    merge_tasks.push_back(new MergeTask(array, left, mid, right, record_size));
-                    next_ranges.push_back({left, right});
-                } else {
-                    // Odd number of ranges, carry forward the last one
-                    next_ranges.push_back(current_ranges[i]);
-                }
-            }
-            
-            // Process merge tasks in parallel if we have any
-            if (!merge_tasks.empty()) {
-                ff_farm merge_farm;
-                
-                // Create workers for the merging phase (use fewer workers for better load balancing)
-                size_t merge_workers = std::min((size_t)merge_tasks.size(), num_threads);
-                std::vector<ff_node*> merge_workers_vec;
-                for (size_t i = 0; i < merge_workers; i++) {
-                    merge_workers_vec.push_back(new MergeWorker(record_size));
-                }
-                     
-                SimpleMergeEmitter* merge_emitter = new SimpleMergeEmitter(merge_tasks);
-                MergeCollector* merge_collector = new MergeCollector();
-                
-                merge_farm.add_emitter(merge_emitter);
-                merge_farm.add_workers(merge_workers_vec);
-                merge_farm.add_collector(merge_collector);
-                
-                // Run the merge farm for this level
-                if (merge_farm.run_and_wait_end() < 0) {
-                    std::cerr << "Error running merge farm" << std::endl;
-                    return 1;
-                }
-            }
-            
-            current_ranges = next_ranges;
-        }
-        
+        // Note: In our current implementation, merging happens inside the collector
         merge_end_time = std::chrono::high_resolution_clock::now();
     }
     
     auto end_time = std::chrono::high_resolution_clock::now();
     
-    // Calculate durations using FastFlow timing approach
+    // Calculate durations
     auto total_duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     auto sort_duration = std::chrono::duration_cast<std::chrono::milliseconds>(sort_end_time - sort_start_time);
-    auto merge_duration = std::chrono::duration_cast<std::chrono::milliseconds>(merge_end_time - merge_start_time);
-    auto overhead_duration = total_duration - sort_duration - merge_duration;
     
     // Verify that the array is sorted
     bool sorted = verify_sorted(array, array_size, record_size);
@@ -548,12 +470,13 @@ int main(int argc, char* argv[]) {
               << "Total time: " << total_duration.count() << " ms\n";
               
     if (!sequential) {
-        std::cout << "  Sort phase: " << sort_duration.count() << " ms (" 
-                  << (sort_duration.count() * 100.0 / total_duration.count()) << "%)\n"
-                  << "  Merge phase: " << merge_duration.count() << " ms ("
-                  << (merge_duration.count() * 100.0 / total_duration.count()) << "%)\n"
-                  << "  Overhead: " << overhead_duration.count() << " ms ("
-                  << (overhead_duration.count() * 100.0 / total_duration.count()) << "%)\n";
+        // Compute the actual sort time (excluding merging)
+        auto actual_sort_time = sort_duration - collector_merge_time;
+        
+        std::cout << "  Sort phase: " << actual_sort_time.count() << " ms (" 
+                  << (actual_sort_time.count() * 100.0 / total_duration.count()) << "%)\n"
+                  << "  Merge phase: " << collector_merge_time.count() << " ms ("
+                  << (collector_merge_time.count() * 100.0 / total_duration.count()) << "%)\n";
     }
     
     // Clean up
