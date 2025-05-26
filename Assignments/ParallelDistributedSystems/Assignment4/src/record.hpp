@@ -4,34 +4,47 @@
 #include <cstring>
 #include <iostream>
 
-// Record structure as per assignment
+// Global variable for runtime payload size configuration
+size_t g_payload_size = 8;  // Default payload size
+
+// Record structure with maximum payload size
+#ifndef MAX_PAYLOAD_SIZE
+#define MAX_PAYLOAD_SIZE 256
+#endif
+
 struct Record {
     unsigned long key;  // sorting value
-    char rpayload[1];   // flexible array member, actual size will be set at runtime
+    char rpayload[MAX_PAYLOAD_SIZE];   // maximum size payload
+    
+    // Get the actual record size based on current payload setting
+    static size_t get_record_size() {
+        return sizeof(unsigned long) + g_payload_size;
+    }
 };
 
-// Function to dynamically create a record array with specific payload size
-inline Record* create_record_array(size_t n, size_t payload_size) {
-    size_t record_size = sizeof(unsigned long) + payload_size;
-    char* memory = new char[n * record_size];
+// Function to create a record array with runtime payload size
+Record* create_record_array(size_t n) {
+    Record* array = new Record[n];
+    
+    // Initialize records with random keys
     for (size_t i = 0; i < n; i++) {
-        Record* rec = reinterpret_cast<Record*>(memory + i * record_size);
-        rec->key = rand();
-        for (size_t j = 0; j < payload_size; j++) {
-            rec->rpayload[j] = static_cast<char>(j % 256);
+        array[i].key = rand();
+        
+        // Initialize payload with some pattern (optional)
+        for (size_t j = 0; j < g_payload_size; j++) {
+            array[i].rpayload[j] = static_cast<char>(j % 256);
         }
     }
-    return reinterpret_cast<Record*>(memory);
+    
+    return array;
 }
 
 // Function to verify the sorted array
-inline bool verify_sorted(Record* array, size_t n, size_t record_size) {
+bool verify_sorted(Record* array, size_t n) {
     for (size_t i = 1; i < n; i++) {
-        Record* prev = reinterpret_cast<Record*>(reinterpret_cast<char*>(array) + (i-1) * record_size);
-        Record* curr = reinterpret_cast<Record*>(reinterpret_cast<char*>(array) + i * record_size);
-        if (prev->key > curr->key) {
+        if (array[i-1].key > array[i].key) {
             std::cerr << "Sorting failure at position " << (i-1) << " and " << i 
-                      << ", keys: " << prev->key << " > " << curr->key << std::endl;
+                      << ", keys: " << array[i-1].key << " > " << array[i].key << std::endl;
             return false;
         }
     }

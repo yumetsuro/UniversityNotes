@@ -26,6 +26,7 @@ inline void usage(const char* progname) {
               << "  -r, --record R      Record payload size in bytes (e.g., 8, 64, 256)\n"
               << "  -t, --threads T     Number of FastFlow threads (e.g., 16, 32)\n"
               << "  -q, --sequential    Run sequential version\n"
+              << "Note: Maximum payload size is " << MAX_PAYLOAD_SIZE << " bytes\n"
               << "  -h, --help          Display this help message\n"
               << std::endl;
 }

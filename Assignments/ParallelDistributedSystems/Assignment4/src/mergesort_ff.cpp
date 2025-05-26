@@ -15,40 +15,47 @@
 using namespace ff;
 using namespace std;
 
-// Record structure as per assignment
+// Global variable for runtime payload size configuration
+size_t g_payload_size = 8;  // Default payload size
+
+// Record structure with maximum payload size
+#ifndef MAX_PAYLOAD_SIZE
+#define MAX_PAYLOAD_SIZE 256
+#endif
+
 struct Record {
     unsigned long key;  // sorting value
-    char rpayload[1];   // flexible array member, actual size will be set at runtime
+    char rpayload[MAX_PAYLOAD_SIZE];   // maximum size payload
+    
+    // Get the actual record size based on current payload setting
+    static size_t get_record_size() {
+        return sizeof(unsigned long) + g_payload_size;
+    }
 };
 
-// Function to dynamically create a record array with specific payload size
-Record* create_record_array(size_t n, size_t payload_size) {
-    // Allocate memory for the array with the correct record size
-    size_t record_size = sizeof(unsigned long) + payload_size;
-    char* memory = new char[n * record_size];
+// Function to create a record array with runtime payload size
+Record* create_record_array(size_t n) {
+    Record* array = new Record[n];
     
     // Initialize records with random keys
     for (size_t i = 0; i < n; i++) {
-        Record* rec = reinterpret_cast<Record*>(memory + i * record_size);
-        rec->key = rand();
+        array[i].key = rand();
         
         // Initialize payload with some pattern (optional)
-        for (size_t j = 0; j < payload_size; j++) {
-            rec->rpayload[j] = static_cast<char>(j % 256);
+        for (size_t j = 0; j < g_payload_size; j++) {
+            array[i].rpayload[j] = static_cast<char>(j % 256);
         }
     }
     
-    return reinterpret_cast<Record*>(memory);
+    return array;
 }
 
 // Function to verify the sorted array
-bool verify_sorted(Record* array, size_t n, size_t record_size) {
+bool verify_sorted(Record* array, size_t n) {
     for (size_t i = 1; i < n; i++) {
-        Record* prev = reinterpret_cast<Record*>(reinterpret_cast<char*>(array) + (i-1) * record_size);
-        Record* curr = reinterpret_cast<Record*>(reinterpret_cast<char*>(array) + i * record_size);
-        if (prev->key > curr->key) {
+        if (array[i-1].key > array[i].key) {
             std::cerr << "Sorting failure at position " << (i-1) << " and " << i 
-                      << ", keys: " << prev->key << " > " << curr->key << std::endl;
+                      << ", keys: " << array[i-1].key << " > " << array[i].key << std::endl;
             return false;
         }
     }
@@ -56,58 +63,47 @@ bool verify_sorted(Record* array, size_t n, size_t record_size) {
 }
 
 // Sequential mergesort implementation
-void merge(Record* array, size_t left, size_t mid, size_t right, size_t record_size, Record* tmp) {
+void merge(Record* array, size_t left, size_t mid, size_t right, Record* tmp) {
     size_t i = left;
     size_t j = mid + 1;
     size_t k = 0;
     
     while (i <= mid && j <= right) {
-        Record* rec_i = reinterpret_cast<Record*>(reinterpret_cast<char*>(array) + i * record_size);
-        Record* rec_j = reinterpret_cast<Record*>(reinterpret_cast<char*>(array) + j * record_size);
-        
-        if (rec_i->key <= rec_j->key) {
-            memcpy(reinterpret_cast<char*>(tmp) + k * record_size, 
-                   reinterpret_cast<char*>(array) + i * record_size, 
-                   record_size);
+        if (array[i].key <= array[j].key) {
+            tmp[k] = array[i];
             i++;
         } else {
-            memcpy(reinterpret_cast<char*>(tmp) + k * record_size, 
-                   reinterpret_cast<char*>(array) + j * record_size, 
-                   record_size);
+            tmp[k] = array[j];
             j++;
         }
         k++;
     }
     
     while (i <= mid) {
-        memcpy(reinterpret_cast<char*>(tmp) + k * record_size, 
-               reinterpret_cast<char*>(array) + i * record_size, 
-               record_size);
+        tmp[k] = array[i];
         i++; k++;
     }
     
     while (j <= right) {
-        memcpy(reinterpret_cast<char*>(tmp) + k * record_size, 
-               reinterpret_cast<char*>(array) + j * record_size, 
-               record_size);
+        tmp[k] = array[j];
         j++; k++;
     }
     
     // Copy back to original array
-    memcpy(reinterpret_cast<char*>(array) + left * record_size, 
-           reinterpret_cast<char*>(tmp), 
-           k * record_size);
+    for (size_t idx = 0; idx < k; idx++) {
+        array[left + idx] = tmp[idx];
+    }
 }
 
-void mergesort(Record* array, size_t left, size_t right, size_t record_size, Record* tmp) {
+void mergesort(Record* array, size_t left, size_t right, Record* tmp) {
     if (left >= right) return;
     
     size_t mid = (left + right) / 2;
     
-    mergesort(array, left, mid, record_size, tmp);
-    mergesort(array, mid + 1, right, record_size, tmp);
+    mergesort(array, left, mid, tmp);
+    mergesort(array, mid + 1, right, tmp);
     
-    merge(array, left, mid, right, record_size, tmp);
+    merge(array, left, mid, right, tmp);
 }
 
 // Structure to represent a chunk of the array to be sorted
@@ -115,11 +111,10 @@ struct SortTask {
     Record* array;
     size_t left;
     size_t right;
-    size_t record_size;
     
-    SortTask() : array(nullptr), left(0), right(0), record_size(0) {}
-    SortTask(Record* arr, size_t l, size_t r, size_t rs)
-        : array(arr), left(l), right(r), record_size(rs) {}
+    SortTask() : array(nullptr), left(0), right(0) {}
+    SortTask(Record* arr, size_t l, size_t r)
+        : array(arr), left(l), right(r) {}
 };
 
 // Structure to represent two sorted chunks to be merged
@@ -128,20 +123,16 @@ struct MergeTask {
     size_t left;
     size_t mid;
     size_t right;
-    size_t record_size;
     
-    MergeTask() : array(nullptr), left(0), mid(0), right(0), record_size(0) {}
-    MergeTask(Record* arr, size_t l, size_t m, size_t r, size_t rs)
-        : array(arr), left(l), mid(m), right(r), record_size(rs) {}
+    MergeTask() : array(nullptr), left(0), mid(0), right(0) {}
+    MergeTask(Record* arr, size_t l, size_t m, size_t r)
+        : array(arr), left(l), mid(m), right(r) {}
 };
 
 // Worker for the initial sorting phase
 class SortWorker : public ff_node {
-private:
-    size_t record_size;
-    
 public:
-    SortWorker(size_t rs) : record_size(rs) {}
+    SortWorker() {}
     
     void* svc(void* task) {
         SortTask* st = static_cast<SortTask*>(task);
@@ -151,49 +142,31 @@ public:
             return task;
         }
         
-        // Create a temporary buffer for the sorted chunk
-        Record* tmp = reinterpret_cast<Record*>(new char[n * record_size]);
+        // Create a temporary buffer for merging operations
+        Record* merge_tmp = new Record[n];
         
-        // Sort just this chunk using the sequential mergesort
-        // First create a temporary buffer for merging operations
-        Record* merge_tmp = reinterpret_cast<Record*>(new char[n * record_size]);
+        // Sort this chunk using the sequential mergesort
+        mergesort(st->array, st->left, st->right, merge_tmp);
         
-        // Copy the chunk to the temporary buffer
-        memcpy(reinterpret_cast<char*>(tmp), 
-               reinterpret_cast<char*>(st->array) + st->left * record_size,
-               n * record_size);
-               
-        // Sort the temporary buffer
-        mergesort(tmp, 0, n - 1, record_size, merge_tmp);
-        
-        // Copy back to original array
-        memcpy(reinterpret_cast<char*>(st->array) + st->left * record_size,
-               reinterpret_cast<char*>(tmp),
-               n * record_size);
-        
-        delete[] reinterpret_cast<char*>(tmp);
-        delete[] reinterpret_cast<char*>(merge_tmp);
+        delete[] merge_tmp;
         
         return task;
     }
 };
 // Worker for the merging phase
 class MergeWorker : public ff_node {
-private:
-    size_t record_size;
-    
 public:
-    MergeWorker(size_t rs) : record_size(rs) {}
+    MergeWorker() {}
     
     void* svc(void* task) {
         MergeTask* mt = static_cast<MergeTask*>(task);
         
         size_t n = mt->right - mt->left + 1;
-        Record* tmp = reinterpret_cast<Record*>(new char[n * record_size]);
+        Record* tmp = new Record[n];
         
-        merge(mt->array, mt->left, mt->mid, mt->right, record_size, tmp);
+        merge(mt->array, mt->left, mt->mid, mt->right, tmp);
         
-        delete[] reinterpret_cast<char*>(tmp);
+        delete[] tmp;
         delete mt;  // Free the task
         
         return nullptr; // No output
@@ -206,11 +179,10 @@ private:
     Record* array;
     size_t n;
     size_t num_workers;
-    size_t record_size;
     
 public:
-    SortEmitter(Record* arr, size_t size, size_t nw, size_t rs)
-        : array(arr), n(size), num_workers(nw), record_size(rs) {}
+    SortEmitter(Record* arr, size_t size, size_t nw)
+        : array(arr), n(size), num_workers(nw) {}
     
     void* svc(void* task) {
         size_t chunk_size = n / num_workers;
@@ -218,7 +190,7 @@ public:
         
         for (size_t i = 0; i < n; i += chunk_size) {
             size_t right = std::min(i + chunk_size - 1, n - 1);
-            SortTask* st = new SortTask(array, i, right, record_size);
+            SortTask* st = new SortTask(array, i, right);
             ff_send_out(st);
         }
         
@@ -231,12 +203,11 @@ class SortCollector : public ff_node {
 private:
     Record* array;
     size_t n;
-    size_t record_size;
     std::vector<SortTask*> sorted_chunks;
     
 public:
-    SortCollector(Record* arr, size_t size, size_t rs)
-        : array(arr), n(size), record_size(rs) {}
+    SortCollector(Record* arr, size_t size)
+        : array(arr), n(size) {}
     
     void* svc(void* task) {
         SortTask* st = static_cast<SortTask*>(task);
@@ -263,13 +234,12 @@ private:
     Record* array;
     size_t n;
     size_t num_chunks;
-    size_t record_size;
     std::vector<std::pair<size_t, size_t>> current_ranges;
     bool first_iteration;
     
 public:
-    MergeEmitter(Record* arr, size_t size, size_t chunks, size_t rs)
-        : array(arr), n(size), num_chunks(chunks), record_size(rs), first_iteration(true) {
+    MergeEmitter(Record* arr, size_t size, size_t chunks)
+        : array(arr), n(size), num_chunks(chunks), first_iteration(true) {
         
         // Initialize with the original chunk ranges
         size_t chunk_size = n / num_chunks;
@@ -293,7 +263,7 @@ public:
                     size_t mid = current_ranges[i].second;
                     size_t right = current_ranges[i + 1].second;
                     
-                    MergeTask* mt = new MergeTask(array, left, mid, right, record_size);
+                    MergeTask* mt = new MergeTask(array, left, mid, right);
                     ff_send_out(mt);
                 }
             }
@@ -359,13 +329,13 @@ void usage(const char* progname) {
               << "  -t, --threads T     Number of FastFlow threads (e.g., 16, 32)\n"
               << "  -q, --sequential    Run sequential version\n"
               << "  -h, --help          Display this help message\n"
+              << "Note: Maximum payload size is " << MAX_PAYLOAD_SIZE << " bytes\n"
               << std::endl;
 }
 
 int main(int argc, char* argv[]) {
     // Default parameters
     size_t array_size = 1000000;  // Default: 1M
-    size_t record_payload = 8;    // Default: 8 bytes
     size_t num_threads = 4;       // Default: 4 threads
     bool sequential = false;      // Default: parallel execution
    
@@ -388,7 +358,12 @@ int main(int argc, char* argv[]) {
                 array_size = parse_size(optarg);
                 break;
             case 'r':
-                record_payload = atoi(optarg);
+                g_payload_size = atoi(optarg);
+                if (g_payload_size > MAX_PAYLOAD_SIZE) {
+                    std::cerr << "Error: Payload size " << g_payload_size 
+                              << " exceeds maximum " << MAX_PAYLOAD_SIZE << " bytes" << std::endl;
+                    return 1;
+                }
                 break;
             case 't':
                 num_threads = atoi(optarg);
@@ -410,24 +385,24 @@ int main(int argc, char* argv[]) {
     // Initialize random number generator
     srand(time(nullptr));
     
-    // Actual record size including the payload
-    size_t record_size = sizeof(unsigned long) + record_payload;
+    // Record size includes the actual payload size being used
+    size_t record_size = Record::get_record_size();
     
     std::cout << "MergeSort Configuration:\n"
               << "  Array size: " << array_size << " elements\n"
-              << "  Record payload: " << record_payload << " bytes\n"
+              << "  Record payload: " << g_payload_size << " bytes\n"
               << "  Record total size: " << record_size << " bytes\n"
               << "  Total memory: " << (array_size * record_size) / (1024*1024) << " MB\n"
               << "  Mode: " << (sequential ? "Sequential" : "Parallel with " + std::to_string(num_threads) + " threads")
               << std::endl;
     
     // Create the array of records with random keys
-    Record* array = create_record_array(array_size, record_payload);
+    Record* array = create_record_array(array_size);
     
     // Temporary array for merging in sequential version
     Record* tmp = nullptr;
     if (sequential) {
-        tmp = reinterpret_cast<Record*>(new char[array_size * record_size]);
+        tmp = new Record[array_size];
     }
     
     // Time variables for different phases
@@ -438,8 +413,8 @@ int main(int argc, char* argv[]) {
     auto merge_end_time = start_time;
     
     if (sequential) {
-        // Run sequential mergesort using std:sort
-        mergesort(array, 0, array_size - 1, record_size, tmp);
+        // Run sequential mergesort
+        mergesort(array, 0, array_size - 1, tmp);
     } else {
         // Run parallel mergesort using FastFlow with optimized parallel merge
         
@@ -451,12 +426,12 @@ int main(int argc, char* argv[]) {
         // Create workers for the sorting phase
         std::vector<ff_node*> sort_workers;
         for (size_t i = 0; i < num_threads; i++) {
-            sort_workers.push_back(new SortWorker(record_size));
+            sort_workers.push_back(new SortWorker());
         }
         
         // Set emitter and collector for sort farm
-        SortEmitter* sort_emitter = new SortEmitter(array, array_size, num_threads, record_size);
-        SortCollector* sort_collector = new SortCollector(array, array_size, record_size);
+        SortEmitter* sort_emitter = new SortEmitter(array, array_size, num_threads);
+        SortCollector* sort_collector = new SortCollector(array, array_size);
         sort_farm.add_emitter(sort_emitter);
         sort_farm.add_workers(sort_workers);
         sort_farm.add_collector(sort_collector);
@@ -494,7 +469,7 @@ int main(int argc, char* argv[]) {
                     size_t mid = current_ranges[i].second;
                     size_t right = current_ranges[i + 1].second;
                     
-                    merge_tasks.push_back(new MergeTask(array, left, mid, right, record_size));
+                    merge_tasks.push_back(new MergeTask(array, left, mid, right));
                     next_ranges.push_back({left, right});
                 } else {
                     // Odd number of ranges, carry forward the last one
@@ -510,7 +485,7 @@ int main(int argc, char* argv[]) {
                 size_t merge_workers = std::min((size_t)merge_tasks.size(), num_threads);
                 std::vector<ff_node*> merge_workers_vec;
                 for (size_t i = 0; i < merge_workers; i++) {
-                    merge_workers_vec.push_back(new MergeWorker(record_size));
+                    merge_workers_vec.push_back(new MergeWorker());
                 }
                      
                 SimpleMergeEmitter* merge_emitter = new SimpleMergeEmitter(merge_tasks);
@@ -542,7 +517,7 @@ int main(int argc, char* argv[]) {
     auto overhead_duration = total_duration - sort_duration - merge_duration;
     
     // Verify that the array is sorted
-    bool sorted = verify_sorted(array, array_size, record_size);
+    bool sorted = verify_sorted(array, array_size);
     
     std::cout << "Sorting " << (sorted ? "successful" : "FAILED") << "\n"
               << "Total time: " << total_duration.count() << " ms\n";
@@ -557,9 +532,9 @@ int main(int argc, char* argv[]) {
     }
     
     // Clean up
-    delete[] reinterpret_cast<char*>(array);
+    delete[] array;
     if (sequential) {
-        delete[] reinterpret_cast<char*>(tmp);
+        delete[] tmp;
     }
     
     return sorted ? 0 : 1;

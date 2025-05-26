@@ -17,7 +17,6 @@ using namespace std;
 int main(int argc, char* argv[]) {
     // Default parameters
     size_t array_size = 1000000;  
-    size_t record_payload = 8;    
     size_t num_threads = 4;       
     bool sequential = false;      
    
@@ -40,7 +39,12 @@ int main(int argc, char* argv[]) {
                 array_size = parse_size(optarg);
                 break;
             case 'r':
-                record_payload = atoi(optarg);
+                g_payload_size = atoi(optarg);
+                if (g_payload_size > MAX_PAYLOAD_SIZE) {
+                    std::cerr << "Error: Payload size " << g_payload_size 
+                              << " exceeds maximum " << MAX_PAYLOAD_SIZE << " bytes" << std::endl;
+                    return 1;
+                }
                 break;
             case 't':
                 num_threads = atoi(optarg);
@@ -63,23 +67,23 @@ int main(int argc, char* argv[]) {
     srand(time(nullptr));
     
     // Actual record size including the payload
-    size_t record_size = sizeof(unsigned long) + record_payload;
+    size_t record_size = sizeof(unsigned long);
     
     std::cout << "MergeSort Configuration:\n"
               << "  Array size: " << array_size << " elements\n"
-              << "  Record payload: " << record_payload << " bytes\n"
+              << "  Record payload: " << g_payload_size << " bytes\n"
               << "  Record total size: " << record_size << " bytes\n"
               << "  Total memory: " << (array_size * record_size) / (1024*1024) << " MB\n"
               << "  Mode: " << (sequential ? "Sequential" : "Parallel with " + std::to_string(num_threads) + " threads")
               << std::endl;
     
     // Create the array of records with random keys
-    Record* array = create_record_array(array_size, record_payload);
+    Record* array = create_record_array(array_size);
     
     // Temporary array for merging in sequential version
     Record* tmp = nullptr;
     if (sequential) {
-        tmp = reinterpret_cast<Record*>(new char[array_size * record_size]);
+        tmp = new Record[array_size];
     }
     
     // Time variables for different phases
@@ -91,7 +95,7 @@ int main(int argc, char* argv[]) {
     
     if (sequential) {
         // Run sequential mergesort
-        mergesort(array, 0, array_size - 1, record_size, tmp);
+        mergesort(array, 0, array_size - 1, tmp);
     } else {
         // Run parallel mergesort using FastFlow with optimized parallel merge
         
@@ -103,12 +107,12 @@ int main(int argc, char* argv[]) {
         // Create workers for the sorting phase
         std::vector<ff_node*> sort_workers;
         for (size_t i = 0; i < num_threads; i++) {
-            sort_workers.push_back(new SortWorker(record_size));
+            sort_workers.push_back(new SortWorker());
         }
         
         // Set emitter and collector for sort farm
-        SortEmitter* sort_emitter = new SortEmitter(array, array_size, num_threads, record_size);
-        SortCollector* sort_collector = new SortCollector(array, array_size, record_size);
+        SortEmitter* sort_emitter = new SortEmitter(array, array_size, num_threads);
+        SortCollector* sort_collector = new SortCollector(array, array_size);
         sort_farm.add_emitter(sort_emitter);
         sort_farm.add_workers(sort_workers);
         sort_farm.add_collector(sort_collector);
@@ -146,7 +150,7 @@ int main(int argc, char* argv[]) {
                     size_t mid = current_ranges[i].second;
                     size_t right = current_ranges[i + 1].second;
                     
-                    merge_tasks.push_back(new MergeTask(array, left, mid, right, record_size));
+                    merge_tasks.push_back(new MergeTask(array, left, mid, right));
                     next_ranges.push_back({left, right});
                 } else {
                     // Odd number of ranges, carry forward the last one
@@ -162,7 +166,7 @@ int main(int argc, char* argv[]) {
                 size_t merge_workers = std::min((size_t)merge_tasks.size(), num_threads);
                 std::vector<ff_node*> merge_workers_vec;
                 for (size_t i = 0; i < merge_workers; i++) {
-                    merge_workers_vec.push_back(new MergeWorker(record_size));
+                    merge_workers_vec.push_back(new MergeWorker());
                 }
                      
                 SimpleMergeEmitter* merge_emitter = new SimpleMergeEmitter(merge_tasks);
@@ -194,7 +198,7 @@ int main(int argc, char* argv[]) {
     auto overhead_duration = total_duration - sort_duration - merge_duration;
     
     // Verify that the array is sorted
-    bool sorted = verify_sorted(array, array_size, record_size);
+    bool sorted = verify_sorted(array, array_size);
     
     std::cout << "Sorting " << (sorted ? "successful" : "FAILED") << "\n"
               << "Total time: " << total_duration.count() << " ms\n";
@@ -209,9 +213,9 @@ int main(int argc, char* argv[]) {
     }
     
     // Clean up
-    delete[] reinterpret_cast<char*>(array);
+    delete[] array;
     if (sequential) {
-        delete[] reinterpret_cast<char*>(tmp);
+        delete[] tmp;
     }
     
     return sorted ? 0 : 1;

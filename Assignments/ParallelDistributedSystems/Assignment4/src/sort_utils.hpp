@@ -12,42 +12,37 @@
  * @param record_size The size of each record in the array.
  * @param tmp Temporary array to hold merged results.
  */
-inline void merge(Record* array, size_t left, size_t mid, size_t right, size_t record_size, Record* tmp) {
+// Sequential mergesort implementation
+void merge(Record* array, size_t left, size_t mid, size_t right, Record* tmp) {
     size_t i = left;
     size_t j = mid + 1;
     size_t k = 0;
-
+    
     while (i <= mid && j <= right) {
-        Record* rec_i = reinterpret_cast<Record*>(reinterpret_cast<char*>(array) + i * record_size);
-        Record* rec_j = reinterpret_cast<Record*>(reinterpret_cast<char*>(array) + j * record_size);
-        if (rec_i->key <= rec_j->key) {
-            memcpy(reinterpret_cast<char*>(tmp) + k * record_size, 
-                   reinterpret_cast<char*>(array) + i * record_size, 
-                   record_size);
+        if (array[i].key <= array[j].key) {
+            tmp[k] = array[i];
             i++;
         } else {
-            memcpy(reinterpret_cast<char*>(tmp) + k * record_size, 
-                   reinterpret_cast<char*>(array) + j * record_size, 
-                   record_size);
+            tmp[k] = array[j];
             j++;
         }
         k++;
     }
+    
     while (i <= mid) {
-        memcpy(reinterpret_cast<char*>(tmp) + k * record_size, 
-               reinterpret_cast<char*>(array) + i * record_size, 
-               record_size);
+        tmp[k] = array[i];
         i++; k++;
     }
+    
     while (j <= right) {
-        memcpy(reinterpret_cast<char*>(tmp) + k * record_size, 
-               reinterpret_cast<char*>(array) + j * record_size, 
-               record_size);
+        tmp[k] = array[j];
         j++; k++;
     }
-    memcpy(reinterpret_cast<char*>(array) + left * record_size, 
-           reinterpret_cast<char*>(tmp), 
-           k * record_size);
+    
+    // Copy back to original array
+    for (size_t idx = 0; idx < k; idx++) {
+        array[left + idx] = tmp[idx];
+    }
 }
 
 /**
@@ -58,10 +53,13 @@ inline void merge(Record* array, size_t left, size_t mid, size_t right, size_t r
  * @param record_size 
  * @param tmp 
  */
-void mergesort(Record* array, size_t left, size_t right, size_t record_size, Record* tmp) {
+void mergesort(Record* array, size_t left, size_t right, Record* tmp) {
     if (left >= right) return;
+    
     size_t mid = (left + right) / 2;
-    mergesort(array, left, mid, record_size, tmp);
-    mergesort(array, mid + 1, right, record_size, tmp);
-    merge(array, left, mid, right, record_size, tmp);
+    
+    mergesort(array, left, mid, tmp);
+    mergesort(array, mid + 1, right, tmp);
+    
+    merge(array, left, mid, right, tmp);
 }
