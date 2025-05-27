@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -O3 -Wall -I$(FF_ROOT) -pthread
+CXXFLAGS = -std=c++17 -O3 -Wall -I$(FF_ROOT) -pthread --ffast-math --march=native
 LDFLAGS = -pthread
 
 # MPI configuration
