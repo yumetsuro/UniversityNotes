@@ -24,6 +24,10 @@ size_t g_payload_size = 8;  // Default payload size
 #define MAX_PAYLOAD_SIZE 256
 #endif
 
+#ifndef DEBUG
+#define DEBUG 1
+#endif
+
 // Replace the existing Record structure with this:
 struct Record {
     unsigned long key;  // sorting value
@@ -60,12 +64,7 @@ std::pair<Record*, char*> create_record_array_with_payload(size_t n) {
     // Initialize records with random keys and payload pointers
     for (size_t i = 0; i < n; i++) {
         array[i].key = rand();
-        array[i].rpayload = payload_block + (i * g_payload_size);
-        
-        // Initialize payload with some pattern (optional)
-        for (size_t j = 0; j < g_payload_size; j++) {
-            array[i].rpayload[j] = static_cast<char>(j % 256);
-        }
+        array[i].rpayload = payload_block + (i * g_payload_size); 
     }
     
     return std::make_pair(array, payload_block);
@@ -465,7 +464,7 @@ int main(int argc, char* argv[]) {
     size_t total_payload_size = g_payload_size * array_size;
 
     // Only rank 0 prints configuration
-    if (rank == 0) {
+    if (rank == 0 && DEBUG) {
         std::cout << "MergeSort Configuration:\n"
                 << "  Array size: " << array_size << " elements\n"
                 << "  Record payload: " << g_payload_size << " bytes\n"
@@ -483,10 +482,14 @@ int main(int argc, char* argv[]) {
     
     // Calculate per-node array size
     size_t array_size_per_node = array_size / size;
-    size_t remainder = array_size % size;
+    int remainder = array_size % size;
     size_t local_array_size = array_size_per_node + (rank < remainder ? 1 : 0);
-    size_t local_offset = rank * array_size_per_node + std::min(rank, (int)remainder);
-
+    
+    // FIXME
+    //size_t local_offset = rank * array_size_per_node + std::min(rank, (int)remainder);
+    
+    // local offset is not used because we are sending the full array from rank 0
+    
     // Only rank 0 creates the full array
     if (rank == 0) {
         // Create the array of records with random keys
@@ -788,7 +791,7 @@ int main(int argc, char* argv[]) {
     
     // Print per-rank timing and memory information
     for (int i = 0; i < size; i++) {
-        if (rank == i) {
+        if (rank == i && DEBUG) {
             std::cout << "\n";
             std::cout << "Rank " << rank << " Performance:\n"
                       << "  Local array size: " << local_array_size << " elements\n"
@@ -824,7 +827,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Sorting " << (sorted ? "successful" : "FAILED") << "\n"
                   << "Total processing time (rank 0): " << total_duration.count() << " ms\n";
                   
-        if (!sequential) {
+        if (!sequential && DEBUG) {
             std::cout << "Phase breakdown (rank 0):\n"
                       << "  Sort phase: " << sort_duration.count() << " ms (" 
                       << (sort_duration.count() * 100.0 / total_duration.count()) << "%)\n"

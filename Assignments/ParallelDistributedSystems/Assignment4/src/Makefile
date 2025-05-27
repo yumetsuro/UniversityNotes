@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -O3 -Wall -I$(FF_ROOT) -pthread --ffast-math --march=native
+CXXFLAGS = -std=c++17 -O3 -Wall -I$(FF_ROOT) -pthread -ffast-math -march=native
 LDFLAGS = -pthread
 
 # MPI configuration
@@ -12,9 +12,9 @@ MPI_LDFLAGS = -pthread
 FF_ROOT = fastflow
 
 # Target and source files
-TARGETS = mergesort_ff mergesort_mpi_ff mergesort_ff_naive mergesort_ff_modular
+TARGETS = mergesort_ff mergesort_ff_mpi mergesort_ff_naive mergesort_ff_modular
 SRC1 = mergesort_ff.cpp
-SRC2 = mergesort_mpi_ff.cpp
+SRC2 = mergesort_ff_mpi.cpp
 SRC4 = mergesort_ff_naive.cpp
 SRC5 = main.cpp
 
@@ -28,6 +28,9 @@ mergesort_ff: $(SRC1)
 
 mergesort_ff_modular: $(SRC5)
 	$(CXX) $(CXXFLAGS) -DMAX_PAYLOAD_SIZE=$(PAYLOAD_SIZE) -o $@ $< $(LDFLAGS)
+
+mergesort_ff_mpi: $(SRC2)
+	$(MPICXX) $(MPI_CXXFLAGS) -DMAX_PAYLOAD_SIZE=$(PAYLOAD_SIZE) -o $@ $< $(MPI_LDFLAGS)
 
 clean:
 	rm -f $(TARGETS) *.o
