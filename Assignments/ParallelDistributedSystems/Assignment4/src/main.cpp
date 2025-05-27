@@ -66,19 +66,24 @@ int main(int argc, char* argv[]) {
     // Initialize random number generator
     srand(time(nullptr));
     
+    //size_t record_size = sizeof(unsigned long);
     // Actual record size including the payload
-    size_t record_size = sizeof(unsigned long);
-    
+    size_t record_size = Record::get_record_size();
+    size_t total_payload_size = g_payload_size * array_size;
+
     std::cout << "MergeSort Configuration:\n"
               << "  Array size: " << array_size << " elements\n"
               << "  Record payload: " << g_payload_size << " bytes\n"
               << "  Record total size: " << record_size << " bytes\n"
+              << "  Total payload size: " << total_payload_size / (1024*1024) << " MB\n"
               << "  Total memory: " << (array_size * record_size) / (1024*1024) << " MB\n"
               << "  Mode: " << (sequential ? "Sequential" : "Parallel with " + std::to_string(num_threads) + " threads")
               << std::endl;
     
     // Create the array of records with random keys
-    Record* array = create_record_array(array_size);
+    auto result = create_record_array_with_payload(array_size);
+    Record* array = result.first;
+    char* payload_block = result.second;
     
     // Temporary array for merging in sequential version
     Record* tmp = nullptr;
@@ -214,6 +219,7 @@ int main(int argc, char* argv[]) {
     
     // Clean up
     delete[] array;
+    delete[] payload_block;
     if (sequential) {
         delete[] tmp;
     }

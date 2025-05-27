@@ -23,23 +23,43 @@ size_t g_payload_size = 8;  // Default payload size
 #define MAX_PAYLOAD_SIZE 256
 #endif
 
+// Replace the existing Record structure with this:
 struct Record {
     unsigned long key;  // sorting value
-    char rpayload[MAX_PAYLOAD_SIZE];   // maximum size payload
+    char* rpayload;     // pointer to payload
     
-    // Get the actual record size based on current payload setting
+    // Constructor
+    Record() : key(0), rpayload(nullptr) {}
+    
+    // Copy constructor - only copies key and pointer, not payload data
+    Record(const Record& other) : key(other.key), rpayload(other.rpayload) {}
+    
+    // Assignment operator - only copies key and pointer
+    Record& operator=(const Record& other) {
+        if (this != &other) {
+            key = other.key;
+            rpayload = other.rpayload;
+        }
+        return *this;
+    }
+    
+    // Get the record size (just key + pointer)
     static size_t get_record_size() {
-        return sizeof(unsigned long) + g_payload_size;
+        return sizeof(unsigned long) + sizeof(char*);
     }
 };
 
-// Function to create a record array with runtime payload size
-Record* create_record_array(size_t n) {
+// Modified function to create record array with inline payload allocation
+std::pair<Record*, char*> create_record_array_with_payload(size_t n) {
     Record* array = new Record[n];
     
-    // Initialize records with random keys
+    // Allocate one contiguous block for all payloads
+    char* payload_block = new char[n * g_payload_size];
+    
+    // Initialize records with random keys and payload pointers
     for (size_t i = 0; i < n; i++) {
         array[i].key = rand();
+        array[i].rpayload = payload_block + (i * g_payload_size);
         
         // Initialize payload with some pattern (optional)
         for (size_t j = 0; j < g_payload_size; j++) {
@@ -47,9 +67,8 @@ Record* create_record_array(size_t n) {
         }
     }
     
-    return array;
+    return std::make_pair(array, payload_block);
 }
-
 // Function to verify the sorted array
 bool verify_sorted(Record* array, size_t n) {
     for (size_t i = 1; i < n; i++) {
@@ -387,17 +406,22 @@ int main(int argc, char* argv[]) {
     
     // Record size includes the actual payload size being used
     size_t record_size = Record::get_record_size();
-    
+    size_t total_payload_size = g_payload_size * array_size;
+
     std::cout << "MergeSort Configuration:\n"
               << "  Array size: " << array_size << " elements\n"
               << "  Record payload: " << g_payload_size << " bytes\n"
               << "  Record total size: " << record_size << " bytes\n"
+              << "  Total payload size: " << total_payload_size / (1024*1024) << " MB\n"
               << "  Total memory: " << (array_size * record_size) / (1024*1024) << " MB\n"
               << "  Mode: " << (sequential ? "Sequential" : "Parallel with " + std::to_string(num_threads) + " threads")
               << std::endl;
     
     // Create the array of records with random keys
-    Record* array = create_record_array(array_size);
+    auto result = create_record_array_with_payload(array_size);
+    Record* array = result.first;
+    char* payload_block = result.second;
+   //Record* array = create_record_array(array_size);
     
     // Temporary array for merging in sequential version
     Record* tmp = nullptr;
@@ -533,6 +557,7 @@ int main(int argc, char* argv[]) {
     
     // Clean up
     delete[] array;
+    delete[] payload_block; // Free the payload block
     if (sequential) {
         delete[] tmp;
     }
