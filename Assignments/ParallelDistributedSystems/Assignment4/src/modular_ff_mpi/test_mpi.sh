@@ -37,7 +37,7 @@ echo "Testing Sequential..."
 for size in "${SIZES[@]}"; do
     for payload in "${PAYLOADS[@]}"; do
         echo "Sequential: size=$size, payload=$payload"
-        output=$(timeout 300 ./mergesort_ff_mpi -s $size -r $payload -q)
+        output=$(timeout 300 srun ./mergesort_ff_mpi -s $size -r $payload -q)
         time_ms=$(extract_time "$output")
         if [ -n "$time_ms" ]; then
             echo "Sequential,$size,$payload,1,1,$time_ms" >> "$CSV_FILE"
@@ -53,7 +53,7 @@ for threads in "${THREADS[@]}"; do
     for size in "${SIZES[@]}"; do
         for payload in "${PAYLOADS[@]}"; do
             echo "FastFlow: threads=$threads, size=$size, payload=$payload"
-            output=$(timeout 300 ./mergesort_ff_mpi -s $size -r $payload -t $threads 2>&1)
+            output=$(timeout 300 srun ./mergesort_ff_mpi -s $size -r $payload -t $threads 2>&1)
             time_ms=$(extract_time "$output")
             if [ -n "$time_ms" ]; then
                 echo "FastFlow,$size,$payload,$threads,1,$time_ms" >> "$CSV_FILE"
