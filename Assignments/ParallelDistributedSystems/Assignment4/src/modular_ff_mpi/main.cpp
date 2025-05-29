@@ -469,7 +469,7 @@ int main(int argc, char* argv[]) {
         }
         
         std::cout << "Sorting " << (sorted ? "successful" : "FAILED") << "\n"
-                  << "Total processing time (rank 0): " << total_duration.count() << " ms\n";
+                  << "Total processing time: " << total_duration.count() << " ms\n";
                   
         if (!sequential && DEBUG) {
             std::cout << "Phase breakdown (rank 0):\n"
