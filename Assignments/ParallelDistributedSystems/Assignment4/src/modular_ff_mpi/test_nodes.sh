@@ -1,4 +1,10 @@
 #!/bin/bash
+#SBATCH --partition=normal
+#SBATCH -o slurm_output_8.log
+#SBATCH -e slurm_error_8.log
+#SBATCH --nodes=8
+#SBATCH --ntasks=8
+
 echo "Compiling..."
 #make clean > /dev/null 2>&1
 #g++ -std=c++17 -O3 -Wall -Ifastflow -pthread -DMAX_PAYLOAD_SIZE=1024 -o mergesort_ff mergesort_ff.cpp -pthread
@@ -42,8 +48,7 @@ for nodes in "${MPI_NODES[@]}"; do
                 else
                     echo "MPI,$size,$payload,$local_threads,$nodes,FAILED" >> "$CSV_FILE"
                 fi
-                # sleep so that no two processes run at the same time for 20 min
-                sleep 4m
+                # sleep so that no two processes run at the same time for 20 minls
             done
         done
     done
