@@ -1,9 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=normal
-#SBATCH -o slurm_output_8.log
-#SBATCH -e slurm_error_8.log
-#SBATCH --nodes=8
-#SBATCH --ntasks=8
+
 
 echo "Compiling..."
 #make clean > /dev/null 2>&1
@@ -40,7 +36,7 @@ for nodes in "${MPI_NODES[@]}"; do
         for size in "${SIZES[@]}"; do
             for payload in "${PAYLOADS[@]}"; do
                 echo "MPI: nodes=$nodes, size=$size, payload=$payload"
-                output=$(timeout 300 srun --time=00:10:00 --ntasks-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
+                output=$(timeout 300 srun --time=00:10:00 --ntasks-per-node=1 --mpi=pmix -N $nodes -n $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
                 echo "$output" >> "$ENTIRE_OUTPUT_FILE"
                 time_ms=$(extract_time "$output")
                 if [ -n "$time_ms" ]; then
