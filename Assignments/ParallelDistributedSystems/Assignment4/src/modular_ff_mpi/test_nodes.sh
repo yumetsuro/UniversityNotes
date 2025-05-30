@@ -43,7 +43,7 @@ for nodes in "${MPI_NODES[@]}"; do
                     echo "MPI,$size,$payload,$local_threads,$nodes,FAILED" >> "$CSV_FILE"
                 fi
                 # sleep so that no two processes run at the same time for 20 min
-            sleep 50s
+                sleep 50s
             done
         done
     done
