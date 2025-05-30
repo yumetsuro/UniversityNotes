@@ -1,8 +1,9 @@
+#!/bin/bash
 echo "Compiling..."
 #make clean > /dev/null 2>&1
 #g++ -std=c++17 -O3 -Wall -Ifastflow -pthread -DMAX_PAYLOAD_SIZE=1024 -o mergesort_ff mergesort_ff.cpp -pthread
 #mpicxx -std=c++17 -O3 -Wall -Ifastflow -pthread -DMAX_PAYLOAD_SIZE=512 -o mergesort_ff_mpi mergesort_ff_mpi.cpp -pthread
-srun --nodes=1 --ntask=1 make all
+#srun --nodes=1 --ntask=1 make all
 
 # Create CSV file
 CSV_FILE="performance_results/test_results_$(date +%Y%m%d_%H%M%S).csv"
@@ -11,7 +12,7 @@ ENTIRE_OUTPUT_FILE="performance_results/entire_output_$(date +%Y%m%d_%H%M%S).txt
 echo "Implementation,Array_Size,Payload_Size,Threads,MPI_Nodes,Time_ms" > "$CSV_FILE"
 
 # Test configurations
-SIZES=(10000000 50000000 100000000)  # 1M, 10M, 50M, 100M
+SIZES=(10000000 50000000 100000000)  # 10M, 50M, 100M
 PAYLOADS=(0 10 30)
 THREADS=(4 8 16 32)
 MPI_NODES=(2 4 8)
@@ -32,7 +33,8 @@ for nodes in "${MPI_NODES[@]}"; do
     for size in "${SIZES[@]}"; do
         for payload in "${PAYLOADS[@]}"; do
             echo "MPI: nodes=$nodes, size=$size, payload=$payload"
-            output=$(timeout 300 srun --cpu-bind=none --ntask-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
+            aoutput=$(timeout 300 srun --cpu-bind=none --ntasks-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
+            #output=$(timeout 300 mpirun --cpu-bind=none --ntasks-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
             # divide the testing of different version
             echo "$output" >> "$ENTIRE_OUTPUT_FILE"
             time_ms=$(extract_time "$output")
