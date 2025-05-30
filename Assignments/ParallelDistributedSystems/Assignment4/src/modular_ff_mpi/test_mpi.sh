@@ -1,4 +1,9 @@
 #!/bin/bash
+#SBATCH --partition=normal
+#SBATCH -o slurm_output_8.log
+#SBATCH -e slurm_error_8.log
+#SBATCH --nodes=8
+#SBATCH --ntasks=8
 
 # Simple Performance Test Script for MergeSort Implementations
 # Tests: Sequential, FastFlow (4,8,16 threads), MPI (2,4 nodes)
@@ -6,6 +11,7 @@
 # Payload sizes: 0, 10, 50 bytes
 
 #cd /home/vincent/UniversityNotes/Assignments/ParallelDistributedSystems/Assignment4/src
+
 
 # Compile programs
 echo "Compiling..."
@@ -77,7 +83,7 @@ for nodes in "${MPI_NODES[@]}"; do
         for size in "${SIZES[@]}"; do
             for payload in "${PAYLOADS[@]}"; do
                 echo "MPI: nodes=$nodes, size=$size, payload=$payload"
-                output=$(srun --ntask-per-node=1 --time=00:10:00 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
+                output=$(srun --ntask-per-node=1 --time=00:10:00 --mpi=pmix -n $nodes -N $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
                 # divide the testing of different version
                 echo "$output" >> "$ENTIRE_OUTPUT_FILE"
                 time_ms=$(extract_time "$output")

@@ -1,5 +1,9 @@
 #!/bin/bash
-
+#SBATCH --partition=normal
+#SBATCH -o slurm_output_8.log
+#SBATCH -e slurm_error_8.log
+#SBATCH --nodes=8
+#SBATCH --ntasks=8
 
 echo "Compiling..."
 #make clean > /dev/null 2>&1
