@@ -12,7 +12,7 @@ echo "Compiling..."
 #make clean > /dev/null 2>&1
 #g++ -std=c++17 -O3 -Wall -Ifastflow -pthread -DMAX_PAYLOAD_SIZE=1024 -o mergesort_ff mergesort_ff.cpp -pthread
 #mpicxx -std=c++17 -O3 -Wall -Ifastflow -pthread -DMAX_PAYLOAD_SIZE=512 -o mergesort_ff_mpi mergesort_ff_mpi.cpp -pthread
-srun --nodes=1 --ntask=1 make all
+srun --nodes=1 --ntasks=1 make all
 
 # Create CSV file
 CSV_FILE="performance_results/test_results_$(date +%Y%m%d_%H%M%S).csv"
@@ -22,7 +22,7 @@ echo "Implementation,Array_Size,Payload_Size,Threads,MPI_Nodes,Time_ms" > "$CSV_
 
 # Test configurations
 SIZES=(10000000 50000000 100000000)  # 1M, 10M, 50M, 100M
-PAYLOADS=(0 10 50)
+PAYLOADS=(0 16 32 64)
 THREADS=(4 8 16 32)
 MPI_NODES=(2 3 4 5 6 7 8)
 
@@ -73,19 +73,20 @@ echo "Testing MPI..."
 echo "Testing MPI ----------------------------------------------" >> "$ENTIRE_OUTPUT_FILE"
 for nodes in "${MPI_NODES[@]}"; do
     # Use 32 threads per node for consistency
-    local_threads=32
-    for size in "${SIZES[@]}"; do
-        for payload in "${PAYLOADS[@]}"; do
-            echo "MPI: nodes=$nodes, size=$size, payload=$payload"
-            output=$(timeout 300 srun --cpu-bind=none --ntask-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
-            # divide the testing of different version
-            echo "$output" >> "$ENTIRE_OUTPUT_FILE"
-            time_ms=$(extract_time "$output")
-            if [ -n "$time_ms" ]; then
-                echo "MPI,$size,$payload,$local_threads,$nodes,$time_ms" >> "$CSV_FILE"
-            else
-                echo "MPI,$size,$payload,$local_threads,$nodes,FAILED" >> "$CSV_FILE"
-            fi
+    for local_threads in "${THREADS[@]}"; do
+        for size in "${SIZES[@]}"; do
+            for payload in "${PAYLOADS[@]}"; do
+                echo "MPI: nodes=$nodes, size=$size, payload=$payload"
+                output=$(srun --ntask-per-node=1 --time=00:10:00 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
+                # divide the testing of different version
+                echo "$output" >> "$ENTIRE_OUTPUT_FILE"
+                time_ms=$(extract_time "$output")
+                if [ -n "$time_ms" ]; then
+                    echo "MPI,$size,$payload,$local_threads,$nodes,$time_ms" >> "$CSV_FILE"
+                else
+                    echo "MPI,$size,$payload,$local_threads,$nodes,FAILED" >> "$CSV_FILE"
+                fi
+            done
         done
     done
 done
