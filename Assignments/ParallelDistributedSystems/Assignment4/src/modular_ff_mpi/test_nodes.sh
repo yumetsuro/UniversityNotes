@@ -5,6 +5,8 @@ echo "Compiling..."
 #mpicxx -std=c++17 -O3 -Wall -Ifastflow -pthread -DMAX_PAYLOAD_SIZE=512 -o mergesort_ff_mpi mergesort_ff_mpi.cpp -pthread
 #srun --nodes=1 --ntask=1 make all
 
+salloc --nodes 8 --time 00:30:00
+
 # Create CSV file
 CSV_FILE="performance_results/test_results_$(date +%Y%m%d_%H%M%S).csv"
 ENTIRE_OUTPUT_FILE="performance_results/entire_output_$(date +%Y%m%d_%H%M%S).txt"
@@ -33,7 +35,7 @@ for nodes in "${MPI_NODES[@]}"; do
         for size in "${SIZES[@]}"; do
             for payload in "${PAYLOADS[@]}"; do
                 echo "MPI: nodes=$nodes, size=$size, payload=$payload"
-                output=$(timeout 300 srun --cpu-bind=none --ntasks-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
+                output=$(timeout 300 srun --cpu-bind=none --time=00:10:00 --ntasks-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
                 #output=$(timeout 300 mpirun -n $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
                 # divide the testing of different version
                 echo "$output" >> "$ENTIRE_OUTPUT_FILE"
