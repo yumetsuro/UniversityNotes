@@ -5,7 +5,6 @@ echo "Compiling..."
 #mpicxx -std=c++17 -O3 -Wall -Ifastflow -pthread -DMAX_PAYLOAD_SIZE=512 -o mergesort_ff_mpi mergesort_ff_mpi.cpp -pthread
 #srun --nodes=1 --ntask=1 make all
 
-salloc --nodes 8 --time 00:30:00
 
 # Create CSV file
 CSV_FILE="performance_results/test_results_$(date +%Y%m%d_%H%M%S).csv"
