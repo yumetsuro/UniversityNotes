@@ -21,7 +21,7 @@ echo "Implementation,Array_Size,Payload_Size,Threads,MPI_Nodes,Time_ms" > "$CSV_
 # Test configurations
 SIZES=(10000000 50000000 100000000)  # 10M, 50M, 100M
 PAYLOADS=(0 32 64)
-THREADS=(8 16 32)
+THREADS=(4 8 16)
 MPI_NODES=(2 4 8)
 
 echo "Starting tests..."
