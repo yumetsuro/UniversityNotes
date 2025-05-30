@@ -33,8 +33,8 @@ for nodes in "${MPI_NODES[@]}"; do
         for size in "${SIZES[@]}"; do
             for payload in "${PAYLOADS[@]}"; do
                 echo "MPI: nodes=$nodes, size=$size, payload=$payload"
-                #output=$(timeout 300 srun --cpu-bind=none --ntasks-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
-                output=$(timeout 300 mpirun -n $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
+                output=$(timeout 300 srun --cpu-bind=none --ntasks-per-node=1 --mpi=pmix --nodes $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
+                #output=$(timeout 300 mpirun -n $nodes ./mergesort_ff_mpi --size $size --record $payload --threads $local_threads)
                 # divide the testing of different version
                 echo "$output" >> "$ENTIRE_OUTPUT_FILE"
                 time_ms=$(extract_time "$output")
