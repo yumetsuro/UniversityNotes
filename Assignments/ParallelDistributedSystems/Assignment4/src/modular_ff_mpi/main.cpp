@@ -243,6 +243,12 @@ int main(int argc, char* argv[]) {
         // Phase 2: Tree-like parallel merge using multiple levels
         merge_start_time = std::chrono::high_resolution_clock::now();
         
+        // Clean up sort farm workers and reuse the farm for merging
+        for (auto* worker : sort_workers) {
+            delete worker;
+        }
+        sort_workers.clear();
+        
         // Initialize ranges for merging
         std::vector<std::pair<size_t, size_t>> current_ranges;
         size_t chunk_size = local_array_size / num_threads;
@@ -275,12 +281,13 @@ int main(int argc, char* argv[]) {
             
             // Process merge tasks in parallel if we have any
             if (!merge_tasks.empty()) {
+                // Create a new farm for merging to avoid thread creation issues
                 ff_farm merge_farm;
                 
-                // Create workers for the merging phase (use fewer workers for better load balancing)
-                size_t merge_workers = std::min((size_t)merge_tasks.size(), num_threads);
+                // Create merge workers using the same thread pool approach
+                size_t merge_workers_count = std::min((size_t)merge_tasks.size(), num_threads);
                 std::vector<ff_node*> merge_workers_vec;
-                for (size_t i = 0; i < merge_workers; i++) {
+                for (size_t i = 0; i < merge_workers_count; i++) {
                     merge_workers_vec.push_back(new MergeWorker());
                 }
                      
@@ -297,6 +304,13 @@ int main(int argc, char* argv[]) {
                     MPI_Abort(MPI_COMM_WORLD, 1);
                     return 1;
                 }
+                
+                // Clean up merge workers for this level
+                for (auto* worker : merge_workers_vec) {
+                    delete worker;
+                }
+                delete merge_emitter;
+                delete merge_collector;
             }
             
             current_ranges = next_ranges;
