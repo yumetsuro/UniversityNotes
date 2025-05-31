@@ -321,8 +321,9 @@ int main(int argc, char* argv[]) {
     int step = 1;
     while (step < num_nodes) {
         // Print the step to understand the merging process
-        if (DEBUG)
+        if (DEBUG){
             printf("[RANK %d] MPI merge step: %d\n", rank, step);
+        }
         
             if (rank % (2 * step) == 0) {
             // Receiver process : 0,2,4,...,num_nodes-1
