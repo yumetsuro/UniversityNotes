@@ -24,6 +24,13 @@ int main(int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_nodes);
 
+    unsigned int hw_threads = std::thread::hardware_concurrency();
+    char* slurm_cpus = getenv("SLURM_CPUS_PER_TASK");
+    
+    std::cout << "Rank " << rank << ": HW threads=" << hw_threads 
+              << ", SLURM CPUs=" << (slurm_cpus ? slurm_cpus : "not set") << std::endl;
+    
+
     // Parse command line options
     static struct option long_options[] = {
         {"size",       required_argument, 0, 's'},
@@ -126,10 +133,12 @@ int main(int argc, char* argv[]) {
             size_t target_size = array_size_per_node + (i < remainder ? 1 : 0);
             
             size_t distribution_bytes = target_size * (sizeof(unsigned long) + g_payload_size);
-            printf("[RANK 0] Initial distribution to rank %d: %zu records, %.2f MB\n",
-                   i, target_size, distribution_bytes / (1024.0 * 1024.0));
-            fflush(stdout);
-            
+            if (DEBUG){
+                printf("[RANK 0] Initial distribution to rank %d: %zu records, %.2f MB\n",
+                    i, target_size, distribution_bytes / (1024.0 * 1024.0));
+                fflush(stdout);
+            }
+
             unsigned long* key_buffer = new unsigned long[target_size];
             for (size_t j = 0; j < target_size; j++) {
                 key_buffer[j] = array[current_offset + j].key;
@@ -214,7 +223,7 @@ int main(int argc, char* argv[]) {
         for (size_t i = 0; i < num_threads; i++) {
             sort_workers.push_back(new SortWorker());
         }
-        
+
         // Set emitter and collector for sort farm
         SortEmitter* sort_emitter = new SortEmitter(local_array, local_array_size, num_threads);
         SortCollector* sort_collector = new SortCollector(local_array, local_array_size);
@@ -311,8 +320,10 @@ int main(int argc, char* argv[]) {
     int step = 1;
     while (step < num_nodes) {
         // Print the step to understand the merging process
-        printf("[RANK %d] MPI merge step: %d\n", rank, step);
-        if (rank % (2 * step) == 0) {
+        if DEBUG
+            printf("[RANK %d] MPI merge step: %d\n", rank, step);
+        
+            if (rank % (2 * step) == 0) {
             // Receiver process : 0,2,4,...,num_nodes-1
             int sender = rank + step;
             if (sender < num_nodes) {
