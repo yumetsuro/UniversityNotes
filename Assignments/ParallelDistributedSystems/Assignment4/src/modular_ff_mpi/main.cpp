@@ -217,6 +217,9 @@ int main(int argc, char* argv[]) {
         // Phase 1: Sort chunks in parallel using a farm
         sort_start_time = std::chrono::high_resolution_clock::now();
         
+        // Use fewer initial chunks to achieve 8->4->2->1 pattern for 32 threads
+        size_t initial_chunks = std::max((size_t)1, num_threads / 4);
+        
         ff_farm sort_farm;
         
         // Create workers for the sorting phase
@@ -226,7 +229,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Set emitter and collector for sort farm
-        SortEmitter* sort_emitter = new SortEmitter(local_array, local_array_size, num_threads);
+        SortEmitter* sort_emitter = new SortEmitter(local_array, local_array_size, initial_chunks);
         SortCollector* sort_collector = new SortCollector(local_array, local_array_size);
         sort_farm.add_emitter(sort_emitter);
         sort_farm.add_workers(sort_workers);
@@ -245,7 +248,7 @@ int main(int argc, char* argv[]) {
         
         // Initialize ranges for merging
         std::vector<std::pair<size_t, size_t>> current_ranges;
-        size_t chunk_size = local_array_size / num_threads;
+        size_t chunk_size = local_array_size / initial_chunks;
         if (chunk_size == 0) chunk_size = 1;
         
         for (size_t i = 0; i < local_array_size; i += chunk_size) {
