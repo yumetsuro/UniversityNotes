@@ -25,13 +25,6 @@ int main(int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_nodes);
 
-    unsigned int hw_threads = std::thread::hardware_concurrency();
-    char* slurm_cpus = getenv("SLURM_CPUS_PER_TASK");
-    
-    std::cout << "Rank " << rank << ": HW threads=" << hw_threads 
-              << ", SLURM CPUs=" << (slurm_cpus ? slurm_cpus : "not set") << std::endl;
-    
-
     // Parse command line options
     static struct option long_options[] = {
         {"size",       required_argument, 0, 's'},
