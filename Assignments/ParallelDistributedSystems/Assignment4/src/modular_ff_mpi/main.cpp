@@ -72,15 +72,16 @@ int main(int argc, char* argv[]) {
     
     size_t record_size = Record::get_record_size();
     size_t total_payload_size = g_payload_size * array_size;
+    size_t total_memory = (array_size * record_size) + total_payload_size;
 
     // Only rank 0 prints configuration
     if (rank == 0 && DEBUG) {
         std::cout << "MergeSort Configuration:\n"
                 << "  Array size: " << array_size << " elements\n"
                 << "  Record payload: " << g_payload_size << " bytes\n"
-                << "  Record total size: " << record_size << " bytes\n"
+                << "  Record struct size: " << record_size << " bytes (key + pointer)\n"
                 << "  Total payload size: " << total_payload_size / (1024*1024) << " MB\n"
-                << "  Total memory: " << (array_size * record_size) / (1024*1024) << " MB\n"
+                << "  Total memory: " << total_memory / (1024*1024) << " MB (structs + payload)\n"
                 << "  Mode: " << (sequential ? "Sequential" : "Parallel with " + std::to_string(num_threads) + " threads")
                 << "  MPI: " << num_nodes << " processes"
                 << std::endl;
