@@ -15,9 +15,9 @@ FF_ROOT = ../fastflow
 clean_before_run:
 	rm -f mergesort_ff_mpi *.o
 # Target and source files
-TARGETS = clean_before_run mergesort_ff_mpi 
+TARGETS = clean_before_run mergesort_ff_mpi mergesort_ff_mpi_chunked 
 SRC = main.cpp
-
+SRC2 = main_chunked.cpp
 # Payload size configurations for testing
 PAYLOAD_SIZE ?= 256
 DEBUG ?= 0
@@ -26,6 +26,9 @@ SIMULATE_TRANSFER ?= 0
 all: $(TARGETS)
 
 mergesort_ff_mpi: $(SRC)
+	$(MPICXX) $(MPI_CXXFLAGS) -DMAX_PAYLOAD_SIZE=$(PAYLOAD_SIZE) -DDEBUG=$(DEBUG) -DSIMULATE_TRANSFER=$(SIMULATE_TRANSFER) -o $@ $< $(MPI_LDFLAGS)
+
+mergesort_ff_mpi_chunked: $(SRC2)
 	$(MPICXX) $(MPI_CXXFLAGS) -DMAX_PAYLOAD_SIZE=$(PAYLOAD_SIZE) -DDEBUG=$(DEBUG) -DSIMULATE_TRANSFER=$(SIMULATE_TRANSFER) -o $@ $< $(MPI_LDFLAGS)
 
 clean:
