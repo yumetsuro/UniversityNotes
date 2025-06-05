@@ -141,7 +141,7 @@ int main(int argc, char* argv[]) {
     size_t local_array_size = array_size_per_node + (rank < remainder ? 1 : 0);
     
     // ----------- Data Distribution Phase -----------
-    // Rank 0 creates the full array and distributes it to other ranks
+    // Rank 0 creates the full array and distributes it to other ranks.
     
     // Only rank 0 creates the full array
     if (rank == 0) {
