@@ -1,5 +1,16 @@
 /home/vincentkun/Desktop/UniversityNotes/University Notes/.obsidian
 /home/vincentkun/Desktop/UniversityNotes/Assignments/ParallelComputing/CoDE/.vscode
+/Assignments/ParallelDistributedSystems 
+*.bbl
+*.bcf
+*.xml
+*.fls
+*.fdb_latexmk
+*.log
+*.out
+*.synctex.gz
+*.blg
+
 *.json
 *.js
 *.css

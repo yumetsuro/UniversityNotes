@@ -1,0 +1,36 @@
+\section{Motivation and Objectives}
+\todo{Forse dovrei concentrarmi più su RNN dall'inizio?}
+Nowadays, Artificial Intelligence (AI) became the main driver of innovation in many fields, at the point that the growth of research
+became exponential in the last decade. This fully alignes with the current state of our world, in fact,
+we are observing a paradigm shift in the way we interact with technology (or world), through the use of AI.\newline
+Within AI, whose main goal is not only to understand \textit{intelligence}, but to embed it into agents capable of performing complex tasks through
+\textit{rational reasoning, planning} and \textit{acting}, the subfield of Machine Learning (ML) has emerged as the dominant approach to mimicking biological intelligent behaviour.
+Neural Networks (NN) \textit{learn} complex patterns from large amounts of real-world data, instead of relying on explicit rule based approaches,
+in order to perform \textit{inference} and return prediction on unseen data. \newline
+The last years have seen a surge in popularity of generative models, after a first wave of discriminative models that made popular the field of Deep Learning (DL),
+and introduced GPU computation in 2009 \cite{Raina2009LSDL}. 
+Particularly, deep generative models have been applied with unbelievable results in many fields,
+ from image generation with \textit{Diffusion Models} \cite{ho2020denoisingdiffusionprobabilisticmodels}
+ to text generation with \textit{Transformers} \cite{vaswani2023attentionneed} and protein folding with
+\textit{Alphafold} \cite{jumper2021highly} and many others domains, achieving state of the art results.
+However, deep learning models are known to be expensive in both training and inference, requiring large 
+amount of computational resources (GPU production) and energy consumption \cite{article}.
+
+\section{Reservoir Computing}\todo{Forse in questa sezione devo essere ancora più generico e parlare solo dei vantaggi e le motivazioni d'uso per poi spiegare tutto meglio nel capitolo di background}
+
+Reservoir Computing (RC) is a computational framework introduced in the early 2000s with Echo State Networks (ESN) \cite{jaeger2001echo} and
+Liquid State Machines (LSM) \cite{fernando2003pattern}, these models aims to simplify the training of RNNs and at the same time exploit inherent dynamical properties of real world physical system in order to
+obtain a \textit{"reservoir"} of rich dynamics that can be used to solve complex task, at the same time we reduce the training cost by only performing a linear regression on the output layer.
+The main idea is that usally we need to train the recurrent connection in the network, but RC avoid this by using fixed high dimensional dynamycal system, that project the input signal into an high dimensional space,
+where a simple approach as pseudoinverse or ridge regression is sufficient to learn the linearized representation of the input signal. \newline
+With RC we can solve chaotic time series prediction, speech recognition, robot control \todo{add citation here} with ease with minimal training cost, and we can even use them as a generative model with techniques like Teacher Forcing \cite{6795228}.\newline
+
+
+
+\section{Scientific contribuition}
+\todo{After finishing experimental part...}
+
+
+\section{Structure of the work}
+
+elenco puntato con quello che si dirà in ogni capitolo della tesi

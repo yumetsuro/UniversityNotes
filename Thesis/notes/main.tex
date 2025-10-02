@@ -1,0 +1,192 @@
+\documentclass[
+11pt, % The default document font size, options: 10pt, 11pt, 12pt
+%oneside, % Two side (alternating margins) for binding by default, uncomment to switch to one side
+english, % ngerman for German
+onehalfspacing, % Single line spacing, alternatives: onehalfspacing or doublespacing
+%draft, % Uncomment to enable draft mode (no pictures, no links, overfull hboxes indicated)
+%nolistspacing, % If the document is onehalfspacing or doublespacing, uncomment this to set spacing in lists to single
+%liststotoc, % Uncomment to add the list of figures/tables/etc to the table of contents
+%toctotoc, % Uncomment to add the main table of contents to the table of contents
+parskip, % Uncomment to add space between paragraphs
+%nohyperref, % Uncomment to not load the hyperref package
+headsepline, % Uncomment to get a line under the header
+%chapterinoneline, % Uncomment to place the chapter title next to the number on one line
+%consistentlayout, % Uncomment to change the layout of the declaration, abstract and acknowledgements pages to match the default layout
+]{MastersDoctoralThesis} % The class file specifying the document structure
+
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+\usepackage{csquotes}
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+\usepackage{mathpazo} % Use the Palatino font by default
+\usepackage{blindtext}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[toc,page]{appendix}
+\usepackage{tablefootnote}
+\usepackage[sorting=none, maxnames=99]{biblatex}
+\addbibresource{bibliography.bib} % The filename of the bibliography
+\usepackage{graphicx}   % For including images
+\usepackage{subcaption} % For subfigures
+
+\usepackage{circuitikz}
+\usepackage{tikz}
+%\usepackage{svg}
+\usetikzlibrary{shapes.geometric, decorations.pathmorphing, positioning}
+\usepackage{float}
+%\usepackage[autostyle=true]{csquotes} % Required to generate language-dependent quotes in the bibliography
+
+%----------------------------------------------------------------------------------------
+%	MARGIN SETTINGS
+%----------------------------------------------------------------------------------------
+
+\geometry{
+	paper=a4paper, % Change to letterpaper for US letter
+	inner=2.5cm, % Inner margin
+	outer=3.8cm, % Outer margin
+	bindingoffset=.5cm, % Binding offset
+	top=1.5cm, % Top margin
+	bottom=1.5cm, % Bottom margin
+	%showframe, % Uncomment to show how the type block is set on the page
+}
+
+
+% ------------------------------------------
+%      MY PACKAGES
+% ------------------------------------------
+\usepackage{bookmark}
+\usepackage{todonotes}
+\usepackage[inkscapelatex=false]{svg}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{comment}
+\usepackage{skull}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% theorems
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposition}{Proposition}
+
+\addbibresource{bibliography.bib} % The filename of the bibliography
+
+
+\newcommand{\gnote}[1]{\todo[inline, color=green!40]{#1}}
+\newcommand{\onote}[1]{\todo[inline, color=orange]{#1}}
+\newcommand{\mol}{\mathcal{M}}
+\newcommand{\xb}{\mathbf{x}}
+\newcommand{\norm}[1]{\lVert {#1} \rVert}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\usepackage{color, colortbl}
+\definecolor{LightGrey}{rgb}{0.88,0.88,1}
+\definecolor{LightGreen}{rgb}{0.88,1,0.88}
+\definecolor{LightRed}{rgb}{1,0.88,0.88}
+
+\thesistitle{RON something..} % Your thesis title, this is used in the title and abstract, print it elsewhere with \ttitle
+\supervisor{Prof. Claudio Gallicchio\\Dott. Andrea Ceni\\Dott. Andrea Cossu, } % Your supervisor's name, this is used in the title page, print it elsewhere with \supname
+\examiner{} % Your examiner's name, this is not currently used anywhere in the template, print it elsewhere with \examname
+\degree{Master's Degree} % Your degree name, this is used in the title page and abstract, print it elsewhere with \degreename
+\author{Vincenzo Gargano} % Your name, this is used in the title page and abstract, print it elsewhere with \authorname
+\addresses{} % Your address, this is not currently used anywhere in the template, print it elsewhere with \addressname
+
+\subject{Computer Science} % Your subject area, this is not currently used anywhere in the template, print it elsewhere with \subjectname
+\keywords{} % Keywords for your thesis, this is not currently used anywhere in the template, print it elsewhere with \keywordnames
+\university{Università di Pisa} % Your university's name and URL, this is used in the title page and abstract, print it elsewhere with \univname
+\department{Department of Computer Science} % Your department's name and URL, this is used in the title page and abstract, print it elsewhere with \deptname
+%group{\href{http://researchgroup.university.com}{Research Group Name}} % Your research group's name and URL, this is used in the title page, print it elsewhere with \groupname
+%\faculty{\href{http://faculty.university.com}{Faculty Name}} % Your faculty's name and URL, this is used in the title page and abstract, print it elsewhere with \facname
+
+\AtBeginDocument{
+\hypersetup{pdftitle=\ttitle} % Set the PDF's title to your title
+\hypersetup{pdfauthor=\authorname} % Set the PDF's author to your name
+\hypersetup{pdfkeywords=\keywordnames} % Set the PDF's keywords to your keywords
+}
+
+\begin{document}
+
+%%%% TITLE
+
+\begin{titlepage}
+	\begin{center}
+		% maybe change it
+		\includegraphics[width=0.6\textwidth]{assets/cherubino_black.eps} \\
+		\vspace*{.06\textheight}
+		%{\scshape\LARGE \univname\par}
+		\vspace{0.5cm} % University name
+		\textsc{\Large Master's Degree Thesis}\\[0.5cm] % Thesis type
+
+		\Large \textit{Dipartimento di Informatica \\ Corso di Laurea Magistrale in Informatica}\\[1cm] % University requirement text
+
+		\HRule \\[0.4cm] % Horizontal line
+		{\huge \bfseries \ttitle\par}\vspace{0.4cm} % Thesis title
+		\HRule \\[1.5cm] % Horizontal line
+
+		\begin{minipage}[t]{0.4\textwidth}
+			\begin{flushleft} \large
+				\emph{Author:}\\
+				\authorname % Author name - remove the \href bracket to remove the link
+			\end{flushleft}
+		\end{minipage}
+		\begin{minipage}[t]{0.4\textwidth}
+			\begin{flushright} \large
+				\emph{Supervisors:} \\
+				\supname % Supervisor name - remove the \href bracket to remove the link
+			\end{flushright}
+		\end{minipage}\\[3cm]
+
+		\vfill
+		%\groupname\\\deptname\\[2cm] % Research group name and department name
+
+		\vfill
+
+		Academic Year 2024/2025\\[4cm] % Date
+		%\includegraphics{Logo} % University/department logo - uncomment to place it
+
+		\vfill
+	\end{center}
+\end{titlepage}
+
+
+\section*{}
+\thispagestyle{empty}
+\vfill
+\begin{center}
+	\Large \textbf{Abstract}
+\end{center}
+...
+\vfill
+\hypersetup{linkcolor=purple}
+{
+	\hypersetup{linkcolor=black}
+	\tableofcontents
+}
+
+
+\chapter{Introduction}\label{ch:introduction}
+\input{chapters/introduction}
+
+\chapter{Background}\label{ch:background}
+\input{chapters/background}
+
+\chapter{Problem Statement and Related works}\label{ch:related}
+\input{chapters/relatedworks}
+
+\chapter{Stacking RON Layers}\label{ch:methodology}
+\input{chapters/methodology}
+
+\chapter{Implementation and Experimental results}\label{ch:experiments}
+\input{chapters/experiments}
+
+\chapter{Conclusion and Future Works}\label{ch:conclusion}
+\input{chapters/conclusions}
+
+%\input{chapters/appendix}
+
+\printbibliography
+
+\end{document}
