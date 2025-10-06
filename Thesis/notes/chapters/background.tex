@@ -1,8 +1,9 @@
 
 In this chapter we will review the main concepts and theory needed to understand the rest of this thesis.
-We will start with a brief introduction of the Dynamical Systems (DS) theory and a brief overview of Chaos theory and Machine Learning
-concepts applied to those type of systems. Then we will move to a more specific topic, about RC and the ESN model, with some enphasis on the Deep counterparts of both models
-treated in this work.
+We will start with a brief introduction of the Dynamical Systems (DS) theory and an overview of Machine Learning
+concepts and foundational models that will be useful to understand the rest of the work.
+%Then we will move to a more specific topic, about RC and the ESN model, 
+%with some enphasis on the Deep counterparts of both models treated in this work.
 
 
 \section{The Inherent Dynamism of Natural Systems}\todo{questo va nel background}
@@ -21,7 +22,7 @@ extending to more sophisticasted frameworks including State-Space Models \cite{k
  The aforementioned models, are the basis of modern neural based sequential modeling.\newline
 
 
-\section{Dynamical Systems and Chaos Theory}
+\section{Dynamical Systems review}
 A dynamical system is a system which evolves over time, we can describe it's changes throught \textbf{state variables}, usually many models are constructed such that
 only the foundamental state variables are considered, for example \textit{biological spiking neurons} modeled as in \cite{1257420} are described by a simple 2-D dimensional ODE, where the two state variables are the membrane potential and a recovery variable.
 ignoring existing other possible variables such gradient of ion concentration, temperature; for the sake of obtaining a large scale simulation.\newline
@@ -52,7 +53,7 @@ We can switch from a non-autonomous to an autonomous system by adding time as a 
 non-autonomous system of equation \ref{eq:armonic} can be rewritten with a change of variable.
 
 \clearpage
-\subsection*{Modeling}
+\subsection{Modeling}
 Modeling is a central methodology in the study of complex systems, translating real world observations and hypoteses into a formalized mathematical model, even tough simplified, can be
 crucial for studying emergent behaviours, particlarly in natural systems where we cannot change the initial state, or the enviroment variables that influence it.
 \newline
@@ -111,26 +112,26 @@ The corresponding differential equation describing the membrane potential dynami
 \end{equation}
 where $I_{ext}$ is the external input current, and each conductance $g_i$ is voltage and time dependent, governed by additional gating variables.
 
-\subsection{Discretization}
+However, as previously mentioned, natural system are often complex, as in this case we have a four dimensional non-linear coupled system, accurate modeling can be computationally infeasible, thus often simplified models are
+preferred for large scale simulations, such as the Izhikevich neuron model \cite{1257420} that captures essential spiking dynamics with only two state variables.
+\subsection{Discretization} \todo{quanto in dettaglio?}    
 
+\clearpage
 
 \section{Overview of Machine Learning}
 Machine Learning (ML) is a subfield of Artificial Intelligence (AI) that focuses on statistical methods and algorithms capable to \textit{learn} from past experiences.
-First we need a rigorous definition of what means to learn; Mithell \cite{mitchell1997machine} define ML as "A computer program is said to learn from experience $\mathbf{E}$ with respect to 
-some class of tasks $\mathbf{T}$ and performance measure $\mathbf{P}$, if its performance at tasks in $\mathbf{T}$, as measured by $\mathbf{P}$, improves with experience $\mathbf{E}$".
+First we need a rigorous definition of what means to learn; \textcite[]{mitchell1997machine} defines it as : "A computer program is said to \textbf{learn} from experience $\mathbf{E}$ with respect to 
+some class of tasks $\mathbf{T}$ and performance measure $\mathbf{P}$, if its performance at tasks in $\mathbf{T}$, as measured by $\mathbf{P}$, improves with experience $\mathbf{E}$."
 
-ML can tackle a much wider range of taks that are difficult to solve with explicit rules based programming, in a certain sense it bypasses
+ML can tackle a much wider range of tasks that are difficult to solve with explicit rules based programming, in a certain sense it bypasses
 some level of abstraction, we're not learning the task $T$ directly, but we're sampling from the $E$ space, \textbf{examples} which are 
-collection of \textbf{features} that are qualitative or quantitative properties of the data.\newline
-
-
+collection of \textbf{features} that are qualitative or quantitative properties of the data that are exploited by the model to learn the task $T$.%\newline
+\subsection{The learning problem}
 %Let's start with a definition
 A formal definition of a machine learning model is given below:
-
-
 \begin{comment}
 
-\end{comment}\begin{definition}\todo{questo non è comunque abbastanza generico, perchè definisce solo supervised}
+\begin{definition}\todo{questo non è comunque abbastanza generico, perchè definisce solo supervised}
 Given a I.I.D. unknown probability joint distribution $P(\mathbf{x}, y)$, with $D_{\text{train}} \sim P(\mathbf{x}, y)$, such that $\mathcal{D_{\text{train}}} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N} \in \mathcal{X} \times \mathcal{Y}$, where 
 ${\mathbf{x}_i} \in \mathbb{R}^d$ are the input features and ${y_i} \in \mathbb{R}$ (or $\{0,1\}$ for classification) are the target labels, then a \textbf{machine learning model} is a function $f:\mathbb{R}^d \rightarrow \mathbb{R}$ (or $\{0,1\}$) that maps $\mathbf{x}$ to $y$.
     The goal is to find the optimal parameters $\Theta^*$ of the model $f(\mathbf{x}; \Theta^*)$ that minimize a loss function $\mathcal{L}(y, f(\mathbf{x}; \Theta^*))$ over $\mathcal{D_{\text{train}}}$. 
@@ -145,40 +146,46 @@ ${\mathbf{x}_i} \in \mathbb{R}^d$ are the input features and ${y_i} \in \mathbb{
 \end{comment}
 
 \begin{definition}
-Let $P(\mathbf{x})$ be an independent identically distributed (i.i.d.) unknown probability distribution over the input space $\mathcal{X}$. 
+Let $p_{\text{data}}(\mathbf{x})$ be an independent identically distributed (i.i.d.) unknown probability distribution over the input space $\mathcal{X}$. 
 A dataset is a finite sample drawn from this distribution, $\mathcal{D} = \{\mathbf{x}_i\}_{i=1}^{N} \subset
  \mathcal{X}$, where $\mathbf{x}_i \in \mathbb{R}^d$ are data points (or input features).
 
-A \textbf{machine learning model} is a function $f: \mathbb{R}^d \to \mathcal{O}$ parameterized by 
-$\Theta$, which maps inputs to an output space $\mathcal{O}$. The nature of the model and its goal is defined by the learning paradigm:
+A \textbf{machine learning model} is a family of prediction functions $f: \mathcal{X} \to \mathcal{Y}$ parameterized by 
+$\theta$. The nature of the model and its goal is defined by the learning paradigm:
 
 \begin{itemize}
-    \item In the \textbf{supervised} setting, the data is drawn from a joint distribution $P(\mathbf{x}, y)$, 
+    \item In the \textbf{supervised} setting, the data is drawn from a joint distribution $p_{\text{data}}(\mathbf{x}, y)$, 
     so $\mathcal{D}_{\text{train}} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$, with targets $y_i \in \mathcal{Y}$. 
-    Here, $\mathcal{O} \equiv \mathcal{Y}$ (e.g., $\mathbb{R}$ for regression or $\{0,1\}$ for classification), 
-    and the goal is to find parameters $\Theta^*$ that minimize a loss function $\mathcal{L}(y, f(\mathbf{x}; \Theta))$ 
+    Here, $\mathcal{Y}$ (e.g., $\mathbb{R}$ for regression or $\{0,1\}$ for classification), 
+    and the goal is to find parameters $theta^*$ that minimize a loss function $\mathcal{L}(y, f(\mathbf{x}; \theta))$ 
     quantifying the discrepancy between predictions and true labels.
 
     \item In the \textbf{unsupervised} setting, the data consists only of inputs $\mathbf{x}_i$. 
-    The output space $\mathcal{O}$ is defined by the specific task (e.g., $\mathbb{R}^k$ for dimensionality reduction, 
-    a set of clusters for clustering, or $\mathbb{R}^d$ for generative models). The goal is to find parameters $\Theta^*$
-     that optimize an objective function $\mathcal{J}(f(\mathbf{x}; \Theta), \mathcal{D})$,
+    The output space $\mathcal{Y}$ is defined by the specific task (e.g., $\mathbb{R}^k$ for dimensionality reduction, 
+    a set of clusters for clustering, or $\mathbb{R}^d$ for generative models). The goal is to find parameters $\theta^*$
+     that optimize an objective function $\mathcal{J}(f(\mathbf{x}; \theta), \mathcal{D})$,
       which captures desired structural properties of the data, such as reconstruction error, cluster cohesion, or data likelihood.
 \end{itemize}
 
-In both cases, the ultimate objective is for the model $f(\mathbf{x}; \Theta^*)$ to generalize well to new, unseen data $\mathcal{D}_{\text{test}} \sim P(\mathbf{x})$. 
+In both cases, the ultimate objective is for the model $f(\mathbf{x}; \theta^*)$ to generalize well to new, unseen data $\mathcal{D}_{\text{test}} \sim P(\mathbf{x})$. 
 \end{definition}
 
-\clearpage
-
-As we've just explained, models can learn the data distribution in threen main different styles: \todo{c'è ne sono molti altri semisupervised, active learning etc., li nomino?}
+The model $f_{\theta}$\footnote{We will use $f_{\theta}$ as shorthand for $f(\mathbf{x}; \theta)$}  is said to belong to a \textbf{hypothesis space} $\mathcal{H}$, 
+which is the set of all possible functions the model can represent by varying its parameters $\theta$.
+The choice of model architecture (e.g., linear models, neural networks, decision trees) 
+defines the hypothesis space. A larger, more expressive $\mathcal{H}$ can represent more complex functions.
+The learning algorithm searches within $\mathcal{H}$ to find the hypothesis 
+$f^* = f(\cdot; \theta^*)$ that best approximates the true underlying relationship between inputs and outputs.
+%\clearpage
+\subsection{Learning Paradigms}
+Models learn the data distributions in threen main different styles: \todo{c'è ne sono molti altri semisupervised, active learning etc.,}
 \begin{enumerate}
     \item \textbf{Supervised Learning}, where the we aim for accurate predictions.
     \item \textbf{Unsupervised Learning}, tries to find a compact description of the data
-    \item \textbf{Reinforcement Learning}, where an agent recursively interact with an environment in order to maximize a cumulative reward signal, trought a certain policy.
+    \item \textbf{Reinforcement Learning}, where an agent recursively interact with an environment in order to maximize a cumulative reward signal, trought a certain policy: $\pi^*$.
 \end{enumerate} 
 Understanding learning is crucial to choose the right modeling technique and architecture for a given task.
-In order to have a more compact picture of learning let's decompose the more general learning objective: $P(\mathbf{X}, Y)$
+In order to have a more compact picture of learning let's decompose the more general distribution: $P(\mathbf{X}, Y)$
 
 \begin{comment}
 At the core of ML there are two main concepts: One we've seen before, the \textbf{Learning} process, 
@@ -186,8 +193,7 @@ which is the process of finding the optimal parameters $\Theta^*$ of the model s
 that is the capability to perform well on unseen data, given a certain distribution $P(\mathbf{x}, y)$. We can formalize these concept by examining how the joint distribution can be
 decomposed and how this relates to the learning objective.\newline
 \end{comment}
-
-\subsection*{Learning, Generalizing and Overfitting}
+\subsubsection{Generative and Discriminative Learning o (bayesian view)}
 The joint distribution $P(\mathbf{X}, Y)$ decomposes as: \todo{Vorrei evitare di spiegare bayes, ma come introduco questi concetti?}
 
 \begin{equation}
@@ -195,18 +201,17 @@ The joint distribution $P(\mathbf{X}, Y)$ decomposes as: \todo{Vorrei evitare di
     P(\mathbf{X}, Y) = \color{blue}{P(Y|\mathbf{X})}\color{red}{P(\mathbf{X})} 
     \color{black}= \color{green}{P(\mathbf{X}|Y)}\color{purple}{P(Y)}\color{black}
 \end{equation}
-
 \begin{equation*}
     \text{Joint} = \color{blue} \text{(Posterior)} \color{black} \cdot \color{red} \text{(Marginal)} \color{black} =
      \color{green} \text{(Likelihood)} \color{black} \cdot \color{purple} \text{(Prior)} \color{black}
 \end{equation*}
 
-In machine learning, what is most relevant is often the \textit{posterior distribution}, telling us how much our hypotesis
-$y$ is likely after we've seen the data $\mathbf{x}$. But we could also be interested to approximate the unknown distribution itself,
-to generate new samples from it, in that case we're interested in the \textit{likelihood} and the \textit{prior} distributions.
-This is the main catch between learning differences of \textit{Generative} and \textit{Discriminative} models.\newline
-By rewriting in terms of posterior distribution we get what is commonly referred as the \textbf{Bayes' Theorem}. \todo{citabayes}  
-
+In machine learning, the primary goal is often to predict the label $Y$ for a given datapoint
+$\mathbf{X}$, this is represented by the \textit{posterior distribution}. One could also be interested in approximating the unknown distribution itself
+to then generate new samples from it, in that case, are needed \textit{likelihood} and the \textit{prior} distributions.
+\newline
+% troppo didattico...
+%By rewriting in terms of posterior distribution we get what is commonly referred as the \textbf{Bayes' Theorem}. \todo{citabayes}  
 Bayesian Decision Theory \cite{barberBRML2011} provides a statistical framework for the design of many machine learning algorithms.
 The way models parameters are estimated often reflects whether the approach is \textit{Generative} or \textit{Discriminative}.
 
@@ -216,8 +221,10 @@ Discriminative models rely often on conditional distribution, the posterior, and
 prior knowledge on the parameters, inference is performed through \textbf{Maximum A Posteriori} (MAP) estimation \ref{eq:map}, which seek the best
 hypotesis ($\theta$) given the data and prior knowledge.\newline
 
+
+\todo{forse è meglio ridurre il numero di formule e tenerlo più discorsivo?}
 \begin{equation}\label{eq:map}
-\theta^* = \arg\max_{\theta} P(\theta|\mathcal{D}) = \arg\max_{\theta} P(\mathcal{D}|\theta)P(\theta)
+\theta_{\text{MAP}}^* = \arg\max_{\theta} P(\theta|\mathcal{D}) = \arg\max_{\theta} P(\mathcal{D}|\theta)P(\theta)
 \end{equation}
 
 On the other hand generative models learn the joint distribution, and are typically trained by a \textbf{Maximum Likelihood Estimation} (MLE) \ref{eq:mle},
@@ -225,18 +232,128 @@ fitting the parameters that maximize the likelihood of the data.\newline
 %questo era vecchio magari lo posso risusare se devo cambiare qualcosa
 %%To do inference, we seek the best hypotesis a model can provide, which means finding the most probable parameters $\theta$ given the data, that's called Maximum A Posteriori (MAP) estimation:
 \begin{equation}\label{eq:mle}
-\theta^* = \arg\max_{\theta} P(\mathcal{D}
+\theta_{\text{MLE}}^* = \arg\max_{\theta} P(\mathcal{D}|\theta)
 |\theta)
 \end{equation}
 
-We've focused on how to learn the parameters of a model, however the methods of learning we've seen so far,
-try to find and exact solution with respect to the training data, this do not guarantees \textbf{generalization},
-however there are ways even for bayesian models to achieve generalization.
+\subsection{Risk, Generalization and Overfitting o (Empirical view)}
+%FOOTNOTE BARBER 13.3 CHAPTER PAGE 314
+While the Bayesian perspective \footnote{As said in \cite[p.~314, Ch.~13]{barberBRML2011}, 
+Bayesian approach appears to be formally optimal, but a pragmatic approach is possible, 
+it can be conditioned by a penalty $\lambda$ on the complexity of the model} provides a probabilistic view for learning,
+in practice what is often adopted is called the \textit{empirical} approach based on risk minimization
+\cite{Vapnik1998}. This complements it by focusing on measuring and optimizing performance through the loss function,
+with the main goal of achieving \textit{generalization}.
+We seek a function $f_{\theta}$ that minimizes the expected risk $\mathcal{R}(f_\theta)$ over $p_{\text{data}}(\mathbf{x}, y)$.
+The loss function acts as a proxy for the learning process, risk have a dual nature: the expected risk and the empirical risk.
 
-Since we use the loss function as a proxy for performance, and this function can be a simularity or distance measure
-it introduces some error, we can 
+The \textbf{expected risk} (or population risk) of a hypothesis $f_\theta$ measures its 
+average performance over the true data distribution.
+%
+%\begin{equation}
+%    \mathcal{R}(f_\theta) = \mathbb{E}_{(\mathbf{x}, y) \sim p_{\text{data}}}[\mathcal{L}(y, f(\mathbf{x}; \theta))]
+%\end{equation}
+However, we do not have access to the entire $p_{\text{data}}$ we can only observe a finite sample 
+$\mathcal{D}_{\text{train}}$, therefore, we approximate 
+the expected risk with the \textbf{empirical risk}: $\hat{\mathcal{R}}(f_\theta)$, which
+is the average loss over the training set.\newline
+%\begin{equation}
+%    \hat{\mathcal{R}}(f_\theta) = \frac{1}{N}\sum_{i=1}^{N} \mathcal{L}(y_i, f(\mathbf{x}_i; \theta))
+%\end{equation}
+The learning problem becomes finding $\theta^*$ that minimizes $\hat{\mathcal{R}}(f_\theta)$ 
+over the training set. This is the \textbf{Empirical Risk Minimization} (ERM) principle, 
+which forms the foundation of most practical machine learning algorithms.
+%The complete risk is thus divded into:
+%\begin{equation}
+    %% add also Optimization error
+%   \mathcal{R}(f_\theta) = \underbrace{\hat{\mathcal{R}}(f_\theta)}_{\text{Empirical Risk}} + \underbrace{(\mathcal{R}(f_\theta) - \hat{\mathcal{R}}(f_\theta))}_{\text{Generalization Gap}}
+%\end{equation}
+%% Error is important we can decompose the expected error by Statistical Learning Theory
 
+\subsubsection{Risk Decomposition}
 
+%We choose $f_{\theta}$ from $\mathcal{H}$  such that the expected risk can be decomposed as:
+Most of the times the space of possible solution is unfanthomably large, thus we need to decompose the risk in order to understand if 
+we are generalizing correctly.\newline
+Let $f_{\mathcal{H}}^* = \arg\min_{f \in \mathcal{H}} \mathcal{R}(f)$ be the best possible function within the hypothesis space, 
+and let $\hat f_{\mathcal{H}} = \arg\min_{f \in \mathcal{H}} \hat{\mathcal{R}}(f)$ denote the empirical risk minimizer found by the learning algorithm.
+Then, the population risk of the learned model can be decomposed in: \cite{10.5555/3360093}\cite{Vapnik1998}\cite{mjt_dlt}\cite[pag. 33, Ch 2]{bach2024learning}
+%\cite{mjt_dlt}\cite[pag. 33 Ch 2]{bach2024learning}
+%\cite[pag. 168, Ch 12.3]{books/daglib/0033642}
+
+%The \textbf{approximation term} reflects the intrinsic limitations of the hypothesis space~$\mathcal{H}$, 
+%the \textbf{generalization term} measures the difference between empirical and true performance, 
+%and the \textbf{optimization term} accounts for the gap due to imperfect minimization of the empirical risk.
+
+\begin{equation}
+    \mathcal{R}(f_\theta) = 
+    \underbrace{\mathcal{R}(f_\theta) - \hat{\mathcal{R}}(f_\theta)}_{\text{Generalization error}}
+     + \underbrace{\hat{\mathcal{R}}(f_\theta) - \hat{\mathcal{R}}({f^*}_\mathcal{H})}_{\text{Optimization error}} 
+     + \underbrace{\hat{\mathcal{R}}(\hat{f}_\mathcal{H}) - \mathcal{R}(f_\mathcal{H}^*)}_{\text{Estimation error}} + \underbrace{\mathcal{R}(f_\mathcal{H}^*)}_{\text{Approximation error}} 
+\end{equation}
+
+The approximation error is irreducible because the data-generating process includes 
+an intrinsic noise~$\varepsilon$ that cannot be captured by any hypothesis
+ in~$\mathcal{H}$. Consequently, learning algorithms must focus on reducing the remaining
+  components. When the selected hypothesis~$f_\theta$ is insufficiently 
+  expressive, \textbf{underfitting} occurs: the empirical risk $\hat{\mathcal{R}}(f_\theta)$ may be small,
+   yet the estimated hypothesis fails to approximate the target function.\footnote{In the case of limited data availability}
+    Conversely, if~$f_\theta$ possesses excessive capacity, the estimator
+     can \textit{interpolate} $\mathcal{D}_{train}$, attaining negligible empirical risk, but with a large generalization gap; 
+     this phenomenon is called \textbf{overfitting}. 
+
+\subsection{Optimizing and Regularizing}\todo{questa è una parte più pragmatica che spiega come si fa learning e come si gestice la complessità}
+We extensively talked about different ways of learning, but yet we haven't discussed on how actually the learning is performed.
+Many of the modern ML algorithm are based on \textbf{Gradient-Based Optimization} methods \cite{citaqualcosa}, which iteratively update the model parameters $\theta$ in order to minimize the loss function $\mathcal{L}(y, f(\mathbf{x}; \theta))$.
+% what we use for the learning in the work is mainly pseudoinverse, ridge regression since we rely on cover theorem
+In this work we will focus on 
+\todo{comunque nella tesi non facciamo molto uso di gradient based optimization, forse si può sorvolare sui dettagli o serve comunque come background?}
+However learning differs from pure optimization, ML methods optimize indirectly with respect to the population risk.
+% continua discorso su ottimizzazione e poi vai direrramente sulla parte successiva
+The typical ML objective function minimized is:
+\begin{equation}
+    \mathcal{L(\theta)} = \mathbb{E}_{(\mathbf{x}, y) \sim \mathcal{D}_{train}}[\mathcal{L}(y, f(\mathbf{x}; \theta))] + \lambda \Omega(\mathbf{w}) 
+\end{equation}
+
+The term $\Omega(\mathbf{w})$ is a regularization term that allows to control the complexity of the model, $\lambda$
+is an hyperparameter that controls the strength of the regularization.
+
+The most common algorithm is the \textbf{Stochastic Gradient Descent} (SGD) \cite{citaqualcosa}, 
+which iteratively updates the parameters $\theta$ in the opposite direction of the gradient of the loss function with respect to the parameters.
+Typically we start from a configuration $\theta_0$ and at each iteration $t$ we compute the gradient of the loss function
+with respect to the parameters $\nabla_\theta \mathcal{L}(\theta_t)$, then we update the parameters using a learning rate $\eta$ that controls the step size of the update.
+
+The learning rule is written as:
+
+\begin{equation}
+    \theta_{t+1} = \theta_t - \eta \nabla_\theta \mathcal{L}(\theta_t)
+\end{equation}
+
+\subsubsection{Optimization and Regularization in Reservoir Computing} \todo{questa parte va spostata, metterla qui è troppo presto, oppure introduco reservoir prima}
+In reservoir computing, the recurrent connections remains fixed after initialization, 
+so learning reduces to estimating the readout parameters. 
+Given reservoir states collected in the recurent matrix $\mathbf{W_{rec}} \in \mathbb{R}^{N \times d}$
+ and targets $\mathbf{Y} \in \mathbb{R}^{N \times m}$, the readout weights $\mathbf{W_{out}} \in \mathbb{R}^{d \times m}$ are obtained by solving a regularized least-squares problem:
+
+\begin{equation}
+    \mathbf{W_{out}} = \arg\min_{\mathbf{W}} ||\mathbf{Y} - \mathbf{W}^T \mathbf{W_{rec}}||_2^2 + \lambda ||\mathbf{W}||_2^2
+\end{equation}
+
+The Tikhonov coefficient $\lambda \ge 0$ controls the readout capacity and mitigates overfitting. whenever
+$N$ or $d$ is large, iterative solvers such as conjugate gradients approximate the same optimum while retaining the regularization term.
+
+\subsubsection{Model selection and Hyperparameters}
+
+\section{Structured Probabilistic Models (Graphical Models)}\todo{Since RNN are Directed Graphical Models}
+Qui l'idea è di andare a parlare dei modelli grafici probabilistici e di come questi siano utili per capire i modelli neurali su sequenze
+
+Structured Probabilistic Models are used to describe a probability distribution using a graph (from graph theory) structure,
+which nodes represent random variables and edges represent dependencies between them.
+
+What need to add: Directed and Undirected, inference and learning basics, few famous models (HMM, RBM, CRF Energy-Based Models (EBM),
+ why structured models are so useful : Information flow, interpretability, prior knowledge, etc.)
+
+\begin{comment}
 % filepath: /home/vincent/UniversityNotes/Thesis/notes/chapters/background.tex
 \begin{figure}[H]
     \centering
@@ -269,39 +386,13 @@ it introduces some error, we can
     \caption{Probabilistic graphical model representation}
     \label{fig:probabilistic_model}
 \end{figure}
-
-
-
-
-
-% ...existing code...
-\begin{comment}    
-\begin{itemize}
-    \item $P(\mathbf{x})$ is the distribution of the input features, also called \textbf{marginal distribution}, it describes how the input features are distributed in the input space.
-    \item $P(y)$ is the distribution of the target labels, also called \textbf{prior distribution}, it describes how the target labels are distributed in the output space.
-    \item $P(y|\mathbf{x})$ is the conditional distribution of the target labels given the input features, also called \textbf{posterior distribution}, it describes how the target labels are distributed given a certain input feature.
-    \item $P(\mathbf{x}|y)$ is the conditional distribution of the input features given the target labels, also called \textbf{likelihood}, it describes how the input features are distributed given a certain target label.
-\end{itemize}
 \end{comment}
 
 
+\section{Recurrent Neural Networks and Deep Learning}
+yadaydayda
 
-\subsection{Learning Paradigms}
-
-\subsection{Overfitting and Generalization}
-
-\subsection{Optimization}
-
-\section{Structured Probabilistic Models (Graphical Models)}\todo{Since RNN are Directed Graphical Models}
-Structured Probabilistic Models are used to describe a probability distribution using a graph (from graph theory) structure,
-which nodes represent random variables and edges represent dependencies between them.
-
-What need to add: Directed and Undirected, inference and learning basics, few famous models (HMM, RBM, CRF Energy-Based Models (EBM),
- why structured models are so useful : Information flow, interpretability, prior knowledge, etc.)
-
-
-
-\section{Deep Recurrent Neural Networks}
+\section{Deep Recurrent Neural Networks}\todo{questa parte va riscritta dopo}
 Deep Learning had a great impact on the field of machine learning and artificial intelligence. When we consider a 
 deep learning model, we are referring to a model that has multiple layers of neurons. 
 The most common type of deep learning model is the Multilayer Perceptron (MLP),
@@ -322,7 +413,7 @@ The most common type of deep learning model is the Multilayer Perceptron (MLP),
     \label{fig:rnn}
 \end{figure}
 
-\section{Deep Reservoir Computing}
+\section{Deep Reservoir Computing}\todo{questo vai nei related works}
 
 Reservoir Computing (RC) is a framework introduced by \todo[color=green!90]{cite}, that is designed to 
 simplify the training of Recurrent Neural Networks. 

@@ -23,7 +23,7 @@ Liquid State Machines (LSM) \cite{fernando2003pattern}, these models aims to sim
 obtain a \textit{"reservoir"} of rich dynamics that can be used to solve complex task, at the same time we reduce the training cost by only performing a linear regression on the output layer.
 The main idea is that usally we need to train the recurrent connection in the network, but RC avoid this by using fixed high dimensional dynamycal system, that project the input signal into an high dimensional space,
 where a simple approach as pseudoinverse or ridge regression is sufficient to learn the linearized representation of the input signal. \newline
-With RC we can solve chaotic time series prediction, speech recognition, robot control \todo{add citation here} with ease with minimal training cost, and we can even use them as a generative model with techniques like Teacher Forcing \cite{6795228}.\newline
+With RC we can solve chaotic time series prediction, speech recognition, robot control \todo{add citation here} with ease with minimal training cost, furthermore we can extend techniques like Teacher Forcing \cite{6795228} for generative purposes.\newline
 
 
 
