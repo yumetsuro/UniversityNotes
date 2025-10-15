@@ -1,4 +1,3 @@
-
 In this chapter we will review the main concepts and theory needed to understand the rest of this thesis.
 We will start with a brief introduction of the Dynamical Systems (DS) theory and an overview of Machine Learning
 concepts and foundational models that will be useful to understand the rest of the work.
@@ -147,17 +146,19 @@ ${\mathbf{x}_i} \in \mathbb{R}^d$ are the input features and ${y_i} \in \mathbb{
 
 \begin{definition}
 Let $p_{\text{data}}(\mathbf{x})$ be an independent identically distributed (i.i.d.) unknown probability distribution over the input space $\mathcal{X}$. 
-A dataset is a finite sample drawn from this distribution, $\mathcal{D} = \{\mathbf{x}_i\}_{i=1}^{N} \subset
+A dataset is a finite sample drawn from this distribution, $\mathcal{D}_{\text{dev}} = \{\mathbf{x}_i\}_{i=1}^{N} \subset
  \mathcal{X}$, where $\mathbf{x}_i \in \mathbb{R}^d$ are data points (or input features).
 
 A \textbf{machine learning model} is a family of prediction functions $f: \mathcal{X} \to \mathcal{Y}$ parameterized by 
 $\theta$. The nature of the model and its goal is defined by the learning paradigm:
 
+\end{definition}
+
 \begin{itemize}
     \item In the \textbf{supervised} setting, the data is drawn from a joint distribution $p_{\text{data}}(\mathbf{x}, y)$, 
-    so $\mathcal{D}_{\text{train}} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N}$, with targets $y_i \in \mathcal{Y}$. 
+    so $\mathcal{D}_{\text{train}} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{k}$, with targets $y_i \in \mathcal{Y}$. 
     Here, $\mathcal{Y}$ (e.g., $\mathbb{R}$ for regression or $\{0,1\}$ for classification), 
-    and the goal is to find parameters $theta^*$ that minimize a loss function $\mathcal{L}(y, f(\mathbf{x}; \theta))$ 
+    and the goal is to find parameters $\theta^*$ that minimize a loss function $\mathcal{L}(y, f(\mathbf{x}; \theta))$ 
     quantifying the discrepancy between predictions and true labels.
 
     \item In the \textbf{unsupervised} setting, the data consists only of inputs $\mathbf{x}_i$. 
@@ -166,9 +167,7 @@ $\theta$. The nature of the model and its goal is defined by the learning paradi
      that optimize an objective function $\mathcal{J}(f(\mathbf{x}; \theta), \mathcal{D})$,
       which captures desired structural properties of the data, such as reconstruction error, cluster cohesion, or data likelihood.
 \end{itemize}
-
-In both cases, the ultimate objective is for the model $f(\mathbf{x}; \theta^*)$ to generalize well to new, unseen data $\mathcal{D}_{\text{test}} \sim P(\mathbf{x})$. 
-\end{definition}
+In both cases, the ultimate objective is for the model $f(\mathbf{x}; \theta^*)$ to generalize well to unseen data $\mathcal{D}_{\text{test}} \sim P(\mathbf{x})$. 
 
 The model $f_{\theta}$\footnote{We will use $f_{\theta}$ as shorthand for $f(\mathbf{x}; \theta)$}  is said to belong to a \textbf{hypothesis space} $\mathcal{H}$, 
 which is the set of all possible functions the model can represent by varying its parameters $\theta$.
@@ -286,6 +285,7 @@ Then, the population risk of the learned model can be decomposed in: \cite{10.55
 %and the \textbf{optimization term} accounts for the gap due to imperfect minimization of the empirical risk.
 
 \begin{equation}
+\label{eq:risk_decomposition}
     \mathcal{R}(f_\theta) = 
     \underbrace{\mathcal{R}(f_\theta) - \hat{\mathcal{R}}(f_\theta)}_{\text{Generalization error}}
      + \underbrace{\hat{\mathcal{R}}(f_\theta) - \hat{\mathcal{R}}({f^*}_\mathcal{H})}_{\text{Optimization error}} 
@@ -303,32 +303,39 @@ an intrinsic noise~$\varepsilon$ that cannot be captured by any hypothesis
      this phenomenon is called \textbf{overfitting}. 
 
 \subsection{Optimizing and Regularizing}\todo{questa è una parte più pragmatica che spiega come si fa learning e come si gestice la complessità}
-We extensively talked about different ways of learning, but yet we haven't discussed on how actually the learning is performed.
-Many of the modern ML algorithm are based on \textbf{Gradient-Based Optimization} methods \cite{citaqualcosa}, which iteratively update the model parameters $\theta$ in order to minimize the loss function $\mathcal{L}(y, f(\mathbf{x}; \theta))$.
+We extensively talked about different ways of learning, but yet we haven't discussed on how the learning is actually performed.
+Many of the modern ML algorithm are based on \textbf{Gradient-Based Optimization} methods \cite{GVK502988711}, which iteratively update the model parameters $\theta$ in order to minimize the loss function $\mathcal{L}(y, f(\mathbf{x}; \theta))$.
 % what we use for the learning in the work is mainly pseudoinverse, ridge regression since we rely on cover theorem
-In this work we will focus on 
+%In this work we will focus on 
 \todo{comunque nella tesi non facciamo molto uso di gradient based optimization, forse si può sorvolare sui dettagli o serve comunque come background?}
 However learning differs from pure optimization, ML methods optimize indirectly with respect to the population risk.
 % continua discorso su ottimizzazione e poi vai direrramente sulla parte successiva
 The typical ML objective function minimized is:
 \begin{equation}
-    \mathcal{L(\theta)} = \mathbb{E}_{(\mathbf{x}, y) \sim \mathcal{D}_{train}}[\mathcal{L}(y, f(\mathbf{x}; \theta))] + \lambda \Omega(\mathbf{w}) 
+    \mathcal{L}(\theta) = \mathbb{E}_{(\mathbf{x}, y) \sim \mathcal{D}_{train}}[\mathcal{L}(y, f(\mathbf{x}; \theta))] + \lambda \Omega(\mathbf{w}) 
 \end{equation}
 
 The term $\Omega(\mathbf{w})$ is a regularization term that allows to control the complexity of the model, $\lambda$
-is an hyperparameter that controls the strength of the regularization.
-
-The most common algorithm is the \textbf{Stochastic Gradient Descent} (SGD) \cite{citaqualcosa}, 
+is an hyperparameter that controls the strength of the regularization.\newline
+Regularization can be done in different ways for example, using a prior distribution over the parameters, or in optimization we can penalize with different 
+norms, for example $L2$ or $L1$ norms, if we are interested in decreasing magnitude of parameters or inducing sparsity respectively.\newline
+The algorithm that empowers the entire ML is \textbf{Stochastic Gradient Descent} (SGD) \cite[pag. 152, Ch 5.2]{Goodfellow-et-al-2016} 
 which iteratively updates the parameters $\theta$ in the opposite direction of the gradient of the loss function with respect to the parameters.
-Typically we start from a configuration $\theta_0$ and at each iteration $t$ we compute the gradient of the loss function
-with respect to the parameters $\nabla_\theta \mathcal{L}(\theta_t)$, then we update the parameters using a learning rate $\eta$ that controls the step size of the update.
-
+Typically the parameters are initialized in some configuration $\theta_0$, a good initialization is often crucial to convergence,
+ and at each iteration $t$ we compute the gradient of the loss function
+with respect to the parameters $\nabla_\theta \mathcal{L}(\theta_t)$, then we update the parameters using with a learning rate $\eta$ that controls the step size or magnitude of update and usually is one 
+the most influential factors that determines how quickly and accurately the model converge in a region with an optimal solution.
+\newline
 The learning rule is written as:
-
 \begin{equation}
+    \label{eq:learning_rule}
     \theta_{t+1} = \theta_t - \eta \nabla_\theta \mathcal{L}(\theta_t)
 \end{equation}
+More advanced optimization algorithms exist, such as \textbf{Adam} \cite{kingma2017adammethodstochasticoptimization} but are based on SGD with some modifications.
+Moreover SGD can work online or in batch mode, meaning that we can apply the learning rule \ref{eq:learning_rule} for each $x_i \sim \mathcal{D}_{train}$ or, the first is preferred when $|\mathcal{D}_{train}|$ is large, and the second when is small enough to fit in memory or 
+if we want the optimization to be noisy, favouring possibility to escape local minima.\newline
 
+\begin{comment}
 \subsubsection{Optimization and Regularization in Reservoir Computing} \todo{questa parte va spostata, metterla qui è troppo presto, oppure introduco reservoir prima}
 In reservoir computing, the recurrent connections remains fixed after initialization, 
 so learning reduces to estimating the readout parameters. 
@@ -339,19 +346,32 @@ Given reservoir states collected in the recurent matrix $\mathbf{W_{rec}} \in \m
     \mathbf{W_{out}} = \arg\min_{\mathbf{W}} ||\mathbf{Y} - \mathbf{W}^T \mathbf{W_{rec}}||_2^2 + \lambda ||\mathbf{W}||_2^2
 \end{equation}
 
+
 The Tikhonov coefficient $\lambda \ge 0$ controls the readout capacity and mitigates overfitting. whenever
 $N$ or $d$ is large, iterative solvers such as conjugate gradients approximate the same optimum while retaining the regularization term.
 
+\end{comment}
 \subsubsection{Model selection and Hyperparameters}
-
-\section{Structured Probabilistic Models (Graphical Models)}\todo{Since RNN are Directed Graphical Models}
-Qui l'idea è di andare a parlare dei modelli grafici probabilistici e di come questi siano utili per capire i modelli neurali su sequenze
-
-Structured Probabilistic Models are used to describe a probability distribution using a graph (from graph theory) structure,
-which nodes represent random variables and edges represent dependencies between them.
-
-What need to add: Directed and Undirected, inference and learning basics, few famous models (HMM, RBM, CRF Energy-Based Models (EBM),
- why structured models are so useful : Information flow, interpretability, prior knowledge, etc.)
+The standard pipeline for training a machine learning model follows a systematic approach.
+ Given a specific task and
+a sampled dataset $\mathcal{D}_{\text{dev}} \sim p_{\text{data}}$ partitioned into three subsets: 
+training $\mathcal{D}_{\text{train}}$, validation $\mathcal{D}_{\text{val}}$ , and test sets $\mathcal{D}_{\text{test}}$. The training set optimizes model parameters, 
+the validation set serves for hyperparameter tuning and architectural decisions,
+ and the test set provides an unbiased performance estimate.\todo{forse devo prima spiegare cos'è unbiased estimate?}
+\newline
+Hyperparameters are those parameters not learned during training but set prior to the learning process. 
+We have seen examples like the regularization coefficient $\lambda$ and the learning rate $\eta$.
+The training phase primarily reduces the estimation error $\mathcal{R}(f_\theta) - \hat{\mathcal{R}}(f_\theta)$, from
+eq. \ref{eq:risk_decomposition}. Model selection, conversely, controls the approximation error $\mathcal{R}(f_\mathcal{H}^*)$
+ by determining the expressiveness of $\mathcal{H}$ trough hyperparameter choices.  
+ %During validation, practitioners evaluate both the generalization error and optimization error to ensure
+ %  the hypothesis space contains functions that generalize effectively and that the learning algorithm has
+ %   successfully converged.
+Model selection involves training multiple candidate models with varying architectures and 
+hyperparameters on the training set, then selecting the configuration with the best validation performance. 
+Validation methods, such as K-fold cross-validation \cite{} or Bootstrapping \cite{} and Bayesian optimization \cite{} are often used
+in order to seach more efficiently in the space of possible models.
+\newline
 
 \begin{comment}
 % filepath: /home/vincent/UniversityNotes/Thesis/notes/chapters/background.tex
@@ -388,9 +408,230 @@ What need to add: Directed and Undirected, inference and learning basics, few fa
 \end{figure}
 \end{comment}
 
+\clearpage
 
-\section{Recurrent Neural Networks and Deep Learning}
-yadaydayda
+\section{Neural Networks and Deep Learning}
+Neural networks (NNs) \cite[Ch. 3.1]{prince2023understanding} are flexible non-linear universal function approximators \cite{cybenko1989approximation} \cite{bach2024learning}
+which are inspired by biological neural system, where information is processed in hierarchical manner, in fact, the idea originates from the layerwise brain organization in the visual cortex
+where information is processed at different complexity scales as discussed in \cite{fukushima1980neocognitron}. 
+Specifically a shallow feedforward neural network (FFN) is composed of interconnected nodes called \textit{perceptrons} \cite{rosenblatt1958perceptron} or artificial neurons divided in:
+input layer, that receives the perceived signal $\mathbf{x} \in \mathbb{R}^d$, one hidden layer, and an output layer that predicts the target $\hat{y}$.
+By stacking hidden layers we are composing together many different functions eg. $f_{net}^l \circ f_{net}^{l-1} \circ ... \circ f_{net}^1$, with each hidden layer having its own parameters:  $\theta = \left\{ {W^{(l)}}, \mathbf{b^{(l)}} \right\}}$,
+ increasing the complexity of the model as well the hypothesis space $\mathcal{H}$.
+
+\begin{figure}[H]
+    \centering
+\begin{tikzpicture}[
+    >=Stealth, line width=0.3pt, 
+    inputneuron/.style={circle, draw, minimum size=1cm, fill=green!20}, 
+    hiddenneuron/.style={circle, draw, minimum size=1cm, fill=blue!20}, 
+    outputneuron/.style={circle, draw, minimum size=1cm, fill=red!20}, 
+    arrow/.style={-Stealth},
+    % add scale
+    scale=0.65, transform shape
+]
+    % Input layer
+    \node[inputneuron] (i1) at (0,1.3) {$x_1$};
+    \node[inputneuron] (i2) at (0,0) {$x_2$};
+    \node[inputneuron] (i3) at (0,-1.3) {$x_3$};
+    
+    
+    % add sigmoid function shape inside the neuron instead of h_i
+    % Hidden layer
+    \node[hiddenneuron] (h1) at (3,3) {$\sigma(h_1)$};
+    \node[hiddenneuron] (h2) at (3,1.4) {$\sigma(h_2)$};
+    \node[hiddenneuron] (h3) at (3,-0.2) {$\sigma(h_3)$};
+    \node[hiddenneuron] (h4) at (3,-1.8) {$\sigma(h_4)$};
+    \node[hiddenneuron] (h5) at (3,-3.4) {$\sigma(h_5)$};
+
+    % Output layer
+    \node[outputneuron] (o1) at (6,1) {$y_1$};
+    \node[outputneuron] (o2) at (6,-1.4) {$y_2$};
+    
+    % Add generic W,b above these arrows
+    \node[above] at (1.1,2.5) {$W^{(1)}, b^{(1)}$};
+
+    \foreach \i in {1,2,3} {
+        \foreach \j in {1,2,3,4,5} {
+            \draw[arrow] (i\i) -- (h\j);
+        }
+    }
+
+    \node[above] at (4.8,2.5) {$W^{(2)}, b^{(2)}$};
+
+    % Connections from hidden to output
+    \foreach \j in {1,2,3,4,5} {
+        \foreach \k in {1,2} {
+            \draw[arrow] (h\j) -- (o\k);
+        }
+    }
+
+\end{tikzpicture}
+    \caption{A simple Feedforward Neural Network with one hidden layer.}
+    \label{fig:ffn}
+\end{figure}
+\newline
+This is the main idea behind \textbf{Deep Learning} \cite[Ch 4.3]{prince2023understanding}, which refers to Deep neural networks (DNNs) which are the core 
+of many state-of-the-art machine learning systems \cite{lecun2015deep}.
+\newline
+Consider $f_{net}^l$ to be the generic output at layer $l$ of a DNN, composed by two parts: an affine transformation $W$, followed by a non-linear activation or transfer function
+$\sigma$. \newline
+\begin{equation}
+    f_{net}^l(\mathbf{x}) = \sigma(W^{(l)}\mathbf{x} + b^{(l)}) = \sigma(\sum_{i=1}^{d} w_i^{(l)} x_i + b^{(l)})\footnote{With $x_i$ and $w_i^{(l)}$ the $i$-th element of $\mathbf{x}$ and $W^{(l)}$ respectively}
+\end{equation}
+We call $W^{(l)}$ the weight matrix, $\mathbf{b}^{(l)}$ the bias vector, $\sigma$ is an arbitrary\footnote{While for hidden layers the right activation is usually chosen by model selection, for output layer the activation regards the task
+e.g., identity for regression, softmax or logistic for classification} non linear function such as ReLU, Sigmoid or Tanh.
+$\mathbf{x} \in \mathbb{R}^d$ is the input vector.
+The parameters of this model, weight are estimated trough an algorithm known as \textbf{Backpropagation} \cite{rumelhart1986learning},
+ which is an application of the chain rule of calculus to compute the gradient of the loss function with respect to the model parameters.
+
+
+\subsection{Recurrent Neural Networks for Sequential Data}
+% cite the unreasonably effectivenes of RNN...
+Recurrent Neural Networks (RNNs) \cite{rumelhart1986learning} are a class of neural networks designed to handle sequential values $[\mathbf{x}^1, ..., \mathbf{x}^\tau]$,
+ where the order of the data points matters. 
+ Unlike FFNs, which process inputs independently thus requiring fixed length data with a separated parameter for each input dimension, 
+ also sequential data exhibit temporal dependancies and long context which complexity grows with respect to number of timesteps $\tau$, 
+ RNNs introduce parameter sharing across time steps, allowing them to generalize across different sequence lengths and capture temporal dependencies.
+ \newline\newline
+Parameters sharing embodies a key \textit{inductive bias}: the assumption of temporal stationarity.
+ This assumption implies that the same parameters are updated each time step, so that the conditional probability distribution over variables at time
+$t+1$ given all previous time steps do not depend explicitly on $t$, but only on the hidden state at time $t$, i.e.
+$p(\mathbf{h}_{t+1} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{h}_{k+1} \mid \mathbf{h}_{k}; \theta)$ and 
+$p(\mathbf{y}_{t} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{y}_{k} \mid \mathbf{h}_{k}; \theta)$ for all 
+$t, k \in \mathbb{N}$. This implies that the same parameter set~$\theta$ governs the dynamics at each time step, 
+so that temporal dependencies are captured solely through the hidden state~$\mathbf{h}_t$, without explicit 
+dependence on~$t$.
+\newline\newline
+ Similarly to seminal works as Time Delay Neural Networks (TDNNs) \cite{waibel1989phoneme} and Elman networks \cite{ELMAN1990179}, 
+ RNNs maintain a hidden state $\mathbf{h}^t$ that is updated at each time step based on the current input $\mathbf{x}^t$ and the previous hidden state $\mathbf{h}^{t-1}$.
+\newline
+Computational graphs are often used to represent the structure of RNNs, this is true because they are part of the family of structured probabilistic models or 
+\textbf{Graphical Models} \cite{barberBRML2011}, i.e., Hidden Markov Models (HMMs), Bayesian Networks (BNs) and Conditional Random Fields (CRFs).
+Where nodes represent random variables and edges represent dependancies between them, similarly we can think 
+to RNNs as a specialization of these probabilistic models, but with a parameterized approach on the dependancies.
+\newline
+RNNs can be \textit{unrolled} trough time, which results in a directed acyclic graph (DAG), this helps
+visualizing the flow of information trough such networks, as we can see from the figure \ref{fig:rnn_unrolled}.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        >=Stealth, line width=0.8pt, 
+        singlecell/.style={circle, draw, minimum size=1cm, fill=blue!20}, 
+    rnncell/.style={circle, draw, minimum size=1cm, fill=blue!20},
+    hidden/.style={circle, draw, dashed, minimum size=1cm, fill=blue!10}, 
+    arrow/.style={-Stealth}
+    % add scale
+    , scale=1, transform shape
+]
+    % Part 1: Single RNN cell 
+    % change single-x fill color to green!20
+    \node[singlecell, fill=green!20] (single-x) at (1.2,0) {$x$};
+    \node[singlecell] (single-h) at (1.2,1.4) {$h$};
+    \draw[arrow] (single-x) -- node[midway, left] {\tiny$W_{in}$} (single-h);
+    % draw inside the box a \sigma
+    %version without sigma inside the box
+    %\draw[arrow] (single-h.east) to[out=20, in=20, looseness=2] node[pos=0.55, draw=black, fill=black,  minimum size=6pt, inner sep=0pt, rectangle] {} (single-h.north);
+    
+    % version with sigma inside the box
+    \draw[arrow] (single-h.east) to[out=20, in=20, looseness=2] node[pos=0.55, draw=black, fill=red,  minimum size=6pt, inner sep=0pt, rectangle] {\tiny$\sigma$} (single-h.north);
+
+    \draw[arrow] (single-h) -- node[midway, right] {\tiny$W_{out}$} ++(0,1) node[above] {$y$};
+    \draw[arrow] (single-h) -- ++(0,1) node[above] {$y$};
+
+    % add near the black square the text $\sigmoid$
+    \node[above right] at (1.8,1.2) {\tiny$W_{rec}$};
+
+    % Part 2: Unfold arrow 
+    \draw[arrow] (2.2,0.8) -- (4,0.8);
+    \node[below] at (3.1,0.8) {Unfold};
+    
+    % Part 3: Unfolded RNN
+    \node[hidden] (hprev) at (5.0,0.8) {$h^{(...)}$};
+    \node[rnncell] (ht1) at (6.8,0.8) {$h^{(t-1)}$};
+    \node[rnncell] (ht) at (8.4,0.8) {$h^{(t)}$};
+    \node[rnncell] (ht2) at (10,0.8) {$h^{(t+1)}$};
+    \node[hidden] (hnext) at (11.6,0.8) {$h^{(...)}$};
+    \node at (6.8,-0.5) (xt1) {$x^{(t-1)}$};
+    \node at (8.4,-0.5) (xt) {$x^{(t)}$};
+    \node at (10,-0.5) (xt2) {$x^{(t+1)}$};
+    \node at (6.8,2.2) (yt1) {$y^{(t-1)}$};
+    \node at (8.4,2.2) (yt) {$y^{(t)}$}; 
+    \node at (10,2.2) (yt2) {$y^{(t+1)}$}; 
+    
+    % Horizontal connections 
+    %add W rec
+    %\node[above right] at (5.4,0.8) {$W_{rec}$};
+    \draw[arrow] (hprev) -- node[midway, below] {\tiny$W_{rec}$} (ht1);
+    \draw[arrow] (ht1) -- node[midway, below] {\tiny$W_{rec}$} (ht);
+    \draw[arrow] (ht) -- node[midway, below] {\tiny$W_{rec}$} (ht2); 
+    \draw[arrow] (ht2) -- node[midway, below] {\tiny$W_{rec}$} (hnext);
+
+    % Vertical connections 
+    %draw w_out as in horizontal connection 
+    \draw[arrow] (xt1) -- node[midway, left] {\tiny$W_{in}$} (ht1);
+    \draw[arrow] (xt) -- node[midway, left] {\tiny$W_{in}$} (ht);
+    \draw[arrow] (xt2) -- node[midway, left] {\tiny$W_{in}$} (ht2);
+    % Output connections 
+    \draw[arrow] (ht1) -- node[midway, right] {\tiny$W_{out}$} (yt1);
+    \draw[arrow] (ht) -- node[midway, right] {\tiny$W_{out}$} (yt);
+    \draw[arrow] (ht2) -- node[midway, right] {\tiny$W_{out}$} (yt2);
+
+\end{tikzpicture}
+    \caption{Recurrent Neural Network unrolled through time}
+    \label{fig:rnn_unrolled}
+\end{figure}
+
+RNNs differs from traditional DNNs, due to the sequential input nature, thus even training is performed in a different way,
+the algorithm used for training these models is called \textbf{Backpropagation Through Time} (BPTT) \cite{werbos2002backpropagation}, which requires 
+to backpropagate the error trough from the end to the start of the unrolled graph \ref{fig:rnn_unrolled} with $O(\tau)$ complexity.
+\newline
+As proved by Funashi and Nakamura \cite{funahashi1993approximation}, 
+Continuous Time Recurrent Neural Networks (CTRNNs) are able to approximate finite time dynamical systems with arbitrary precision.
+We derive a discretized version of equation \ref{eq:ctrnn} as follows
+%Since recurrent dynamics can be viewed as a discretization of a continuous-time dynamical system as described in \cite{funahashi1993approximation}
+%the BPTT operated in the unfolded graph, by computing gradients with respect to the timesteps.
+\begin{equation}
+    \mathbf{h}(t) = \tanh(W_{in}\mathbf{x}(t) + W_{rec}\mathbf{h}(t-1) + \mathbf{b})
+\end{equation}
+At each time step $t$, the hidden state $\mathbf{h}(t)$ is updated based on the current input $\mathbf{x}(t)$ and the previous hidden state $\mathbf{h}(t-1)$:
+Where $W_{in}$ is the input-to-hidden weight matrix, $W_{rec}$ is the hidden-to-hidden (recurrent) weight matrix, $\mathbf{b}$ is the bias vector, and $\sigma$ is a non-linear activation function such as Tanh or ReLU.
+    The output $\hat{y}^t$ at each time step can be computed as:
+\begin{equation}
+    \hat{y}(t) = W_{out}\mathbf{h}(t) + \mathbf{c}
+\end{equation}
+Where $W_{out}$ is the hidden-to-output weight matrix and $\mathbf{c}$ is the output bias vector.
+\newline
+Finally we get the following DE for a general RNN:
+\begin{equation}
+    \label{eq:ctrnn}
+    \frac{d\mathbf{h}(t)}{dt} = -\mathbf{h}(t) + \tanh(W_{in}\mathbf{x}(t) + W_{rec}\mathbf{h}(t) + \mathbf{b})
+\end{equation}
+
+\subsection{The challenge for Long-Term Dependencies}
+RNNs are the models that most naturally can represent sequential data, however in the last years, they have been largely replaced by Transformer architectures \cite{vaswani2023attentionneed},
+this happened mainly because of the difficulty in training RNNs to capture long-term depedancies in sequence, as discussed in \cite{article}, \cite{230622}, \cite{279181}.
+Core of this work as well is the investigation of this problem, thus we will briefly summarize the main issues and solution proposed in literature.
+\newline
+By looking again at picture \ref{fig:rnn_unrolled},
+if we imagine a really long sequence, the gradients will be propagated back through many time steps, this can lead to numerical instability.
+This is due to the repeated multiplication of the gradients by the Jacobian matrix of the hidden state with respect to itself at the previous time step.
+Essentially we compute the following loss:
+\begin{equation}
+    \frac{\partial \mathcal{L}_t}{\partial W_{rec}} = \sum_{k=1}^{t} \frac{\partial \mathcal{L}_t}{\partial \mathbf{h}_t} \left(\prod_{l=k}^{t-1} \frac{\partial \mathbf{h}_{l+1}}{\partial \mathbf{h}_l}\right) \frac{\partial \mathbf{h}_k}{\partial W_{rec}}
+\end{equation}
+where $\frac{\partial \mathbf{h}_{l+1}}{\partial \mathbf{h}_l}$ is the Jacobian matrix at time step $l$. The product $\prod_{l=k}^{t-1} \frac{\partial \mathbf{h}_{l+1}}{\partial \mathbf{h}_l}$ grows exponentially with the sequence length $(t-k)$, 
+leading to \textit{vanishing} or \textit{exploding} gradients \footnote{Gradient issues is related to depth of a network, even sufficiently deep FFNs suffers of vanishing/exploding issues.} \cite[pag. 290, Ch 8.2]{lecun2015deep} depending on the spectral properties of these Jacobian matrices.
+Suppose that $W_{rec}$ eigendecomposes as $W_{rec}^t = V \text{diag}({\lambda})^t V^{-1}$.
+Exploding happen when the $|\lambda_{max}| > 1$, while vanishing when $|\lambda_{max}| < 1$.
+\newline
+Several solutions have been proposed in literature to mitigate this problem, such as Long short-term Memory \cite{article}
+ gradient clipping  \cite{pmlr-v28-pascanu13},
+residual connections \cite{he2015deepresiduallearningimage}, as well approaches directly acting on the recurrent 
+matrix that fixes its spectrum to 1, such as orthogonal or unitary RNNs \cite{arjovsky2016unitaryevolutionrecurrentneural} \cite{le2015simplewayinitializerecurrent}
+
+\subsubsection{LSTM and Memory}\todo{smetto qui...}
 
 \section{Deep Recurrent Neural Networks}\todo{questa parte va riscritta dopo}
 Deep Learning had a great impact on the field of machine learning and artificial intelligence. When we consider a 
@@ -405,6 +646,7 @@ The most common type of deep learning model is the Multilayer Perceptron (MLP),
  to the number of timestep we unroll the network trough time (or sequence). But we can add depth in more than one way,
  one of those is to stack multiple layers of RNNs on top of each other sequentially. 
  
+
  \todo{Change this image or make a new one or cite it}
  \begin{figure}[H]
     \centering
