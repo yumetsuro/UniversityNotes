@@ -16,16 +16,6 @@ Particularly, deep generative models have been applied with unbelievable results
 However, deep learning models are known to be expensive in both training and inference, requiring large 
 amount of computational resources (GPU production) and energy consumption \cite{article}.
 
-\section{Reservoir Computing}\todo{Forse in questa sezione devo essere ancora più generico e parlare solo dei vantaggi e le motivazioni d'uso per poi spiegare tutto meglio nel capitolo di background}
-
-Reservoir Computing (RC) is a computational framework introduced in the early 2000s with Echo State Networks (ESN) \cite{jaeger2001echo} and
-Liquid State Machines (LSM) \cite{fernando2003pattern}, these models aims to simplify the training of RNNs and at the same time exploit inherent dynamical properties of real world physical system in order to
-obtain a \textit{"reservoir"} of rich dynamics that can be used to solve complex task, at the same time we reduce the training cost by only performing a linear regression on the output layer.
-The main idea is that usally we need to train the recurrent connection in the network, but RC avoid this by using fixed high dimensional dynamycal system, that project the input signal into an high dimensional space,
-where a simple approach as pseudoinverse or ridge regression is sufficient to learn the linearized representation of the input signal. \newline
-With RC we can solve chaotic time series prediction, speech recognition, robot control \todo{add citation here} with ease with minimal training cost, furthermore we can extend techniques like Teacher Forcing \cite{6795228} for generative purposes.\newline
-
-
 
 \section{Scientific contribuition}
 \todo{After finishing experimental part...}

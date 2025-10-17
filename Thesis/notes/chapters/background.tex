@@ -480,7 +480,7 @@ $\sigma$. \newline
     f_{net}^l(\mathbf{x}) = \sigma(W^{(l)}\mathbf{x} + b^{(l)}) = \sigma(\sum_{i=1}^{d} w_i^{(l)} x_i + b^{(l)})\footnote{With $x_i$ and $w_i^{(l)}$ the $i$-th element of $\mathbf{x}$ and $W^{(l)}$ respectively}
 \end{equation}
 We call $W^{(l)}$ the weight matrix, $\mathbf{b}^{(l)}$ the bias vector, $\sigma$ is an arbitrary\footnote{While for hidden layers the right activation is usually chosen by model selection, for output layer the activation regards the task
-e.g., identity for regression, softmax or logistic for classification} non linear function such as ReLU, Sigmoid or Tanh.
+e.g., identity for regression, logistic for binary classification and softmax for multiclassifiers} non linear function such as ReLU, Sigmoid or Tanh.
 $\mathbf{x} \in \mathbb{R}^d$ is the input vector.
 The parameters of this model, weight are estimated trough an algorithm known as \textbf{Backpropagation} \cite{rumelhart1986learning},
  which is an application of the chain rule of calculus to compute the gradient of the loss function with respect to the model parameters.
@@ -488,23 +488,28 @@ The parameters of this model, weight are estimated trough an algorithm known as 
 
 \subsection{Recurrent Neural Networks for Sequential Data}
 % cite the unreasonably effectivenes of RNN...
-Recurrent Neural Networks (RNNs) \cite{rumelhart1986learning} are a class of neural networks designed to handle sequential values $[\mathbf{x}^1, ..., \mathbf{x}^\tau]$,
+Recurrent Neural Networks (RNNs) \cite{rumelhart1986learning} are a class of neural networks designed to handle sequential values,
  where the order of the data points matters. 
- Unlike FFNs, which process inputs independently thus requiring fixed length data with a separated parameter for each input dimension, 
- also sequential data exhibit temporal dependancies and long context which complexity grows with respect to number of timesteps $\tau$, 
+ FFNs, which process inputs independently thus requiring fixed length data with a separated parameter for each input dimension, 
+ also sequential data exhibit temporal dependancies and long context which complexity grows with respect to number of timesteps $T$.
+ \newline
+Moreover, RNNs learns the joint distribution of the entire sequence, by factorizing the joint distribution over $T$ steps, given
+$\mathbf{x}_{1:T} = [\mathbf{x}_1, \ldots, \mathbf{x}_T]$ as a product of conditional distributions \cite{sutskever2014sequencesequencelearningneural}:
+\begin{equation}
+    p(\mathbf{x}_{1:T}) = \prod_{t=1}^{T} p(\mathbf{x}_t \mid \mathbf{x}_{1:t-1}; \theta)
+\end{equation}
  RNNs introduce parameter sharing across time steps, allowing them to generalize across different sequence lengths and capture temporal dependencies.
- \newline\newline
 Parameters sharing embodies a key \textit{inductive bias}: the assumption of temporal stationarity.
  This assumption implies that the same parameters are updated each time step, so that the conditional probability distribution over variables at time
 $t+1$ given all previous time steps do not depend explicitly on $t$, but only on the hidden state at time $t$, i.e.
 $p(\mathbf{h}_{t+1} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{h}_{k+1} \mid \mathbf{h}_{k}; \theta)$ and 
 $p(\mathbf{y}_{t} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{y}_{k} \mid \mathbf{h}_{k}; \theta)$ for all 
-$t, k \in \mathbb{N}$. This implies that the same parameter set~$\theta$ governs the dynamics at each time step, 
+$t, k \in \mathbb{N}$. Meaning that the same parameter set~$\theta$ governs the dynamics at each time step, 
 so that temporal dependencies are captured solely through the hidden state~$\mathbf{h}_t$, without explicit 
 dependence on~$t$.
 \newline\newline
- Similarly to seminal works as Time Delay Neural Networks (TDNNs) \cite{waibel1989phoneme} and Elman networks \cite{ELMAN1990179}, 
- RNNs maintain a hidden state $\mathbf{h}^t$ that is updated at each time step based on the current input $\mathbf{x}^t$ and the previous hidden state $\mathbf{h}^{t-1}$.
+ Similarly to seminal works as Time Delay Neural Networks (TDNNs) \cite{waibel1989phoneme}, 
+ RNNs maintain a hidden state $\mathbf{h}_t$ that is updated at each time step based on the current input $\mathbf{x}_t$ and the previous hidden state $\mathbf{h}^{t-1}$.
 \newline
 Computational graphs are often used to represent the structure of RNNs, this is true because they are part of the family of structured probabilistic models or 
 \textbf{Graphical Models} \cite{barberBRML2011}, i.e., Hidden Markov Models (HMMs), Bayesian Networks (BNs) and Conditional Random Fields (CRFs).
@@ -553,12 +558,12 @@ visualizing the flow of information trough such networks, as we can see from the
     \node[rnncell] (ht) at (8.4,0.8) {$h^{(t)}$};
     \node[rnncell] (ht2) at (10,0.8) {$h^{(t+1)}$};
     \node[hidden] (hnext) at (11.6,0.8) {$h^{(...)}$};
-    \node at (6.8,-0.5) (xt1) {$x^{(t-1)}$};
-    \node at (8.4,-0.5) (xt) {$x^{(t)}$};
-    \node at (10,-0.5) (xt2) {$x^{(t+1)}$};
-    \node at (6.8,2.2) (yt1) {$y^{(t-1)}$};
-    \node at (8.4,2.2) (yt) {$y^{(t)}$}; 
-    \node at (10,2.2) (yt2) {$y^{(t+1)}$}; 
+    \node at (6.8,-0.5) (xt1) {$x_{(t-1)}$};
+    \node at (8.4,-0.5) (xt) {$x_{(t)}$};
+    \node at (10,-0.5) (xt2) {$x_{(t+1)}$};
+    \node at (6.8,2.2) (yt1) {$y_{(t-1)}$};
+    \node at (8.4,2.2) (yt) {$y_{(t)}$}; 
+    \node at (10,2.2) (yt2) {$y_{(t+1)}$}; 
     
     % Horizontal connections 
     %add W rec
@@ -585,7 +590,7 @@ visualizing the flow of information trough such networks, as we can see from the
 
 RNNs differs from traditional DNNs, due to the sequential input nature, thus even training is performed in a different way,
 the algorithm used for training these models is called \textbf{Backpropagation Through Time} (BPTT) \cite{werbos2002backpropagation}, which requires 
-to backpropagate the error trough from the end to the start of the unrolled graph \ref{fig:rnn_unrolled} with $O(\tau)$ complexity.
+to backpropagate the error trough from the end to the start of the unrolled graph \ref{fig:rnn_unrolled} with $O(T)$ complexity.
 \newline
 As proved by Funashi and Nakamura \cite{funahashi1993approximation}, 
 Continuous Time Recurrent Neural Networks (CTRNNs) are able to approximate finite time dynamical systems with arbitrary precision.
@@ -610,12 +615,12 @@ Finally we get the following DE for a general RNN:
 \end{equation}
 
 \subsection{The challenge for Long-Term Dependencies}
-RNNs are the models that most naturally can represent sequential data, however in the last years, they have been largely replaced by Transformer architectures \cite{vaswani2023attentionneed},
+RNNs are powerful models for sequential data, however in the last years, they have been largely replaced by Transformer architectures \cite{vaswani2023attentionneed},
 this happened mainly because of the difficulty in training RNNs to capture long-term depedancies in sequence, as discussed in \cite{article}, \cite{230622}, \cite{279181}.
 Core of this work as well is the investigation of this problem, thus we will briefly summarize the main issues and solution proposed in literature.
 \newline
 By looking again at picture \ref{fig:rnn_unrolled},
-if we imagine a really long sequence, the gradients will be propagated back through many time steps, this can lead to numerical instability.
+if we imagine a really long sequence, the gradients will be propagated back through many time steps, this can lead to numerical instability and make long term dependencies hard to learn.
 This is due to the repeated multiplication of the gradients by the Jacobian matrix of the hidden state with respect to itself at the previous time step.
 Essentially we compute the following loss:
 \begin{equation}
@@ -626,12 +631,47 @@ leading to \textit{vanishing} or \textit{exploding} gradients \footnote{Gradient
 Suppose that $W_{rec}$ eigendecomposes as $W_{rec}^t = V \text{diag}({\lambda})^t V^{-1}$.
 Exploding happen when the $|\lambda_{max}| > 1$, while vanishing when $|\lambda_{max}| < 1$.
 \newline
-Several solutions have been proposed in literature to mitigate this problem, such as Long short-term Memory \cite{article}
- gradient clipping  \cite{pmlr-v28-pascanu13},
-residual connections \cite{he2015deepresiduallearningimage}, as well approaches directly acting on the recurrent 
-matrix that fixes its spectrum to 1, such as orthogonal or unitary RNNs \cite{arjovsky2016unitaryevolutionrecurrentneural} \cite{le2015simplewayinitializerecurrent}
+Several solutions have been proposed in literature to mitigate this problem, such as gradient clipping  \cite{pmlr-v28-pascanu13},
+residual connections \cite{he2015deepresiduallearningimage} that help by adding to the timesteps directly the signal from previous steps, as well approaches directly acting on the recurrent 
+matrix that fixes its spectrum to 1, such as orthogonal or unitary RNNs \cite{arjovsky2016unitaryevolutionrecurrentneural} \cite{le2015simplewayinitializerecurrent}.
+Even choosing the right transfer function can help: Sigmoidal activations tend to saturate very quickly since their derivatives approaches $0$ in the extreme regions, alternatives such as $\tanh$ that
+saturates less, or ReLU that has more stable gradients and regularize at the same time by sparsifying activations \cite{pmlr-v15-glorot11a} contribute to the architectural bias.\todo{giusto?}
+\newline
+A fundamental insight into solving the vanishing gradient came from Hochreiter et al. \cite{article}, introducing the concept of \textbf{Constant Error Carousel} (CEC),
+which allows gradients to flow unchanged trough time in the backward pass by using self-loops with unit weight in the recurrent connections.
+But with CEC the error is integrated over time, and time based tasks often require memory to change dynamically.
+\subsubsection{Gated RNNs}
+To address the memory issues of learning long-term dependencies in sequential data, 
+specialized RNN architectures with gating mechanisms have been developed, specifically
+Long Short-Term Memory (LSTM) networks \cite{article} and Gated Recurrent Units (GRUs) \cite{cho2014learningphraserepresentations}.
+These gates in these models solve the CEC problem by allowing the network to learn selectively what information should be integrated or forgotten over time.
+\newline
+The \textit{forget gate} uses sigmoid activation to decide what amount of information discard from the previous $h_t$, while
+the \textit{input gate} control how much of the new information from the current input $x_t$ should be added to the cell state.
+Finally the \textit{output gate} determines what part of the cell state should be output as the new hidden state $h_t$.
 
-\subsubsection{LSTM and Memory}\todo{smetto qui...}
+\section{Reservoir Computing}\todo{Forse in questa sezione devo essere ancora più generico e parlare solo dei vantaggi e le motivazioni d'uso per poi spiegare tutto meglio nel capitolo di background}
+
+Reservoir Computing (RC) is a computational framework introduced in the early 2000s with Echo State Networks (ESN) \cite{jaeger2001echo} and
+Liquid State Machines (LSM) \cite{fernando2003pattern}, these models aims to simplify the training of RNNs and at the same time exploit inherent dynamical properties of real world physical system in order to
+obtain a \textit{"reservoir"} of rich dynamics that can be used to solve complex task, at the same time we reduce the training cost by only performing a linear regression on the output layer.
+The main idea is that usally we need to train the recurrent connection in the network, but RC avoid this by using fixed high dimensional dynamycal system, that project the input signal into an high dimensional space,
+where a simple approach as pseudoinverse or ridge regression is sufficient to learn the linearized representation of the input signal. \newline
+With RC we can solve chaotic time series prediction, speech recognition, robot control \todo{add citation here} with ease with minimal training cost, furthermore we can extend techniques like Teacher Forcing \cite{6795228} for generative purposes.\newline
+\newline
+The core of this work revolves around RC methods that solve the problem of learning long-term dependancies, by directly avoid
+the use of BPTT and its issues. A way to think to RC is that they are generalization of \textbf{kernel methods} to sequential data,
+ these type of models solve the task in two steps: firstly they project the input data into a high dimensional space using a fixed non-linear mapping (the reservoir in RC),
+  secondly they learn a linear model on top of this representation to make predictions.
+ \newline
+Both methods relies on the \textbf{Cover's Theorem} \cite{cover2006geometrical}, which states :
+\begin{quote}
+    \textit{"A complex pattern-classification problem, cast in a high-dimensional space nonlinearly, is more likely to be linearly separable than in a low-dimensional space."}
+\end{quote}
+
+\subsection{Echo State Networks}
+
+
 
 \section{Deep Recurrent Neural Networks}\todo{questa parte va riscritta dopo}
 Deep Learning had a great impact on the field of machine learning and artificial intelligence. When we consider a 
