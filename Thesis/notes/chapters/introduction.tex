@@ -16,6 +16,26 @@ Particularly, deep generative models have been applied with unbelievable results
 However, deep learning models are known to be expensive in both training and inference, requiring large 
 amount of computational resources (GPU production) and energy consumption \cite{article}.
 
+\section{Reservoir Computing for Efficient AI} \todo{mancano citazioni ed è ripetitivo rispetto al background}
+Sequential data processing remains a fundamental challenge in machine learning, from natural language to time series forecasting.
+While Recurrent Neural Networks (RNNs) have been the traditional approach for modeling temporal dependencies, 
+training them to capture long-term patterns has proven notoriously difficult due to vanishing and exploding gradients.
+Although architectures like LSTMs and GRUs have partially addressed these issues through gating mechanisms,
+and Transformers have recently dominated the field with their attention-based approach, these solutions come at the cost
+of increased architectural complexity and computational demands.\newline
+An alternative paradigm that has gained attention is Reservoir Computing (RC)\cite{}, which offers a fundamentally different approach
+to sequential processing. By maintaining a fixed, randomly initialized recurrent network as a "reservoir" of dynamics,
+and training only a simple linear readout layer, RC circumvents the gradient-based training of recurrent connections entirely.
+This framework not only simplifies the learning process but also draws inspiration from neuroscience and physical computing systems,
+where rich dynamics emerge naturally without explicit optimization.\newline
+
+Despite its computational efficiency and theoretical elegance, vanilla RC models face their own set of limitations,
+particularly in scaling to complex tasks that require multiple levels of temporal abstraction\cite{}.
+This motivates the exploration of \textit{deep} variants \cite{} of reservoir computing architectures,
+which aim to combine the efficiency of the RC paradigm with the representational power of hierarchical processing.
+This thesis investigates such deep reservoir architectures, examining how stacking multiple reservoir layers
+can enable learning at different timescales while maintaining the training efficiency that makes RC attractive.\newline
+
 
 \section{Scientific contribuition}
 \todo{After finishing experimental part...}

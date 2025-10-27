@@ -488,28 +488,28 @@ The parameters of this model, weight are estimated trough an algorithm known as 
 
 \subsection{Recurrent Neural Networks for Sequential Data}
 % cite the unreasonably effectivenes of RNN...
-Recurrent Neural Networks (RNNs) \cite{rumelhart1986learning} are a class of neural networks designed to handle sequential values,
- where the order of the data points matters. 
- FFNs, which process inputs independently thus requiring fixed length data with a separated parameter for each input dimension, 
+Recurrent Neural Networks (RNNs) \cite{rumelhart1986learning} are a class of neural networks designed to handle sequential values.
+Their recurrent architecture introduces an \textit{architectural bias} \cite{1263574} towards capturing sequential dependancies. Even prior to training, recurrent units can display clustering resembling markovian dynamics.
+\newline
+ In contrast FFNs, process inputs independently, requiring fixed length data with separated parameters for each input dimension, 
  also sequential data exhibit temporal dependancies and long context which complexity grows with respect to number of timesteps $T$.
  \newline
-Moreover, RNNs learns the joint distribution of the entire sequence, by factorizing the joint distribution over $T$ steps, given
-$\mathbf{x}_{1:T} = [\mathbf{x}_1, \ldots, \mathbf{x}_T]$ as a product of conditional distributions \cite{sutskever2014sequencesequencelearningneural}:
+Formally, RNNs model the joint distribution of a sequence $\mathbf{x}_{1:T} = [\mathbf{x}_1, \ldots, \mathbf{x}_T]$, by factorizing it over $T$ steps
+ as a product of conditional distributions \cite{sutskever2014sequencesequencelearningneural}:
 \begin{equation}
     p(\mathbf{x}_{1:T}) = \prod_{t=1}^{T} p(\mathbf{x}_t \mid \mathbf{x}_{1:t-1}; \theta)
 \end{equation}
  RNNs introduce parameter sharing across time steps, allowing them to generalize across different sequence lengths and capture temporal dependencies.
 Parameters sharing embodies a key \textit{inductive bias}: the assumption of temporal stationarity.
- This assumption implies that the same parameters are updated each time step, so that the conditional probability distribution over variables at time
-$t+1$ given all previous time steps do not depend explicitly on $t$, but only on the hidden state at time $t$, i.e.
-$p(\mathbf{h}_{t+1} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{h}_{k+1} \mid \mathbf{h}_{k}; \theta)$ and 
-$p(\mathbf{y}_{t} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{y}_{k} \mid \mathbf{h}_{k}; \theta)$ for all 
-$t, k \in \mathbb{N}$. Meaning that the same parameter set~$\theta$ governs the dynamics at each time step, 
-so that temporal dependencies are captured solely through the hidden state~$\mathbf{h}_t$, without explicit 
+This assumption implies that the same parameters are updated each time step, so that the conditional probability distribution over variables at time
+$t+1$ given all previous time steps do not depend explicitly on $t$, but only on the hidden state at time $t$.\newline\newline
+For any time indices $t,k \in \mathbb{N}$, transition and output distributions: $p(\mathbf{h}_{t+1} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{h}_{k+1} \mid \mathbf{h}_{k}; \theta)$ and 
+$p(\mathbf{y}_{t} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{y}_{k} \mid \mathbf{h}_{k}; \theta)$, share the same parameter set~$\theta$ governing the dynamics at each time step, 
+consequently, temporal dependencies are captured solely through the evolution of the hidden state~$\mathbf{h}_t$, without explicit 
 dependence on~$t$.
 \newline\newline
  Similarly to seminal works as Time Delay Neural Networks (TDNNs) \cite{waibel1989phoneme}, 
- RNNs maintain a hidden state $\mathbf{h}_t$ that is updated at each time step based on the current input $\mathbf{x}_t$ and the previous hidden state $\mathbf{h}^{t-1}$.
+ RNNs maintain a hidden state $\mathbf{h}_t$ that is updated at each time step based on the current input $\mathbf{x}_t$ and the previous hidden state $\mathbf{h}_{t-1}$.
 \newline
 Computational graphs are often used to represent the structure of RNNs, this is true because they are part of the family of structured probabilistic models or 
 \textbf{Graphical Models} \cite{barberBRML2011}, i.e., Hidden Markov Models (HMMs), Bayesian Networks (BNs) and Conditional Random Fields (CRFs).
@@ -553,11 +553,11 @@ visualizing the flow of information trough such networks, as we can see from the
     \node[below] at (3.1,0.8) {Unfold};
     
     % Part 3: Unfolded RNN
-    \node[hidden] (hprev) at (5.0,0.8) {$h^{(...)}$};
-    \node[rnncell] (ht1) at (6.8,0.8) {$h^{(t-1)}$};
-    \node[rnncell] (ht) at (8.4,0.8) {$h^{(t)}$};
-    \node[rnncell] (ht2) at (10,0.8) {$h^{(t+1)}$};
-    \node[hidden] (hnext) at (11.6,0.8) {$h^{(...)}$};
+    \node[hidden] (hprev) at (5.0,0.8) {$h_{(...)}$};
+    \node[rnncell] (ht1) at (6.8,0.8) {$h_{(t-1)}$};
+    \node[rnncell] (ht) at (8.4,0.8) {$h_{(t)}$};
+    \node[rnncell] (ht2) at (10,0.8) {$h_{(t+1)}$};
+    \node[hidden] (hnext) at (11.6,0.8) {$h_{(...)}$};
     \node at (6.8,-0.5) (xt1) {$x_{(t-1)}$};
     \node at (8.4,-0.5) (xt) {$x_{(t)}$};
     \node at (10,-0.5) (xt2) {$x_{(t+1)}$};
@@ -593,11 +593,12 @@ the algorithm used for training these models is called \textbf{Backpropagation T
 to backpropagate the error trough from the end to the start of the unrolled graph \ref{fig:rnn_unrolled} with $O(T)$ complexity.
 \newline
 As proved by Funashi and Nakamura \cite{funahashi1993approximation}, 
-Continuous Time Recurrent Neural Networks (CTRNNs) are able to approximate finite time dynamical systems with arbitrary precision.
+Continuous Time Recurrent Neural Networks \todo{forse questa parte non va bene non c'entra molto} (CTRNNs) are able to approximate finite time dynamical systems with arbitrary precision.
 We derive a discretized version of equation \ref{eq:ctrnn} as follows
 %Since recurrent dynamics can be viewed as a discretization of a continuous-time dynamical system as described in \cite{funahashi1993approximation}
 %the BPTT operated in the unfolded graph, by computing gradients with respect to the timesteps.
 \begin{equation}
+    \label{eq:rnn}
     \mathbf{h}(t) = \tanh(W_{in}\mathbf{x}(t) + W_{rec}\mathbf{h}(t-1) + \mathbf{b})
 \end{equation}
 At each time step $t$, the hidden state $\mathbf{h}(t)$ is updated based on the current input $\mathbf{x}(t)$ and the previous hidden state $\mathbf{h}(t-1)$:
@@ -615,8 +616,10 @@ Finally we get the following DE for a general RNN:
 \end{equation}
 
 \subsection{The challenge for Long-Term Dependencies}
-RNNs are powerful models for sequential data, however in the last years, they have been largely replaced by Transformer architectures \cite{vaswani2023attentionneed},
-this happened mainly because of the difficulty in training RNNs to capture long-term depedancies in sequence, as discussed in \cite{article}, \cite{230622}, \cite{279181}.
+\label{sec:rnn_long_term_dependencies}
+RNNs are powerful models for sequential data modeling, however in the last years, they have been largely replaced by Transformer architectures \cite{vaswani2023attentionneed},
+this happened mainly because of the difficulty in training RNNs to capture long-term dependencies in sequences \cite{article}, \cite{230622}, \cite{279181}. The problem is addressed as \textit{information latching} \cite{298725}, which
+consist in the ability of such network to retain a robust representation of bits of information, this happens when the states of the network are contained in a reduced attracting set of an hyperbolic attractor \cite{haykin2009neural}.
 Core of this work as well is the investigation of this problem, thus we will briefly summarize the main issues and solution proposed in literature.
 \newline
 By looking again at picture \ref{fig:rnn_unrolled},
@@ -627,9 +630,11 @@ Essentially we compute the following loss:
     \frac{\partial \mathcal{L}_t}{\partial W_{rec}} = \sum_{k=1}^{t} \frac{\partial \mathcal{L}_t}{\partial \mathbf{h}_t} \left(\prod_{l=k}^{t-1} \frac{\partial \mathbf{h}_{l+1}}{\partial \mathbf{h}_l}\right) \frac{\partial \mathbf{h}_k}{\partial W_{rec}}
 \end{equation}
 where $\frac{\partial \mathbf{h}_{l+1}}{\partial \mathbf{h}_l}$ is the Jacobian matrix at time step $l$. The product $\prod_{l=k}^{t-1} \frac{\partial \mathbf{h}_{l+1}}{\partial \mathbf{h}_l}$ grows exponentially with the sequence length $(t-k)$, 
-leading to \textit{vanishing} or \textit{exploding} gradients \footnote{Gradient issues is related to depth of a network, even sufficiently deep FFNs suffers of vanishing/exploding issues.} \cite[pag. 290, Ch 8.2]{lecun2015deep} depending on the spectral properties of these Jacobian matrices.
+leading to \textit{vanishing} or \textit{exploding} (V/E) gradients \footnote{Gradient issues is related to depth of a network, even sufficiently deep FFNs suffers of V/E issues.} \cite[pag. 290, Ch 8.2]{lecun2015deep} depending on the spectral properties of these Jacobian matrices.
 Suppose that $W_{rec}$ eigendecomposes as $W_{rec}^t = V \text{diag}({\lambda})^t V^{-1}$.
 Exploding happen when the $|\lambda_{max}| > 1$, while vanishing when $|\lambda_{max}| < 1$.
+Essentially the jacobian matrix provide information about how small changes in $h_t$ propagates to the next step or equivalently how the gradient on $h_{t+1}$ propagates at the previous step, moreover
+the recurrent matrix and the jacobian can have complex-valued eigenvalues, with imaginary part that induces oscillatory dynamics, making more complicated dynamics easier to learn. 
 \newline
 Several solutions have been proposed in literature to mitigate this problem, such as gradient clipping  \cite{pmlr-v28-pascanu13},
 residual connections \cite{he2015deepresiduallearningimage} that help by adding to the timesteps directly the signal from previous steps, as well approaches directly acting on the recurrent 
@@ -650,54 +655,105 @@ The \textit{forget gate} uses sigmoid activation to decide what amount of inform
 the \textit{input gate} control how much of the new information from the current input $x_t$ should be added to the cell state.
 Finally the \textit{output gate} determines what part of the cell state should be output as the new hidden state $h_t$.
 
-\section{Reservoir Computing}\todo{Forse in questa sezione devo essere ancora più generico e parlare solo dei vantaggi e le motivazioni d'uso per poi spiegare tutto meglio nel capitolo di background}
-
-Reservoir Computing (RC) is a computational framework introduced in the early 2000s with Echo State Networks (ESN) \cite{jaeger2001echo} and
-Liquid State Machines (LSM) \cite{fernando2003pattern}, these models aims to simplify the training of RNNs and at the same time exploit inherent dynamical properties of real world physical system in order to
-obtain a \textit{"reservoir"} of rich dynamics that can be used to solve complex task, at the same time we reduce the training cost by only performing a linear regression on the output layer.
-The main idea is that usally we need to train the recurrent connection in the network, but RC avoid this by using fixed high dimensional dynamycal system, that project the input signal into an high dimensional space,
-where a simple approach as pseudoinverse or ridge regression is sufficient to learn the linearized representation of the input signal. \newline
-With RC we can solve chaotic time series prediction, speech recognition, robot control \todo{add citation here} with ease with minimal training cost, furthermore we can extend techniques like Teacher Forcing \cite{6795228} for generative purposes.\newline
+\section{Reservoir Computing}
+Reservoir Computing (RC) is a computational framework introduced in the early 2000s with two keys models: Echo State Networks (ESN) \cite{jaeger2001echo} and
+Liquid State Machines (LSM) \cite{fernando2003pattern}. Both approaches aims to simplify the training of RNNs while exploiting the inherent dynamical properties of real world physical systems to
+obtain a \textit{"reservoir"} of rich dynamics that can be leveraged to solve complex task. 
+A major advantage of RC lies in it's efficiency: only the linear readout layer is trained, while recurrent connections remains fixed.
 \newline
-The core of this work revolves around RC methods that solve the problem of learning long-term dependancies, by directly avoid
-the use of BPTT and its issues. A way to think to RC is that they are generalization of \textbf{kernel methods} to sequential data,
+The central idea is to avoid training the recurrent connection in the network by using a fixed high-dimensional reservoir, that project the input signal into an high dimensional feature space,
+where a linear classifier is sufficient to learn the linearized representation of the input signal. \newline
+Reservoir Computing has been successfully applied to tasks such as time series prediction, speech recognition, robot control \todo{add citation here}, furthermore can also be extended to generative settings using techniques such as Teacher Forcing \cite{6795228}.\newline
+\newline
+The focus of this work is on RC methods that address the challenge of solving learning long-term dependancies, by directly avoid
+the use of BPTT and its issues. From a theoretical viewpoint, RC models can be viewed as generalization of \textbf{kernel methods} to sequential data,
  these type of models solve the task in two steps: firstly they project the input data into a high dimensional space using a fixed non-linear mapping (the reservoir in RC),
   secondly they learn a linear model on top of this representation to make predictions.
  \newline
-Both methods relies on the \textbf{Cover's Theorem} \cite{cover2006geometrical}, which states :
+Both RC and kernel methods relies on the \textbf{Cover's Theorem} \cite{cover2006geometrical}, which states :
 \begin{quote}
     \textit{"A complex pattern-classification problem, cast in a high-dimensional space nonlinearly, is more likely to be linearly separable than in a low-dimensional space."}
 \end{quote}
 
 \subsection{Echo State Networks}
-
-
+ESNs are a specific type of fully connected RNN, where only a small part of recurrent connection in the hidden layer is active, inducing sparsity, and only the output weights are trained.
+%In the previous section we talked about the possibility to project trough a rich reservoir of dynamics the input signal trough a ESN, but how really we can build such reservoir?\newline
+A common approach to build rich reservoirs \cite{lecun2015deep}[Ch 10.8] is to design the recurrence within a state-space system that operates neare in the \textit{edge of chaos} regime as described by \cite{NIPS2004_f8da71e5} \cite{LANGTON1986120}.
+ The idea is to constrain the eigenvalues of the system's Jacobian matrix $\mathbf{J}$ to be close to $1$. As we previously mentioned in sec \ref{sec:rnn_long_term_dependencies},
+ we want to enforce this condition on: $\mathbf{J}_t = \frac{\partial \mathbf{h}_{t}}{\partial \mathbf{h}_{t-1}}$.
+ \newline
+ In practice, this is controlled by the \textbf{spectral radious} of such $\mathbf{J}$, defined as the largest absolute eigenvalue of the matrix, denoted as $\rho(\mathbf{J}) = \max{|\lambda_i|}$.
+ By constraining $\rho(\mathbf{J})$ to be close to $1$, we can ensure that the system is in the edge of chaos regime, which is characterized by a balance between stability and instability.
+ \newline
+ In ESNs we can control the spectral radius of the recurrent weight matrix $W_{rec}$ directly during initialization by scaling it appropriately.
+ Given a randomly initialized weight matrix $W_{rec}^{init}$, we can compute its spectral radius $\rho(W_{rec}^{init})$ and then scale it to a desired value $\rho_{desired}$:
+ \begin{equation}
+    W_{rec} = \frac{\rho_{desired}}{\rho(W_{rec}^{init})} W_{rec}^{init}
+ \end{equation}
+ % ripetitivo
+ %By choosing $\rho_{desired}$ close to $1$, we are promoting rich dynamics that are sensitive to input variations while still being stable enough to retain information over time.
+ \newline
+ Once the reservoir is initialized, we can use it to process input sequences and collect the reservoir states over time.
+ The readout layer is then trained using closed form solutions as ridge regression or pseudoinverse.
+\newline
+A more general formulation is the Leaky ESN is given by \cite{JAEGER2007335}, which introduces a leaking rate $\alpha \in [0,1]$ to control the speed of the reservoir dynamics:
+\begin{equation}
+    \mathbf{h}(t) = (1 - \alpha) \mathbf{h}(t-1) + \alpha \tanh(W_{in}\mathbf{x}(t) + W_{rec}\mathbf{h}(t-1) + \mathbf{b})
+\end{equation}
+When $\alpha = 1$, the Leaky ESN reduces to the standard ESN, while for $\alpha < 1$, the reservoir state updates more slowly, allowing it to capture longer-term dependencies in the input sequence.
+\newline
+\subsubsection{Echo State Property}
+The entire field of RC, particularly ESNs, relies onto the assumption that the reservoir's dynamics are stables and that the current state is uniquely determined by the input history.
+The \textbf{Echo State Property} (ESP) \cite{jaeger2001echo} formalizes this requirement, stating that for any bounded input sequence,
+ the reservoir state should asymptotically depend only on the input history and not on the initial state.\newline
+ Formally, let $\mathbf{x}(t)$ be a bounded input sequence and $\mathbf{h}_1(0)$, $\mathbf{h}_2(0)$ be two different initial reservoir states
+ obtained by running that sequence through the reservoir. The ESP requires that:
+ \begin{equation}
+    \label{ESP}
+    \lim_{t \to \infty} ||\mathbf{h}_1(t) - \mathbf{h}_2(t)|| \to 0 
+ \end{equation}
+When this condition holds, the model models behaves as a \textit{fading memory} filter, where the influence of past inputs diminishes over time, in DS theory
+these are called also \textit{contractive systems} \cite{addcitation}. For it to be true, we must impose two conditions, a necessary and a sufficient one, both regarding the spectral properties of the recurrent weight matrix $W_{rec}$.
+The necessary condition requires:
+\begin{equation}
+    ||\rho(W_{rec})|| < 1
+\end{equation}
+While the sufficient condition requires:
+\begin{equation}
+    ||\sigma_{max}(W_{rec})|| < 1
+\end{equation}
+Where $\rho(W_{rec})$ is the spectral radius of the matrix $W_{rec}$
+and $\sigma_{max}(W_{rec})$ is the largest singular value of the matrix $W_{rec}$, recall from \cite{0521386322}[pp. 347], that
+the spectral radius is always upper bounded by the largest singular value: $\rho(W_{rec}) \leq \sigma_{max}(W_{rec}) = ||W_{rec}||_2$.
+\newline
+Although ESP guarantees that the reservoir state depends uniquely on the input history and not on initial conditions, enforcing its sufficient condition,
+$\rho(\mathbf{W}_{\text{rec}}) < 1$, is often too restrictive in practice.
+This bound ensures that the recurrent dynamics are contractive even in the absence of input, thereby guaranteeing stability under all circumstances. 
+However, it also leads to reservoirs with overly damped dynamics, where perturbations decay too quickly and the network loses its ability to store temporal information.
+The sufficient conditions is derived under the assumption of an autonomous system, neglecting the stabilizing effect of the continuous external input.
+Empirically, the most effective reservoirs operate near the edge of chaos and the spectral radius is often set even slightly above $1$ in some cases \cite{cucchi2022hands}.
 
 \section{Deep Recurrent Neural Networks}\todo{questa parte va riscritta dopo}
-Deep Learning had a great impact on the field of machine learning and artificial intelligence. When we consider a 
-deep learning model, we are referring to a model that has multiple layers of neurons. 
-The most common type of deep learning model is the Multilayer Perceptron (MLP),
- which consists of multiple layers of fully connected neurons. By adding layers to these models
- we are able to learn representation at different scales, each layer take the pattern from the previous layers and is capable 
- to learn a more complex pattern. 
- In this work, we will focus on
- a set of deep learning models known as Recurrent Neural Networks (RNNs).\cite{ELMAN1990179}\todo[color=green!90]{citations needed}
- RNNs are a type of neural network that is designed to handle sequential data. Depth in these architectures usually referes
- to the number of timestep we unroll the network trough time (or sequence). But we can add depth in more than one way,
- one of those is to stack multiple layers of RNNs on top of each other sequentially. 
- 
+The concept of \textit{depth} on RNNs is ambiguous and can be extended in multiple ways, as discussed by \cite{pascanu2014constructdeeprecurrentneural}.
+Firstly we say that a deep network applies multiple non-linear transformations to the input data, this is trivial for FNNs,
+but in the case of vanilla \footnote{In literature "vanilla" term refers to non-gated RNNs as the equation \ref{eq:rnn} describes} RNNs, the depth is embedded into the temporal structure, since we apply at each time step the same non-linearity.
+In the picture \ref{fig:rnn_depths} we can see the that there are several ways to introduce depth in RNNs.\newline
+If we implement the depth from the \textit{input-to-hidden} layers, the networks improves disentangling the underlying factors of variations
+from the original input signal, similar to how Convolutional layers in Convolutional Neural Networks (CNNs) extract features hierachically \cite{something}.
+For \textit{hidden-to-output} intermediate layers instead, the networks learn a more compact latent representation, with results in a more efficient summarization of input history into the hidden state that ù
+lead to the output layer, so the readout is simplified.\newline
+Yet another way to introduce depth is the \textit{hidden-to-hidden} transition, which essentially allows the hidden state to rapidly adapt to mode shifts in the input signal, this could be particularly useful in non-stationary environments, however
+a deep transition approach could lead to optimization issues due to the increased depth in the temporal dimension.
+\newline
+Finally we can stack multiple recurrent layers on top of each other, that is the main drive of this thesis, this approach encourages the model to learn at different timescales
+with the first layers capturing fast dynamics and the deeper layers capturing slower ones.
 
  \todo{Change this image or make a new one or cite it}
  \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{images/deep_architectures.png}
-    \caption{Depths in Neural Network}
-    \label{fig:rnn}
+    \caption{Depths in Recurrent Neural Networks represented graphically by \cite{pascanu2014constructdeeprecurrentneural}}
+    \label{fig:rnn_depths}
 \end{figure}
 
 \section{Deep Reservoir Computing}\todo{questo vai nei related works}
-
-Reservoir Computing (RC) is a framework introduced by \todo[color=green!90]{cite}, that is designed to 
-simplify the training of Recurrent Neural Networks. 
-The main point is that we do not need to train the recurrent connections
- of the network, but only an output layer called the readout.
