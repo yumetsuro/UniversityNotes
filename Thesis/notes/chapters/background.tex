@@ -1,64 +1,100 @@
-In this chapter we will review the main concepts and theory needed to understand the rest of this thesis.
-We will start with a brief introduction of the Dynamical Systems (DS) theory and an overview of Machine Learning
+
+In this chapter, we will review the main concepts and theory needed to understand the rest of this thesis.
+We will start with a brief introduction to the Dynamical Systems (DS) theory and an overview of Machine Learning
 concepts and foundational models that will be useful to understand the rest of the work.
-%Then we will move to a more specific topic, about RC and the ESN model, 
-%with some enphasis on the Deep counterparts of both models treated in this work.
 
+\section{The Inherent Dynamism of Natural Systems}
+Dynamics are an intrinsic aspect of reality, and the universe can be thought of as a complex, non-linear dynamical system where the state of any part is constantly
+changing over time due to interactions with other parts.
+Historically, the mathematical modelling of such systems began with the study of simple differential equations as a method
+to solve the two-body problems, but many natural phenomena are essentially Complex Systems (CS), emerging from simple interactions between single components of the 
+environment, which exhibits complex dynamics that evolve through time:
+such as motion of planets, flow of fluids, weather changes, growth of population \cite{renshaw1993modelling} and many other phenomena.\newline
 
-\section{The Inherent Dynamism of Natural Systems}\todo{questo va nel background}
-Our universe is essentially a complex non-linear dynamical system, and since Newton in mid 1600s, used differential equations as a method
-to solve the two body problems, but many natural phenomena are essentially Complex Systems, from small components of the 
-environment there are interdependaces \todo{devo approfondire i sistemi complessi?} (CS) which exhibit dynamics that evolve through time:
-such as motion of planets, flow of fluids, weather changes, growth of population and many others phenomena.\newline
-
-Dynamics is a fundamental piece of reality and modeling time dependent system evolution, is crucial to understand the world around us:
-eg. the design of control system, stock market and also the human brain can be modeled as a dynamical system.
-\todo{forse questa parte sui framework non va messa qui} The methodological framework developed through the preceding century have been specifically designed to analyze sequential data structures, commonly referred as \textit{time series},
-These approaches encompass techniques such as Autoregressive (AR) 
-models (i should cite but cannot find source) which employ linear regression on data sequences,
+Since dynamics is such an important aspect of natural systems, many real world processes can be modelled as dynamical systems,
+eg. the design of a control system, the stock market \cite{10.5555/322494} and also the human brain \cite{RevModPhys.78.1213} can be modeled as a dynamical system.\newline
+Troughout the last century the analysis of sequential data, commonly referred as \textit{time series}, became increasingly critical for understanding dynamical behaviours. Consequently specific methodological frameworks were developed to model such data.
+The approaches encompass techniques such as Autoregressive (AR) 
+models which employ linear regression on data sequences,
 extending to more sophisticasted frameworks including State-Space Models \cite{kalman1960new}, originally developed for Control Theory applications,
- and Hidden Markov Models (HMM) \cite{baum1966statistical}. The latter served as fundational precursors to Recurrent Neural Netowrks \cite{ELMAN1990179} (RNNs).
- The aforementioned models, are the basis of modern neural based sequential modeling.\newline
+ and Hidden Markov Models (HMM) \cite{baum1966statistical}. The latter served as fundational precursors to Recurrent Neural Networks \cite{ELMAN1990179} (RNNs).
+ The aforementioned models are the basis of modern neural-based sequential modeling.\newline
 
 
 \section{Dynamical Systems review}
-A dynamical system is a system which evolves over time, we can describe it's changes throught \textbf{state variables}, usually many models are constructed such that
+A dynamical system is a system which evolves over time we can describe it's changes throught \textbf{state variables}, usually many models are constructed such that
 only the foundamental state variables are considered, for example \textit{biological spiking neurons} modeled as in \cite{1257420} are described by a simple 2-D dimensional ODE, where the two state variables are the membrane potential and a recovery variable.
-ignoring existing other possible variables such gradient of ion concentration, temperature; for the sake of obtaining a large scale simulation.\newline
+ignoring existing other possible variables, such gradient of ion concentration, temperature, for the sake of obtaining a large scale simulation.\newline
 
 There are two types of dynamical systems: \textit{Differential Equations}, which are continuous in time,
-and Difference Equations or \textit{Iterated Maps} which are discrete in time. 
-The most used in a wide range of sciences fields are the former, which are further distinguished in Ordinary Differential Equations (ODE) 
+and Difference Equations or \textit{Iterated Maps}, which are discrete in time. 
+The most used in a wide range of scientific fields are the former, which are further distinguished in Ordinary Differential Equations (ODE) 
 and Partial Differential Equations (PDE), the difference is that in PDE we have two or more independent variables.  \newline
 
-This thesis will focus on ODEs since our models fell into that category, but we will also use \textit{discretization methods} (link to the section maybe) to obtain it's approximated solution.\newline
- Formally we define an ODE as:
+This work will treat ODEs in their discretized form which we'll see in section \ref{sec:discretization_methods} to obtain it's approximated solution.\newline
+ Formally, we define an ODE as:
 \begin{equation}
     \frac{d\mathbf{x}}{dt} = f(\mathbf{x},t)
+    \label{eq:ode}
 \end{equation}
 where $\mathbf{x} \in \mathbb{R}^n$ is the state vector, $t$ is the time and $f:\mathbb{R}^n \times \mathbb{R} \rightarrow \mathbb{R}^n$ is a
 vector field grouping all the state variables that describe the evolution of the system. \newline
 
 \todo{questo va tolto, forse è meglio non andare troppo in dettaglio con queste cose}
-An example of ODE is the well known Dampened Harmonic Oscillator:
+An example of ODE is the well-known Damped Harmonic Oscillator:
 \begin{equation} \label{eq:armonic}
     \frac{d^2x}{dt^2} + 2\beta \frac{dx}{dt} + \omega_0^2 x = 0
 \end{equation}
 where $x$ is the position of the oscillator, $\beta$ is the damping coefficient and $\omega_0$ is the natural frequency of the oscillator.
 \todo{anche questo va tolto?}
 
-A Differential Equation is \textit{autonomous} if the function $f$ does not depend explicitly on time, otherwise is \textit{non-autonomous}.
-We can switch from a non-autonomous to an autonomous system by adding time as a new variable to the state vector, for example the
+A Differential Equation is \textit{autonomous} if the function $f$ does not depend explicitly on the independent variable, such as time; otherwise it is \textit{non-autonomous}.
+We can switch from a non-autonomous to an autonomous system by adding the independent variable as a new variable to the state vector, for example, the
 non-autonomous system of equation \ref{eq:armonic} can be rewritten with a change of variable.
+\newline
+Generally, a differential equation has an infinite number of solutions, since it depends on the state at a given time, if we define a certain state at time $t_0$ as \textbf{initial condition} such that $\mathbf{x}(t_0) = \mathbf{x_0}$.
+Then the solution of the ODE is called \textit{initial value problem}.\newline
+%definition
+\begin{definition}
+    An \textit{initial value problem} (IVP) is defined as the pair $(\frac{d\mathbf{x}}{dt} = f(\mathbf{x},t), \mathbf{x}(t_0) = \mathbf{x_0})$,
+    where $\frac{d\mathbf{x}}{dt} = f(\mathbf{x},t)$ is a differential equation and $\mathbf{x}(t_0) = \mathbf{x_0}$ is the initial condition at time $t_0$.
+\end{definition}
+In order to solve the IVP, we need to find a function $\mathbf{x}(t)$ that satisfies both the differential equation and the initial condition.
 
+\todo{aggiungere immagini per far capire meglio}
+
+\subsection{Stability}\todo{forse è meglio usare un immagine invece di scrivere tutto questo formalismo}
+Stability \cite{strogatz:2000} is a fundamental concept in the study of dynamical systems; it describes how a system responds to small perturbations or changes in initial conditions.
+
+A system is said to be \textbf{stable} if small perturbations in the initial conditions lead to small changes in the system's behaviour over time.
+On the other hand, a system is \textbf{unstable} if small perturbations can lead to large deviations in behaviour.
+\newline
+Considering the generic equation \ref{eq:ode}, an equilibrium point $\mathbf{x}^*$ is a point where $f(\mathbf{x}^*) = 0$. The stability of this equilibrium point can be analysed using the following definitions:
+\begin{itemize}
+    \item \textbf{Lyapunov Stability}: An equilibrium point $\mathbf{x}^*$ is Lyapunov stable if, for every $\epsilon > 0$, there exists a $\delta > 0$ such that if $||\mathbf{x}(t_0) - \mathbf{x}^*|| < \delta$, 
+    then $||\mathbf{x}(t) - \mathbf{x}^*|| < \epsilon$ for all $t \geq t_0$. The system remains close to the equilibrium point remains close to the equilibrium point for all future times within the $\epsilon$ bound. 
+    
+    \item \textbf{Asymptotic Stability}: An equilibrium point $\mathbf{x}^*$ is asymptotically stable if it is Lyapunov stable and, 
+    in addition, there exists a $\delta' > 0$ such that if $||\mathbf{x}(t_0) - \mathbf{x}^*|| < \delta'$, then $\lim_{t \to \infty} \mathbf{x}(t) = \mathbf{x}^*$. The system remains close to the equilibrium point, but it also converges to it over time.
+    \item \textbf{Uniform Stability}: An equilibrium point $\mathbf{x}^*$ is uniformly stable if the $\delta$ in the Lyapunov stability definition can be chosen independently of the initial time $t_0$.
+    \item \textbf{Instability}: An equilibrium point $\mathbf{x}^*$ is unstable if it is not Lyapunov stable.
+\end{itemize}
+
+To analyse the stability of an equilibrium point, we can use linearization, which involves approximating the system near the equilibrium point using its Jacobian matrix.
+The Jacobian matrix $\mathbf{J}$ is defined as:
+\begin{equation}
+    \mathbf{J} = \frac{\partial f}{\partial \mathbf{x}} \bigg|_{\mathbf{x} = \mathbf{x}^*}
+\end{equation}
+The eigenvalues of the Jacobian matrix provide insights into the local behaviour of the system near the equilibrium point.
+\todo{dovrei descrivere come le parti immaginarie e reali degli autovalori cambiano il comportamento del sistema?} 
 \clearpage
 \subsection{Modeling}
-Modeling is a central methodology in the study of complex systems, translating real world observations and hypoteses into a formalized mathematical model, even tough simplified, can be
-crucial for studying emergent behaviours, particlarly in natural systems where we cannot change the initial state, or the enviroment variables that influence it.
+Modelling is a central methodology in the study of complex systems, translating real-world observations and hypotheses into a formalised mathematical model, even though simplified, can be
+crucial for studying emergent behaviours, particularly in natural systems where we cannot change the initial state, or the environmental variables that influence it.
 \newline
-The Hodgkin-Huxley model \cite{hodgkin1952quantitative} describes the dynamics of neuronal membrane
+The Hodgkin-Huxley model \cite{hodgkin1952quantitative} describes the dynamics of the neuronal membrane
 potential through an equivalent electrical circuit. The membrane can be represented as a capacitor $C_m$ 
-in parallel with several ion channels, each modeled as a voltage-dependent conductance 
+in parallel with several ion channels, each modelled as a voltage-dependent conductance 
 in series with a battery representing the ion's reversal potential.
 \newline
 \begin{figure}[H]
@@ -111,47 +147,56 @@ The corresponding differential equation describing the membrane potential dynami
 \end{equation}
 where $I_{ext}$ is the external input current, and each conductance $g_i$ is voltage and time dependent, governed by additional gating variables.
 
-However, as previously mentioned, natural system are often complex, as in this case we have a four dimensional non-linear coupled system, accurate modeling can be computationally infeasible, thus often simplified models are
-preferred for large scale simulations, such as the Izhikevich neuron model \cite{1257420} that captures essential spiking dynamics with only two state variables.
-\subsection{Discretization} \todo{quanto in dettaglio?}    
+However, as previously mentioned, natural systems are often complex; as in this case, we have a four-dimensional non-linear coupled system. Accurate modelling can be computationally infeasible, thus often simplified models are
+preferred for large-scale simulations, such as the Izhikevich neuron model \cite{1257420} that captures essential spiking dynamics with only two state variables.
+\subsection{Discretization Methods}\label{sec:discretization_methods} \todo{quanto in dettaglio?}    
+Finding an analytical solution for an ODE is unfeasible in many cases; thus, we need to rely on numerical methods
+to approximate the solution. Discretising the time variables in small steps of size $\tau$, there are many ways to approximate the solution of an ODE,
+but two main classes exist: \textbf{Explicit} and \textbf{Implicit} methods.\newline
+Implicit methods are more stable and accurate for numerically unstable equations (also known as stiff systems\footnote{Stiff systems are those where some terms change very rapidly compared to others.}), but require solving a system of equations at each timestep, which can be computationally expensive. On the other hand,
+Explicit methods compute the state at the timestep $t+1$ directly from the current state at time $t$, for example the well known \textbf{Euler's method} \cite{scott2011numerical} approximates the solution as:
+
+\begin{equation}
+    \mathbf{x}(t+\tau) = \mathbf{x}(t) + \tau f(\mathbf{x}(t), t)
+\end{equation}
+
+The main methods used for this work are the Explicit Euler's method, which introduces some error, the local discretisation error,
+is $||\mathbf{x}(t+\tau) - \mathbf{x}_{\text{approx}}(t+\tau)|| = O(\tau^2)$, while the global error over $N$ steps is $O(\tau)$. 
+This method is preferred since we're trying to 
+lowering computation cost as much as possible, however, in order to keep the computation stable, we need to use small time steps $\tau$.
+Of course exists a wide range of more advanced methods, such as the \textbf{Runge-Kutta} methods or even Adaptive Runge-Kutta \cite{scott2011numerical} which provide higher order accuracy if needed.
 
 \clearpage
 
 \section{Overview of Machine Learning}
-Machine Learning (ML) is a subfield of Artificial Intelligence (AI) that focuses on statistical methods and algorithms capable to \textit{learn} from past experiences.
-First we need a rigorous definition of what means to learn; \textcite[]{mitchell1997machine} defines it as : "A computer program is said to \textbf{learn} from experience $\mathbf{E}$ with respect to 
+Machine Learning (ML) is a subfield of Artificial Intelligence (AI) that focuses on statistical methods and algorithms capable of \textit{learn} from past experiences.
+First, we need a rigorous definition of what it means to learn; \textcite[]{mitchell1997machine} defines it as: "A computer program is said to \textbf{learn} from experience $\mathbf{E}$ with respect to 
 some class of tasks $\mathbf{T}$ and performance measure $\mathbf{P}$, if its performance at tasks in $\mathbf{T}$, as measured by $\mathbf{P}$, improves with experience $\mathbf{E}$."
 
-ML can tackle a much wider range of tasks that are difficult to solve with explicit rules based programming, in a certain sense it bypasses
-some level of abstraction, we're not learning the task $T$ directly, but we're sampling from the $E$ space, \textbf{examples} which are 
+ML can tackle a much wider range of tasks that are difficult to solve with explicit rules-based programming; in a certain sense, it bypasses
+some level of abstraction, we're not learning the task $T$ directly, but we're sampling from the $E$ space, \textbf{examples}, which are 
 collection of \textbf{features} that are qualitative or quantitative properties of the data that are exploited by the model to learn the task $T$.%\newline
 \subsection{The learning problem}
 %Let's start with a definition
 A formal definition of a machine learning model is given below:
-\begin{comment}
-
-\begin{definition}\todo{questo non è comunque abbastanza generico, perchè definisce solo supervised}
-Given a I.I.D. unknown probability joint distribution $P(\mathbf{x}, y)$, with $D_{\text{train}} \sim P(\mathbf{x}, y)$, such that $\mathcal{D_{\text{train}}} = \{(\mathbf{x}_i, y_i)\}_{i=1}^{N} \in \mathcal{X} \times \mathcal{Y}$, where 
-${\mathbf{x}_i} \in \mathbb{R}^d$ are the input features and ${y_i} \in \mathbb{R}$ (or $\{0,1\}$ for classification) are the target labels, then a \textbf{machine learning model} is a function $f:\mathbb{R}^d \rightarrow \mathbb{R}$ (or $\{0,1\}$) that maps $\mathbf{x}$ to $y$.
-    The goal is to find the optimal parameters $\Theta^*$ of the model $f(\mathbf{x}; \Theta^*)$ that minimize a loss function $\mathcal{L}(y, f(\mathbf{x}; \Theta^*))$ over $\mathcal{D_{\text{train}}}$. 
-    \footnote{This definition captures the \textit{supervised learning} paradigm. 
-    More broadly, in \textit{unsupervised learning}, 
-    the data consists only of $\{\mathbf{x}_i\}$ and 
-    the goal is to learn the underlying structure of the data (e.g., clusters, latent representations,
-     or the data distribution itself) by optimizing a task-specific objective function $\mathcal{J}$ 
-     without the use of target labels $y$.}
-\end{definition}
-
-\end{comment}
 
 \begin{definition}
-Let $p_{\text{data}}(\mathbf{x})$ be an independent identically distributed (i.i.d.) unknown probability distribution over the input space $\mathcal{X}$. 
-A dataset is a finite sample drawn from this distribution, $\mathcal{D}_{\text{dev}} = \{\mathbf{x}_i\}_{i=1}^{N} \subset
- \mathcal{X}$, where $\mathbf{x}_i \in \mathbb{R}^d$ are data points (or input features).
-
-A \textbf{machine learning model} is a family of prediction functions $f: \mathcal{X} \to \mathcal{Y}$ parameterized by 
-$\theta$. The nature of the model and its goal is defined by the learning paradigm:
-
+Let $\mathcal{X} \subseteq \mathbb{R}^d$ be the input space, and let
+$p_{\text{data}}$ denote an unknown data-generating distribution over $\mathcal{X}$.
+We assume that the dataset consists of $N$ independent and identically distributed
+(i.i.d.) samples drawn from $p_{\text{data}}$, namely
+\[
+\mathcal{D}_{\text{dev}} = \{\mathbf{x}_i\}_{i=1}^{N},
+\qquad \mathbf{x}_i \sim p_{\text{data}}.
+\]
+Let $\mathcal{Y}$ denote the output (or target) space.
+A \textbf{machine learning model} is a family of prediction functions
+\[
+f_\theta : \mathcal{X} \to \mathcal{Y},
+\]
+parameterized by $\theta \in \Theta$.
+The nature of the model and its learning objective are determined by the
+chosen learning paradigm:
 \end{definition}
 
 \begin{itemize}
@@ -171,72 +216,31 @@ In both cases, the ultimate objective is for the model $f(\mathbf{x}; \theta^*)$
 
 The model $f_{\theta}$\footnote{We will use $f_{\theta}$ as shorthand for $f(\mathbf{x}; \theta)$}  is said to belong to a \textbf{hypothesis space} $\mathcal{H}$, 
 which is the set of all possible functions the model can represent by varying its parameters $\theta$.
-The choice of model architecture (e.g., linear models, neural networks, decision trees) 
+The choice of model architecture (e.g., linear models, neural networks, decision trees) \cite{lecun2015deep}
 defines the hypothesis space. A larger, more expressive $\mathcal{H}$ can represent more complex functions.
 The learning algorithm searches within $\mathcal{H}$ to find the hypothesis 
 $f^* = f(\cdot; \theta^*)$ that best approximates the true underlying relationship between inputs and outputs.
 %\clearpage
-\subsection{Learning Paradigms}
-Models learn the data distributions in threen main different styles: \todo{c'è ne sono molti altri semisupervised, active learning etc.,}
-\begin{enumerate}
-    \item \textbf{Supervised Learning}, where the we aim for accurate predictions.
-    \item \textbf{Unsupervised Learning}, tries to find a compact description of the data
-    \item \textbf{Reinforcement Learning}, where an agent recursively interact with an environment in order to maximize a cumulative reward signal, trought a certain policy: $\pi^*$.
-\end{enumerate} 
-Understanding learning is crucial to choose the right modeling technique and architecture for a given task.
-In order to have a more compact picture of learning let's decompose the more general distribution: $P(\mathbf{X}, Y)$
 
+\subsection{Modelling approaches: Generative vs Discriminative}
+Both supervised and unsupervised models differ in how they represent data distributions.
+There are two main approaches: \textbf{Generative} and \textbf{Discriminative} learning.\newline
+Discriminative models learn the conditional probability $p(y|\mathbf{x})$ directly, focusing on the decision boundary between classes. They are typically used for classification and regression tasks.
+
+In contrast, generative models learn the joint probability distribution $p(\mathbf{x})$, modelling how the data is generated. So that they can generate samples that are similar to the training data, and are used for density estimation (e.g., Gaussian Mixture Models, Hidden Markov Models) \cite[Ch. 5.8]{lecun2015deep}, unsupervised learning, and semi-supervised learning.
 \begin{comment}
-At the core of ML there are two main concepts: One we've seen before, the \textbf{Learning} process, 
-which is the process of finding the optimal parameters $\Theta^*$ of the model such that the loss function $\mathcal{L}(y, f(\mathbf{x}; \Theta^*))$ is minimized with respect to training data, then we have \textbf{Generalization}, 
-that is the capability to perform well on unseen data, given a certain distribution $P(\mathbf{x}, y)$. We can formalize these concept by examining how the joint distribution can be
-decomposed and how this relates to the learning objective.\newline
+Bayesian Decision Theory \cite{barberBRML2011} provides a statistical framework for the design of many ML algorithms.
 \end{comment}
-\subsubsection{Generative and Discriminative Learning o (bayesian view)}
-The joint distribution $P(\mathbf{X}, Y)$ decomposes as: \todo{Vorrei evitare di spiegare bayes, ma come introduco questi concetti?}
-
-\begin{equation}
-    % color the marginal, prior, likelihood and posterior with different colors
-    P(\mathbf{X}, Y) = \color{blue}{P(Y|\mathbf{X})}\color{red}{P(\mathbf{X})} 
-    \color{black}= \color{green}{P(\mathbf{X}|Y)}\color{purple}{P(Y)}\color{black}
-\end{equation}
-\begin{equation*}
-    \text{Joint} = \color{blue} \text{(Posterior)} \color{black} \cdot \color{red} \text{(Marginal)} \color{black} =
-     \color{green} \text{(Likelihood)} \color{black} \cdot \color{purple} \text{(Prior)} \color{black}
-\end{equation*}
-
-In machine learning, the primary goal is often to predict the label $Y$ for a given datapoint
-$\mathbf{X}$, this is represented by the \textit{posterior distribution}. One could also be interested in approximating the unknown distribution itself
-to then generate new samples from it, in that case, are needed \textit{likelihood} and the \textit{prior} distributions.
-\newline
-% troppo didattico...
-%By rewriting in terms of posterior distribution we get what is commonly referred as the \textbf{Bayes' Theorem}. \todo{citabayes}  
-Bayesian Decision Theory \cite{barberBRML2011} provides a statistical framework for the design of many machine learning algorithms.
-The way models parameters are estimated often reflects whether the approach is \textit{Generative} or \textit{Discriminative}.
-
-\footnote{However, this correspondence is not absolute \cite[p.~312, Ch.~13]{barberBRML2011}: logistic regression
- can also be trained by pure MLE, and generative models can incorporate priors and thus be estimated via MAP.}
-Discriminative models rely often on conditional distribution, the posterior, and whenever we can incorporate
-prior knowledge on the parameters, inference is performed through \textbf{Maximum A Posteriori} (MAP) estimation \ref{eq:map}, which seek the best
-hypotesis ($\theta$) given the data and prior knowledge.\newline
-
-
-\todo{forse è meglio ridurre il numero di formule e tenerlo più discorsivo?}
-\begin{equation}\label{eq:map}
-\theta_{\text{MAP}}^* = \arg\max_{\theta} P(\theta|\mathcal{D}) = \arg\max_{\theta} P(\mathcal{D}|\theta)P(\theta)
-\end{equation}
-
-On the other hand generative models learn the joint distribution, and are typically trained by a \textbf{Maximum Likelihood Estimation} (MLE) \ref{eq:mle},
+How the parameters are estimated often \footnote{However, this correspondence is not absolute \cite[p.~312, Ch.~13]{barberBRML2011}: logistic regression
+ can also be trained by pure MLE, and generative models can incorporate priors and thus be estimated via MAP.} reflects whether the approach is \textit{Generative} or \textit{Discriminative}.
+\newline  
+Discriminative models inference is performed through \textbf{Maximum A Posteriori} (MAP) estimation, which seeks the best
+hypothesis ($\theta$) given the data and prior knowledge. On the other hand, generative models are typically trained by a \textbf{Maximum Likelihood Estimation} (MLE),
 fitting the parameters that maximize the likelihood of the data.\newline
-%questo era vecchio magari lo posso risusare se devo cambiare qualcosa
-%%To do inference, we seek the best hypotesis a model can provide, which means finding the most probable parameters $\theta$ given the data, that's called Maximum A Posteriori (MAP) estimation:
-\begin{equation}\label{eq:mle}
-\theta_{\text{MLE}}^* = \arg\max_{\theta} P(\mathcal{D}|\theta)
-|\theta)
-\end{equation}
-
-\subsection{Risk, Generalization and Overfitting o (Empirical view)}
+In this work, we will focus mainly on discriminative approaches, even though we can still use our models for generative tasks.
+\subsection{Risk, Generalization and Overfitting}
 %FOOTNOTE BARBER 13.3 CHAPTER PAGE 314
+
 While the Bayesian perspective \footnote{As said in \cite[p.~314, Ch.~13]{barberBRML2011}, 
 Bayesian approach appears to be formally optimal, but a pragmatic approach is possible, 
 it can be conditioned by a penalty $\lambda$ on the complexity of the model} provides a probabilistic view for learning,
@@ -244,7 +248,8 @@ in practice what is often adopted is called the \textit{empirical} approach base
 \cite{Vapnik1998}. This complements it by focusing on measuring and optimizing performance through the loss function,
 with the main goal of achieving \textit{generalization}.
 We seek a function $f_{\theta}$ that minimizes the expected risk $\mathcal{R}(f_\theta)$ over $p_{\text{data}}(\mathbf{x}, y)$.
-The loss function acts as a proxy for the learning process, risk have a dual nature: the expected risk and the empirical risk.
+The loss function acts as a proxy for the learning process.
+Risk has a dual nature: the expected risk and the empirical risk.
 
 The \textbf{expected risk} (or population risk) of a hypothesis $f_\theta$ measures its 
 average performance over the true data distribution.
@@ -272,7 +277,7 @@ which forms the foundation of most practical machine learning algorithms.
 \subsubsection{Risk Decomposition}
 
 %We choose $f_{\theta}$ from $\mathcal{H}$  such that the expected risk can be decomposed as:
-Most of the times the space of possible solution is unfanthomably large, thus we need to decompose the risk in order to understand if 
+Most of the time, the space of possible solutions is unfathomably large; thus, we need to decompose the risk in order to understand if 
 we are generalizing correctly.\newline
 Let $f_{\mathcal{H}}^* = \arg\min_{f \in \mathcal{H}} \mathcal{R}(f)$ be the best possible function within the hypothesis space, 
 and let $\hat f_{\mathcal{H}} = \arg\min_{f \in \mathcal{H}} \hat{\mathcal{R}}(f)$ denote the empirical risk minimizer found by the learning algorithm.
@@ -298,17 +303,17 @@ an intrinsic noise~$\varepsilon$ that cannot be captured by any hypothesis
   components. When the selected hypothesis~$f_\theta$ is insufficiently 
   expressive, \textbf{underfitting} occurs: the empirical risk $\hat{\mathcal{R}}(f_\theta)$ may be small,
    yet the estimated hypothesis fails to approximate the target function.\footnote{In the case of limited data availability}
-    Conversely, if~$f_\theta$ possesses excessive capacity, the estimator
+   If $f_\theta$ possesses excessive capacity, the estimator
      can \textit{interpolate} $\mathcal{D}_{train}$, attaining negligible empirical risk, but with a large generalization gap; 
      this phenomenon is called \textbf{overfitting}. 
 
 \subsection{Optimizing and Regularizing}\todo{questa è una parte più pragmatica che spiega come si fa learning e come si gestice la complessità}
 We extensively talked about different ways of learning, but yet we haven't discussed on how the learning is actually performed.
-Many of the modern ML algorithm are based on \textbf{Gradient-Based Optimization} methods \cite{GVK502988711}, which iteratively update the model parameters $\theta$ in order to minimize the loss function $\mathcal{L}(y, f(\mathbf{x}; \theta))$.
+Many of the modern ML algorithms are based on \textbf{Gradient-Based Optimization} methods \cite{GVK502988711}, which iteratively update the model parameters $\theta$ in order to minimize the loss function $\mathcal{L}(y, f(\mathbf{x}; \theta))$.
 % what we use for the learning in the work is mainly pseudoinverse, ridge regression since we rely on cover theorem
 %In this work we will focus on 
 \todo{comunque nella tesi non facciamo molto uso di gradient based optimization, forse si può sorvolare sui dettagli o serve comunque come background?}
-However learning differs from pure optimization, ML methods optimize indirectly with respect to the population risk.
+However, learning differs from pure optimization, ML methods optimize indirectly with respect to the population risk.
 % continua discorso su ottimizzazione e poi vai direrramente sulla parte successiva
 The typical ML objective function minimized is:
 \begin{equation}
@@ -316,15 +321,15 @@ The typical ML objective function minimized is:
 \end{equation}
 
 The term $\Omega(\mathbf{w})$ is a regularization term that allows to control the complexity of the model, $\lambda$
-is an hyperparameter that controls the strength of the regularization.\newline
-Regularization can be done in different ways for example, using a prior distribution over the parameters, or in optimization we can penalize with different 
-norms, for example $L2$ or $L1$ norms, if we are interested in decreasing magnitude of parameters or inducing sparsity respectively.\newline
+is a hyperparameter that controls the strength of the regularization.\newline
+Regularization can be done in different ways, for example, using a prior distribution over the parameters, or in optimization, we can penalize with different 
+norms, for example, $L2$ or $L1$ norms, if we are interested in decreasing the magnitude of parameters or inducing sparsity, respectively.\newline
 The algorithm that empowers the entire ML is \textbf{Stochastic Gradient Descent} (SGD) \cite[pag. 152, Ch 5.2]{Goodfellow-et-al-2016} 
 which iteratively updates the parameters $\theta$ in the opposite direction of the gradient of the loss function with respect to the parameters.
-Typically the parameters are initialized in some configuration $\theta_0$, a good initialization is often crucial to convergence,
- and at each iteration $t$ we compute the gradient of the loss function
-with respect to the parameters $\nabla_\theta \mathcal{L}(\theta_t)$, then we update the parameters using with a learning rate $\eta$ that controls the step size or magnitude of update and usually is one 
-the most influential factors that determines how quickly and accurately the model converge in a region with an optimal solution.
+Typically, the parameters are initialised in some configuration $\theta_0$, a good initialization is often crucial to convergence
+ and at each iteration $t$, we compute the gradient of the loss function
+with respect to the parameters $\nabla_\theta \mathcal{L}(\theta_t)$, then we update the parameters using a learning rate $\eta$ that controls the step size or magnitude of update, and usually is one 
+the most influential factors that determine how quickly and accurately the model converges in a region with an optimal solution.
 \newline
 The learning rule is written as:
 \begin{equation}
@@ -332,92 +337,52 @@ The learning rule is written as:
     \theta_{t+1} = \theta_t - \eta \nabla_\theta \mathcal{L}(\theta_t)
 \end{equation}
 More advanced optimization algorithms exist, such as \textbf{Adam} \cite{kingma2017adammethodstochasticoptimization} but are based on SGD with some modifications.
-Moreover SGD can work online or in batch mode, meaning that we can apply the learning rule \ref{eq:learning_rule} for each $x_i \sim \mathcal{D}_{train}$ or, the first is preferred when $|\mathcal{D}_{train}|$ is large, and the second when is small enough to fit in memory or 
-if we want the optimization to be noisy, favouring possibility to escape local minima.\newline
-
-\begin{comment}
-\subsubsection{Optimization and Regularization in Reservoir Computing} \todo{questa parte va spostata, metterla qui è troppo presto, oppure introduco reservoir prima}
-In reservoir computing, the recurrent connections remains fixed after initialization, 
-so learning reduces to estimating the readout parameters. 
-Given reservoir states collected in the recurent matrix $\mathbf{W_{rec}} \in \mathbb{R}^{N \times d}$
- and targets $\mathbf{Y} \in \mathbb{R}^{N \times m}$, the readout weights $\mathbf{W_{out}} \in \mathbb{R}^{d \times m}$ are obtained by solving a regularized least-squares problem:
-
-\begin{equation}
-    \mathbf{W_{out}} = \arg\min_{\mathbf{W}} ||\mathbf{Y} - \mathbf{W}^T \mathbf{W_{rec}}||_2^2 + \lambda ||\mathbf{W}||_2^2
-\end{equation}
-
-
-The Tikhonov coefficient $\lambda \ge 0$ controls the readout capacity and mitigates overfitting. whenever
-$N$ or $d$ is large, iterative solvers such as conjugate gradients approximate the same optimum while retaining the regularization term.
-
-\end{comment}
+Moreover, SGD can be performed in either
+online, mini-batch, or full-batch mode.
+In the online setting, the learning rule in \eqref{eq:learning_rule} is
+applied using a single training example at a time.
+In contrast, mini-batch and full-batch SGD compute parameter updates using,
+respectively, a subset or the entirety of the training dataset
+$\mathcal{D}_{\text{train}}$.
+Mini-batch training is generally preferred when $|\mathcal{D}_{\text{train}}|$
+is large, as processing the full dataset at each update step may be
+computationally infeasible or exceed available memory.
+Full-batch optimization is instead practical when the dataset is sufficiently
+small to fit entirely in memory.
+Mini-batch optimization introduces
+stochasticity into the parameter updates, resulting in noisy gradient
+estimates.
+This noise can be beneficial, as it may help the optimization process escape
+poor local minima or saddle points.
+At the same time, the expected update direction of mini-batch gradients
+approximates the true gradient of the empirical risk, as discussed
+in \cite{WILSON20031429}.
 \subsubsection{Model selection and Hyperparameters}
 The standard pipeline for training a machine learning model follows a systematic approach.
  Given a specific task and
 a sampled dataset $\mathcal{D}_{\text{dev}} \sim p_{\text{data}}$ partitioned into three subsets: 
 training $\mathcal{D}_{\text{train}}$, validation $\mathcal{D}_{\text{val}}$ , and test sets $\mathcal{D}_{\text{test}}$. The training set optimizes model parameters, 
 the validation set serves for hyperparameter tuning and architectural decisions,
- and the test set provides an unbiased performance estimate.\todo{forse devo prima spiegare cos'è unbiased estimate?}
-\newline
+ and the test set provides an unbiased performance estimate.
 Hyperparameters are those parameters not learned during training but set prior to the learning process. 
 We have seen examples like the regularization coefficient $\lambda$ and the learning rate $\eta$.
 The training phase primarily reduces the estimation error $\mathcal{R}(f_\theta) - \hat{\mathcal{R}}(f_\theta)$, from
-eq. \ref{eq:risk_decomposition}. Model selection, conversely, controls the approximation error $\mathcal{R}(f_\mathcal{H}^*)$
+eq. \ref{eq:risk_decomposition}. Model selection, controls the approximation error $\mathcal{R}(f_\mathcal{H}^*)$
  by determining the expressiveness of $\mathcal{H}$ trough hyperparameter choices.  
- %During validation, practitioners evaluate both the generalization error and optimization error to ensure
- %  the hypothesis space contains functions that generalize effectively and that the learning algorithm has
- %   successfully converged.
 Model selection involves training multiple candidate models with varying architectures and 
 hyperparameters on the training set, then selecting the configuration with the best validation performance. 
-Validation methods, such as K-fold cross-validation \cite{} or Bootstrapping \cite{} and Bayesian optimization \cite{} are often used
-in order to seach more efficiently in the space of possible models.
-\newline
-
-\begin{comment}
-% filepath: /home/vincent/UniversityNotes/Thesis/notes/chapters/background.tex
-\begin{figure}[H]
-    \centering
-    \begin{tikzpicture}[
-        node distance=1.5cm,
-        thick,
-        >=stealth,
-        scale=0.6,
-        transform shape
-    ]
-    
-    % Nodes with simple styles
-    \node[star, star points=5, minimum size=8mm, draw=red, fill=red!20] (theta) {$\theta$};
-    \node[ellipse, minimum width=25mm, minimum height=12mm, draw=blue, fill=blue!20, right=of theta] (p1) {$p(x,c|\theta)$};
-    \node[ellipse, minimum width=25mm, minimum height=12mm, draw=blue, fill=blue!20, right=of p1] (p2) {$p(c|x^*,\theta)$};
-    \node[diamond, minimum width=30mm, minimum height=15mm, draw=red, fill=red!20, below=of p2] (loss) {$\langle L(c,c^*)\rangle_{p(c|x^*,\theta)}$};
-    \node[star, star points=5, minimum size=8mm, draw=red, fill=red!20, below=of loss] (cstar) {$c^*$};
-    
-    % Input/output labels
-    \node[above=2mm of p1] {$x,c$};
-    \node[above=2mm of p2] {$x^*$};
-    
-    % Simple arrows
-    \draw[->] (theta) -- (p1);
-    \draw[->] (p1) -- (p2);
-    \draw[->] (p2) -- (loss);
-    \draw[->] (cstar) -- (loss);
-    
-    \end{tikzpicture}
-    \caption{Probabilistic graphical model representation}
-    \label{fig:probabilistic_model}
-\end{figure}
-\end{comment}
-
-\clearpage
+Validation methods, such as K-fold cross-validation or Bootstrapping \cite{lecun2015deep} and Bayesian optimization search \cite{8791696} are often used
+in order to search more efficiently in the space of possible models.
 
 \section{Neural Networks and Deep Learning}
 Neural networks (NNs) \cite[Ch. 3.1]{prince2023understanding} are flexible non-linear universal function approximators \cite{cybenko1989approximation} \cite{bach2024learning}
-which are inspired by biological neural system, where information is processed in hierarchical manner, in fact, the idea originates from the layerwise brain organization in the visual cortex
+which are inspired by the biological neural system, where information is processed in hierarchical manner. 
+In fact, the idea originates from the layerwise brain organization in the visual cortex
 where information is processed at different complexity scales as discussed in \cite{fukushima1980neocognitron}. 
-Specifically a shallow feedforward neural network (FFN) is composed of interconnected nodes called \textit{perceptrons} \cite{rosenblatt1958perceptron} or artificial neurons divided in:
+Specifically, a shallow feedforward neural network (FFN) is composed of interconnected nodes called \textit{perceptrons} \cite{rosenblatt1958perceptron} or artificial neurons divided into:
 input layer, that receives the perceived signal $\mathbf{x} \in \mathbb{R}^d$, one hidden layer, and an output layer that predicts the target $\hat{y}$.
 By stacking hidden layers we are composing together many different functions eg. $f_{net}^l \circ f_{net}^{l-1} \circ ... \circ f_{net}^1$, with each hidden layer having its own parameters:  $\theta = \left\{ {W^{(l)}}, \mathbf{b^{(l)}} \right\}}$,
- increasing the complexity of the model as well the hypothesis space $\mathcal{H}$.
+ increasing the complexity of the model as well as the hypothesis space $\mathcal{H}$.
 
 \begin{figure}[H]
     \centering
@@ -479,45 +444,82 @@ $\sigma$. \newline
 \begin{equation}
     f_{net}^l(\mathbf{x}) = \sigma(W^{(l)}\mathbf{x} + b^{(l)}) = \sigma(\sum_{i=1}^{d} w_i^{(l)} x_i + b^{(l)})\footnote{With $x_i$ and $w_i^{(l)}$ the $i$-th element of $\mathbf{x}$ and $W^{(l)}$ respectively}
 \end{equation}
-We call $W^{(l)}$ the weight matrix, $\mathbf{b}^{(l)}$ the bias vector, $\sigma$ is an arbitrary\footnote{While for hidden layers the right activation is usually chosen by model selection, for output layer the activation regards the task
-e.g., identity for regression, logistic for binary classification and softmax for multiclassifiers} non linear function such as ReLU, Sigmoid or Tanh.
+We call $W^{(l)}$ the weight matrix, $\mathbf{b}^{(l)}$ the bias vector, $\sigma$ is an arbitrary\footnote{While for hidden layers the right activation is usually chosen by model selection, for the output layer the activation regards the task
+e.g., identity for regression, logistic for binary classification, and softmax for multiclassifiers} non-linear function such as ReLU, Sigmoid or Tanh.
 $\mathbf{x} \in \mathbb{R}^d$ is the input vector.
-The parameters of this model, weight are estimated trough an algorithm known as \textbf{Backpropagation} \cite{rumelhart1986learning},
+The parameters of this model, weight, are estimated through an algorithm known as \textbf{Backpropagation} \cite{rumelhart1986learning},
  which is an application of the chain rule of calculus to compute the gradient of the loss function with respect to the model parameters.
 
 
 \subsection{Recurrent Neural Networks for Sequential Data}
 % cite the unreasonably effectivenes of RNN...
 Recurrent Neural Networks (RNNs) \cite{rumelhart1986learning} are a class of neural networks designed to handle sequential values.
-Their recurrent architecture introduces an \textit{architectural bias} \cite{1263574} towards capturing sequential dependancies. Even prior to training, recurrent units can display clustering resembling markovian dynamics.
+Their recurrent architecture introduces an \textit{architectural bias} towards capturing sequential dependancies. Even prior to training, recurrent units can display clustering resembling Markovian dynamics \cite{1263574}.
 \newline
- In contrast FFNs, process inputs independently, requiring fixed length data with separated parameters for each input dimension, 
- also sequential data exhibit temporal dependancies and long context which complexity grows with respect to number of timesteps $T$.
+ In contrast to FNNs, which process input samples
+independently and assume a fixed-dimensional input representation, sequential
+data are characterized by temporal dependencies and long-range contextual
+structure.
+As a consequence, the effective complexity of modeling sequential data grows
+with the length of the sequence, i.e., with the number of time steps $T$.
  \newline
+ \newline
+ Formally, RNNs are factorizing the probability of a sequence into a product of conditional distributions over time \cite{sutskever2014sequencesequencelearningneural}. 
+Rather than conditioning explicitly on the entire past sequence, RNNs introduce a hidden state that acts as a compact summary of previous observations. 
+The probability of a sequence $\mathbf{x}_{1:T} = [\mathbf{x}_1, \ldots, \mathbf{x}_T]$ is thus modeled as
+\begin{equation}
+    p(\mathbf{x}_{1:T}) = \prod_{t=1}^{T} p(\mathbf{x}_t \mid \mathbf{h}_{t-1}; \theta),
+\end{equation}
+where the hidden state $\mathbf{h}_t$ is updated recursively according to
+\begin{equation}
+    \mathbf{h}_t = f(\mathbf{h}_{t-1}, \mathbf{x}_t; \theta).
+\end{equation}
+Through this recursive update, the hidden state provides a finite-dimensional representation of the history $\mathbf{x}_{1:t}$, enabling the model to capture temporal dependencies without explicitly storing past inputs.
+ \newline
+\begin{comment}
 Formally, RNNs model the joint distribution of a sequence $\mathbf{x}_{1:T} = [\mathbf{x}_1, \ldots, \mathbf{x}_T]$, by factorizing it over $T$ steps
  as a product of conditional distributions \cite{sutskever2014sequencesequencelearningneural}:
 \begin{equation}
     p(\mathbf{x}_{1:T}) = \prod_{t=1}^{T} p(\mathbf{x}_t \mid \mathbf{x}_{1:t-1}; \theta)
 \end{equation}
+\end{comment}
  RNNs introduce parameter sharing across time steps, allowing them to generalize across different sequence lengths and capture temporal dependencies.
 Parameters sharing embodies a key \textit{inductive bias}: the assumption of temporal stationarity.
 This assumption implies that the same parameters are updated each time step, so that the conditional probability distribution over variables at time
-$t+1$ given all previous time steps do not depend explicitly on $t$, but only on the hidden state at time $t$.\newline\newline
+$t+1$ given all previous time steps does not depend explicitly on $t$, but only on the hidden state at time $t$.\newline\newline
 For any time indices $t,k \in \mathbb{N}$, transition and output distributions: $p(\mathbf{h}_{t+1} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{h}_{k+1} \mid \mathbf{h}_{k}; \theta)$ and 
-$p(\mathbf{y}_{t} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{y}_{k} \mid \mathbf{h}_{k}; \theta)$, share the same parameter set~$\theta$ governing the dynamics at each time step, 
-consequently, temporal dependencies are captured solely through the evolution of the hidden state~$\mathbf{h}_t$, without explicit 
-dependence on~$t$.
+$p(\mathbf{y}_{t} \mid \mathbf{h}_{t}; \theta) = p(\mathbf{y}_{k} \mid \mathbf{h}_{k}; \theta)$, share the same parameter set $\theta$ governing the dynamics at each time step, 
+consequently, temporal dependencies are captured solely through the evolution of the hidden state $\mathbf{h}_t$, without explicit 
+dependence on $t$.
 \newline\newline
- Similarly to seminal works as Time Delay Neural Networks (TDNNs) \cite{waibel1989phoneme}, 
+ Similar to seminal works as Time Delay Neural Networks (TDNNs) \cite{peddinti15b_interspeech}, 
  RNNs maintain a hidden state $\mathbf{h}_t$ that is updated at each time step based on the current input $\mathbf{x}_t$ and the previous hidden state $\mathbf{h}_{t-1}$.
 \newline
-Computational graphs are often used to represent the structure of RNNs, this is true because they are part of the family of structured probabilistic models or 
-\textbf{Graphical Models} \cite{barberBRML2011}, i.e., Hidden Markov Models (HMMs), Bayesian Networks (BNs) and Conditional Random Fields (CRFs).
-Where nodes represent random variables and edges represent dependancies between them, similarly we can think 
-to RNNs as a specialization of these probabilistic models, but with a parameterized approach on the dependancies.
+Computational graphs are often used to represent the structure of RNNs. These are part of the family of structured probabilistic models or 
+\textbf{Graphical Models} \cite{barberBRML2011}, i.e., Hidden Markov Models (HMMs), Bayesian Networks (BNs), and Conditional Random Fields (CRFs) \cite[Ch. 4]{barberBRML2011}.
+Where nodes represent random variables, and edges represent dependencies between them, similarly, we can think 
+to RNNs as a specialization of these probabilistic models, but with a parameterized approach to the dependencies.
 \newline
-RNNs can be \textit{unrolled} trough time, which results in a directed acyclic graph (DAG), this helps
-visualizing the flow of information trough such networks, as we can see from the figure \ref{fig:rnn_unrolled}.
+% RNNs definitions
+An RNNs equation at time step $t$ is defined as:
+\begin{equation}
+    \mathbf{h}(t) = \tanh(W_{in} \mathbf{x}(t) + W_{rec} \mathbf{h}(t-1) + \mathbf{b})
+\end{equation}
+Where $\mathbf{h}(t) \in \mathbb{R}^{N_h}$ is the hidden state at time $t$, $\mathbf{x}(t) \in \mathbb{R}^{N_x}$ is the input vector at time $t$,
+$W_{in} \in \mathbb{R}^{N_h \times N_x}$ is the input weight matrix, $W_{rec} \in \mathbb{R}^{N_h \times N_h}$ is the recurrent weight matrix, $\mathbf{b} \in
+    \mathbb{R}^{N_h}$ is the bias vector, and $\tanh$ is the hyperbolic tangent activation function applied element-wise.
+
+The output $\mathbf{y}(t) \in \mathbb{R}^{N_y}$ at time $t$ is computed as:
+\begin{equation}
+    \mathbf{y}(t) = W_{out} \mathbf{h}(t) +
+    \mathbf{c}
+\end{equation}
+
+RNNs can be \textit{unrolled} through time, which results in a directed acyclic graph (DAG), which helps
+visualizing the flow of information through such networks, as we can see from the figure \ref{fig:rnn_unrolled}.
+
+\definecolor{mypink3}{cmyk}{0, 0.7808, 0.4429, 0.1412}
+\definecolor{green_x}{rgb}{0, 20, 0}
 
 \begin{figure}[H]
     \centering
@@ -553,17 +555,17 @@ visualizing the flow of information trough such networks, as we can see from the
     \node[below] at (3.1,0.8) {Unfold};
     
     % Part 3: Unfolded RNN
-    \node[hidden] (hprev) at (5.0,0.8) {$h_{(...)}$};
-    \node[rnncell] (ht1) at (6.8,0.8) {$h_{(t-1)}$};
-    \node[rnncell] (ht) at (8.4,0.8) {$h_{(t)}$};
-    \node[rnncell] (ht2) at (10,0.8) {$h_{(t+1)}$};
-    \node[hidden] (hnext) at (11.6,0.8) {$h_{(...)}$};
-    \node at (6.8,-0.5) (xt1) {$x_{(t-1)}$};
-    \node at (8.4,-0.5) (xt) {$x_{(t)}$};
-    \node at (10,-0.5) (xt2) {$x_{(t+1)}$};
-    \node at (6.8,2.2) (yt1) {$y_{(t-1)}$};
-    \node at (8.4,2.2) (yt) {$y_{(t)}$}; 
-    \node at (10,2.2) (yt2) {$y_{(t+1)}$}; 
+    \node[hidden] (hprev) at (5.0,0.8) {\tiny$h{(...)}$};
+    \node[rnncell] (ht1) at (6.8,0.8) {\tiny $h{(t-1)}$};
+    \node[rnncell] (ht) at (8.4,0.8) {\tiny $h{(t)}$};
+    \node[rnncell] (ht2) at (10,0.8) {\tiny $h{(t+1)}$};
+    \node[hidden] (hnext) at (11.6,0.8) {\tiny$h{(...)}$};
+    \node at (6.8,-0.5) (xt1) {\tiny $x{(t-1)}$};
+    \node at (8.4,-0.5) (xt) {\tiny $x{(t)}$};
+    \node at (10,-0.5) (xt2) {\tiny $x{(t+1)}$};
+    \node at (6.8,2.2) (yt1) {\tiny $y{(t-1)}$};
+    \node at (8.4,2.2) (yt) {\tiny $y{(t)}$}; 
+    \node at (10,2.2) (yt2) {\tiny $y{(t+1)}$}; 
     
     % Horizontal connections 
     %add W rec
@@ -584,48 +586,26 @@ visualizing the flow of information trough such networks, as we can see from the
     \draw[arrow] (ht2) -- node[midway, right] {\tiny$W_{out}$} (yt2);
 
 \end{tikzpicture}
-    \caption{Recurrent Neural Network unrolled through time}
+    \caption{Vanilla Recurrent Neural Network unrolled through time: the hidden state for generic timestep $t$ is updated with the same two matrices: $W_{in}$ and $W_{rec}$ by taking the previous hidden state $h_{t-1}$ and the signal at the time $t$ along the application of $\sigma$ nonlinearity, the arrows acts as matrix-vector multiplications.}
     \label{fig:rnn_unrolled}
 \end{figure}
 
-RNNs differs from traditional DNNs, due to the sequential input nature, thus even training is performed in a different way,
+RNNs differ from traditional DNNs due to the sequential input nature; even training is performed in a different way,
 the algorithm used for training these models is called \textbf{Backpropagation Through Time} (BPTT) \cite{werbos2002backpropagation}, which requires 
-to backpropagate the error trough from the end to the start of the unrolled graph \ref{fig:rnn_unrolled} with $O(T)$ complexity.
+to backpropagate the error through from the end to the start of the unrolled graph \ref{fig:rnn_unrolled} with $O(T)$ complexity.
 \newline
-As proved by Funashi and Nakamura \cite{funahashi1993approximation}, 
-Continuous Time Recurrent Neural Networks \todo{forse questa parte non va bene non c'entra molto} (CTRNNs) are able to approximate finite time dynamical systems with arbitrary precision.
-We derive a discretized version of equation \ref{eq:ctrnn} as follows
-%Since recurrent dynamics can be viewed as a discretization of a continuous-time dynamical system as described in \cite{funahashi1993approximation}
-%the BPTT operated in the unfolded graph, by computing gradients with respect to the timesteps.
-\begin{equation}
-    \label{eq:rnn}
-    \mathbf{h}(t) = \tanh(W_{in}\mathbf{x}(t) + W_{rec}\mathbf{h}(t-1) + \mathbf{b})
-\end{equation}
-At each time step $t$, the hidden state $\mathbf{h}(t)$ is updated based on the current input $\mathbf{x}(t)$ and the previous hidden state $\mathbf{h}(t-1)$:
-Where $W_{in}$ is the input-to-hidden weight matrix, $W_{rec}$ is the hidden-to-hidden (recurrent) weight matrix, $\mathbf{b}$ is the bias vector, and $\sigma$ is a non-linear activation function such as Tanh or ReLU.
-    The output $\hat{y}^t$ at each time step can be computed as:
-\begin{equation}
-    \hat{y}(t) = W_{out}\mathbf{h}(t) + \mathbf{c}
-\end{equation}
-Where $W_{out}$ is the hidden-to-output weight matrix and $\mathbf{c}$ is the output bias vector.
-\newline
-Finally we get the following DE for a general RNN:
-\begin{equation}
-    \label{eq:ctrnn}
-    \frac{d\mathbf{h}(t)}{dt} = -\mathbf{h}(t) + \tanh(W_{in}\mathbf{x}(t) + W_{rec}\mathbf{h}(t) + \mathbf{b})
-\end{equation}
-
 \subsection{The challenge for Long-Term Dependencies}
 \label{sec:rnn_long_term_dependencies}
-RNNs are powerful models for sequential data modeling, however in the last years, they have been largely replaced by Transformer architectures \cite{vaswani2023attentionneed},
-this happened mainly because of the difficulty in training RNNs to capture long-term dependencies in sequences \cite{article}, \cite{230622}, \cite{279181}. The problem is addressed as \textit{information latching} \cite{298725}, which
-consist in the ability of such network to retain a robust representation of bits of information, this happens when the states of the network are contained in a reduced attracting set of an hyperbolic attractor \cite{haykin2009neural}.
-Core of this work as well is the investigation of this problem, thus we will briefly summarize the main issues and solution proposed in literature.
-\newline
+RNNs are powerful models for sequential data modelling; however, in the last years, they have been largely replaced by Transformer architectures \cite{vaswani2023attentionneed}.
+This happened mainly because of the difficulty in training RNNs to capture long-term dependencies in sequences \cite{article}, \cite{230622}, \cite{279181}. The problem is addressed as \textit{information latching} \cite{298725}, which
+consists in the ability of such networks to retain a robust representation of bits of information, this happens when the states of the network are contained in a reduced attracting set of a hyperbolic attractor \cite{haykin2009neural}, in the neighbourhood of this set the derivatives vanish and hence cannot be propagated through time to reliably latch the set.
+In this work, we will try to address this problem when proposing our solutions that are based on
+previous literature on RNNs designed to capture long-term dependencies; we will briefly summarize the main issues and the solutions proposed in the literature.
+\subsubsection{The cause of Vanishing and Exploding Gradients}
 By looking again at picture \ref{fig:rnn_unrolled},
-if we imagine a really long sequence, the gradients will be propagated back through many time steps, this can lead to numerical instability and make long term dependencies hard to learn.
+if we imagine a really long sequence, the gradients will be propagated back through many time steps, this can lead to numerical instability and make long-term dependencies hard to learn.
 This is due to the repeated multiplication of the gradients by the Jacobian matrix of the hidden state with respect to itself at the previous time step.
-Essentially we compute the following loss:
+Essentially, we compute the following loss:
 \begin{equation}
     \frac{\partial \mathcal{L}_t}{\partial W_{rec}} = \sum_{k=1}^{t} \frac{\partial \mathcal{L}_t}{\partial \mathbf{h}_t} \left(\prod_{l=k}^{t-1} \frac{\partial \mathbf{h}_{l+1}}{\partial \mathbf{h}_l}\right) \frac{\partial \mathbf{h}_k}{\partial W_{rec}}
 \end{equation}
@@ -633,40 +613,100 @@ where $\frac{\partial \mathbf{h}_{l+1}}{\partial \mathbf{h}_l}$ is the Jacobian 
 leading to \textit{vanishing} or \textit{exploding} (V/E) gradients \footnote{Gradient issues is related to depth of a network, even sufficiently deep FFNs suffers of V/E issues.} \cite[pag. 290, Ch 8.2]{lecun2015deep} depending on the spectral properties of these Jacobian matrices.
 Suppose that $W_{rec}$ eigendecomposes as $W_{rec}^t = V \text{diag}({\lambda})^t V^{-1}$.
 Exploding happen when the $|\lambda_{max}| > 1$, while vanishing when $|\lambda_{max}| < 1$.
-Essentially the jacobian matrix provide information about how small changes in $h_t$ propagates to the next step or equivalently how the gradient on $h_{t+1}$ propagates at the previous step, moreover
-the recurrent matrix and the jacobian can have complex-valued eigenvalues, with imaginary part that induces oscillatory dynamics, making more complicated dynamics easier to learn. 
+The Jacobian matrix provides information about how small changes in $h_t$ propagate to the next step, or equivalently, how the gradient on $h_{t+1}$ propagates at the previous step.
+Moreover, the recurrent matrix and the Jacobian can have complex-valued eigenvalues, with an imaginary part that induces oscillatory dynamics, making more complicated dynamics easier to learn. 
 \newline
 Several solutions have been proposed in literature to mitigate this problem, such as gradient clipping  \cite{pmlr-v28-pascanu13},
 residual connections \cite{he2015deepresiduallearningimage} that help by adding to the timesteps directly the signal from previous steps, as well approaches directly acting on the recurrent 
-matrix that fixes its spectrum to 1, such as orthogonal or unitary RNNs \cite{arjovsky2016unitaryevolutionrecurrentneural} \cite{le2015simplewayinitializerecurrent}.
-Even choosing the right transfer function can help: Sigmoidal activations tend to saturate very quickly since their derivatives approaches $0$ in the extreme regions, alternatives such as $\tanh$ that
-saturates less, or ReLU that has more stable gradients and regularize at the same time by sparsifying activations \cite{pmlr-v15-glorot11a} contribute to the architectural bias.\todo{giusto?}
+matrix that fixes its spectrum to 1, such as orthogonal or unitary RNNs \cite{pmlr-v48-arjovsky16} \cite{le2015simplewayinitializerecurrent}.
+Even choosing the right transfer function can help: Sigmoidal activations tend to saturate very quickly since their derivatives approach $0$ in the extreme regions, alternatives such as $\tanh$ that
+saturate less, or ReLU that has more stable gradients and regularize at the same time by sparsifying activations \cite{pmlr-v15-glorot11a} contribute to the architectural bias.
 \newline
 A fundamental insight into solving the vanishing gradient came from Hochreiter et al. \cite{article}, introducing the concept of \textbf{Constant Error Carousel} (CEC),
-which allows gradients to flow unchanged trough time in the backward pass by using self-loops with unit weight in the recurrent connections.
-But with CEC the error is integrated over time, and time based tasks often require memory to change dynamically.
+which allows gradients to flow unchanged through time in the backward pass by using self-loops with unit weight in the recurrent connections.
+But with CEC, the error is integrated over time, and time-based tasks often require memory to change dynamically.
 \subsubsection{Gated RNNs}
 To address the memory issues of learning long-term dependencies in sequential data, 
 specialized RNN architectures with gating mechanisms have been developed, specifically
-Long Short-Term Memory (LSTM) networks \cite{article} and Gated Recurrent Units (GRUs) \cite{cho2014learningphraserepresentations}.
-These gates in these models solve the CEC problem by allowing the network to learn selectively what information should be integrated or forgotten over time.
+Long Short-Term Memory (LSTM) networks \cite{article} and Gated Recurrent Units (GRUs) \cite{cho2014properties}.
+Such architectures aimed to solve Neural Machine Translation (NMT) over long sentences, where standard RNNs failed due to saturation of their memory capabilities.
+The gates in these models solve the CEC problem by allowing the network to learn selectively what information should be integrated or forgotten over time.
 \newline
-The \textit{forget gate} uses sigmoid activation to decide what amount of information discard from the previous $h_t$, while
-the \textit{input gate} control how much of the new information from the current input $x_t$ should be added to the cell state.
-Finally the \textit{output gate} determines what part of the cell state should be output as the new hidden state $h_t$.
+The \textit{forget gate} uses sigmoid activation to decide what amount of information to discard from the previous $h_t$, while
+the \textit{input gate} controls how much of the new information from the current input $x_t$ should be added to the cell state.
+Finally, the \textit{output gate} determines what part of the cell state should be output as the new hidden state $h_t$.
+
+For LSTMs the equations governing the gates and cell state updates are as follows:
+\begin{equation}
+    \begin{split}
+        f_t &= \sigma(W_f \cdot [h_{t-1}, x_t]) \;\; \text{(forget gate)}\\ 
+        i_t &= \sigma(W_i \cdot [h_{t-1}, x_t]) \;\; \text{(input gate)}\\
+        o_t &= \sigma(W_o \cdot [h_{t-1}, x_t]) \;\; \text{(output gate)}\\
+        \tilde{C}_t &= \tanh(W_C \cdot [h_{t-1}, x_t]) \;\; \text{(cell candidate)}\\
+        C_t &= f_t \odot C_{t-1} + i_t \odot \tilde{C}_t \;\; \text{(cell state update)}\\
+        h_t &= o_t \odot \tanh(C_t) \;\; \text{(hidden state update)}
+    \end{split}
+\end{equation}
+
+Where $W_f, W_i, W_o, W_C$ are weight matrices for the respective gates and cell candidate.
+
+Instead, the GRU architecture combines the forget and input gates into a single \textit{update gate}, simplifying the model while retaining similar capabilities. 
+But having fewer parameters makes GRUs faster to train and less prone to overfitting on smaller datasets.
+\textbf{Update gates} acts as a conditional leaky integrator, deciding how much of previous hidden state to retain, 
+while the \textbf{reset gate} determines how much of previous hidden state $h_{t-1}$ to forget and how much of the new
+input $x_t$ to consider when computing the candidate hidden state $\tilde{h}_t$ by using a convex between the two.
+The GRU equations are as follows:
+\begin{equation}
+    \begin{split}
+        z_t &= \sigma(W_z \cdot [h_{t-1}, x_t]) \;\; \text{(update gate)}\\
+        r_t &= \sigma(W_r \cdot [h_{t-1}, x_t]) \;\; \text{(reset gate)}\\
+        \tilde{h}_t &= \tanh(W_h \cdot [r_t \odot h_{t-1}, x_t]) \;\; \text{(candidate hidden state)}\\
+        h_t &= (1 - z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t \;\; \text{(hidden state update)}
+    \end{split}
+\end{equation}
+
+\todo{va bene cosi per la formula o devo aggiungere cosa significa ogni parte?}
+Where $W_z, W_r, W_h$ are weight matrices for the respective gates and candidate hidden state.\newline\newline
+Both LSTMs and GRUs have demonstrated remarkable success in various sequential tasks, including language modelling.
+ But they still rely on BPTT for training, inheriting its limitations regarding computational cost 
+ and difficulty in capturing very long-term dependencies.
+
+
+\section{Deep Recurrent Neural Networks}
+The concept of \textit{depth} on RNNs is ambiguous and can be extended in multiple ways, as discussed by \cite{pascanu2014constructdeeprecurrentneural}.
+Firstly, we say that a deep network applies multiple non-linear transformations to the input data; this is trivial for FNNs,
+but in the case of vanilla \footnote{In literature "vanilla" term refers to non-gated RNNs as the equation \ref{eq:rnn} describes} RNNs, the depth is embedded into the temporal structure, since we apply at each time step the same non-linearity.
+In the picture \ref{fig:rnn_depths} we can see that there are several ways to introduce depth in RNNs.\newline
+If we implement the depth from the \textit{input-to-hidden} layers, the networks improve at disentangling the underlying factors of variations
+from the original input signal, similar to how Convolutional layers in Convolutional Neural Networks (CNNs) extract features hierarchically \cite{zeiler2013visualizingunderstandingconvolutionalnetworks}.
+For \textit{hidden-to-output} intermediate layers instead, the networks learn a more compact latent representation, resulting in a more efficient summarization of input history into the hidden state that 
+leads to the output layer, so the readout is simplified.\newline
+Yet another way to introduce depth is the \textit{hidden-to-hidden} transition, which essentially allows the hidden state to adapt to mode shifts in the input signal rapidly, this could be particularly useful in non-stationary environments, however,
+a deep transition approach could lead to optimization issues due to the increased depth in the temporal dimension.
+\newline
+Finally, we can stack multiple recurrent layers on top of each other, which is the main drive of this thesis, this approach encourages the model to learn at different timescales
+with the first layers capturing fast dynamics and the deeper layers capturing slower ones.
+
+ \todo{Change this image or make a new one or cite it}
+ \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/deep_architectures.png}
+    \caption{Depths in Recurrent Neural Networks represented graphically by \cite{pascanu2014constructdeeprecurrentneural}}
+    \label{fig:rnn_depths}
+\end{figure}
 
 \section{Reservoir Computing}
-Reservoir Computing (RC) is a computational framework introduced in the early 2000s with two keys models: Echo State Networks (ESN) \cite{jaeger2001echo} and
-Liquid State Machines (LSM) \cite{fernando2003pattern}. Both approaches aims to simplify the training of RNNs while exploiting the inherent dynamical properties of real world physical systems to
-obtain a \textit{"reservoir"} of rich dynamics that can be leveraged to solve complex task. 
-A major advantage of RC lies in it's efficiency: only the linear readout layer is trained, while recurrent connections remains fixed.
+Reservoir Computing (RC) is a computational framework introduced in the early 2000s with two key models: Echo State Networks (ESN) \cite{jaeger2001echo} and
+Liquid State Machines (LSM) \cite{fernando2003pattern}. Both approaches aim to simplify the training of RNNs while exploiting the inherent dynamical properties of real-world physical systems to
+obtain a \textit{"reservoir"} of rich dynamics that can be leveraged to solve complex tasks. 
+A major advantage of RC lies in its efficiency: only the linear readout layer is trained, while recurrent connections remain fixed.
 \newline
-The central idea is to avoid training the recurrent connection in the network by using a fixed high-dimensional reservoir, that project the input signal into an high dimensional feature space,
+The central idea is to avoid training the recurrent connection in the network by using a fixed high-dimensional reservoir that projects the input signal into a high-dimensional feature space,
 where a linear classifier is sufficient to learn the linearized representation of the input signal. \newline
 Reservoir Computing has been successfully applied to tasks such as time series prediction, speech recognition, robot control \todo{add citation here}, furthermore can also be extended to generative settings using techniques such as Teacher Forcing \cite{6795228}.\newline
 \newline
-The focus of this work is on RC methods that address the challenge of solving learning long-term dependancies, by directly avoid
-the use of BPTT and its issues. From a theoretical viewpoint, RC models can be viewed as generalization of \textbf{kernel methods} to sequential data,
+The focus of this work is on RC methods that address the challenge of solving learning long-term dependencies, by directly avoiding
+the use of BPTT and its issues. From a theoretical viewpoint, RC models can be viewed as generalization of \textbf{kernel methods} \cite[Ch. 5]{haykin2009neural} to sequential data,
  these type of models solve the task in two steps: firstly they project the input data into a high dimensional space using a fixed non-linear mapping (the reservoir in RC),
   secondly they learn a linear model on top of this representation to make predictions.
  \newline
@@ -676,34 +716,62 @@ Both RC and kernel methods relies on the \textbf{Cover's Theorem} \cite{cover200
 \end{quote}
 
 \subsection{Echo State Networks}
-ESNs are a specific type of fully connected RNN, where only a small part of recurrent connection in the hidden layer is active, inducing sparsity, and only the output weights are trained.
+\label{sec:esn}
+ESNs are a specific type of fully connected RNN, where only a small part of recurrent connections in the hidden layer is active, inducing sparsity, and only the output weights are trained.
 %In the previous section we talked about the possibility to project trough a rich reservoir of dynamics the input signal trough a ESN, but how really we can build such reservoir?\newline
-A common approach to build rich reservoirs \cite{lecun2015deep}[Ch 10.8] is to design the recurrence within a state-space system that operates neare in the \textit{edge of chaos} regime as described by \cite{NIPS2004_f8da71e5} \cite{LANGTON1986120}.
+A common approach to build rich reservoirs \cite[Ch 10.8]{lecun2015deep} is to design the recurrence within a state-space system that operates in the \textit{edge of chaos} regime as described by \cite{NIPS2004_f8da71e5} \cite{LANGTON1986120}.
  The idea is to constrain the eigenvalues of the system's Jacobian matrix $\mathbf{J}$ to be close to $1$. As we previously mentioned in sec \ref{sec:rnn_long_term_dependencies},
  we want to enforce this condition on: $\mathbf{J}_t = \frac{\partial \mathbf{h}_{t}}{\partial \mathbf{h}_{t-1}}$.
  \newline
- In practice, this is controlled by the \textbf{spectral radious} of such $\mathbf{J}$, defined as the largest absolute eigenvalue of the matrix, denoted as $\rho(\mathbf{J}) = \max{|\lambda_i|}$.
+ In practice, this is controlled by the \textbf{spectral radius} of such $\mathbf{J}$, defined as the largest absolute eigenvalue of the matrix, denoted as $\rho(\mathbf{J}) = \max{|\lambda_i|}$.
  By constraining $\rho(\mathbf{J})$ to be close to $1$, we can ensure that the system is in the edge of chaos regime, which is characterized by a balance between stability and instability.
  \newline
- In ESNs we can control the spectral radius of the recurrent weight matrix $W_{rec}$ directly during initialization by scaling it appropriately.
+ In ESNs we can control the spectral radius of the recurrent weight matrix $W_{rec} \in \mathbb{R}^{N_r \times N_r}$ directly during initialization by scaling it appropriately.
  Given a randomly initialized weight matrix $W_{rec}^{init}$, we can compute its spectral radius $\rho(W_{rec}^{init})$ and then scale it to a desired value $\rho_{desired}$:
  \begin{equation}
     W_{rec} = \frac{\rho_{desired}}{\rho(W_{rec}^{init})} W_{rec}^{init}
  \end{equation}
+Even the $W_{in} \in \mathbb{R}^{N_r \times N_u}$ matrix is usually scaled by an important hyperparameter called \textbf{input scaling} $\omega_{in}$, which controls the influence of the input signal on the reservoir dynamics.
+This parameter is crucial because it affects how the reservoir responds to different input magnitudes and can impact the overall performance of the ESN.
+A common practice is to scale $W_{in}$ as follows:
+\begin{equation}
+    W_{in} = \omega_{in} W_{in}^{init} \\
+    % or norm 2
+\end{equation}
  % ripetitivo
  %By choosing $\rho_{desired}$ close to $1$, we are promoting rich dynamics that are sensitive to input variations while still being stable enough to retain information over time.
- \newline
- Once the reservoir is initialized, we can use it to process input sequences and collect the reservoir states over time.
- The readout layer is then trained using closed form solutions as ridge regression or pseudoinverse.
-\newline
+
 A more general formulation is the Leaky ESN is given by \cite{JAEGER2007335}, which introduces a leaking rate $\alpha \in [0,1]$ to control the speed of the reservoir dynamics:
 \begin{equation}
     \mathbf{h}(t) = (1 - \alpha) \mathbf{h}(t-1) + \alpha \tanh(W_{in}\mathbf{x}(t) + W_{rec}\mathbf{h}(t-1) + \mathbf{b})
 \end{equation}
 When $\alpha = 1$, the Leaky ESN reduces to the standard ESN, while for $\alpha < 1$, the reservoir state updates more slowly, allowing it to capture longer-term dependencies in the input sequence.
-\newline
-\subsubsection{Echo State Property}
-The entire field of RC, particularly ESNs, relies onto the assumption that the reservoir's dynamics are stables and that the current state is uniquely determined by the input history.
+\subsubsection{Tikhonov Regularization}
+ Once the reservoir is initialized, we can use it to process input sequences and collect the reservoir states over time.
+After we computed the reservoir states $\mathbf{h}(t)$ for the entire input sequence, we have to find $W_{out}$ that maps the reservoir states to the desired output.
+ 
+Given a set of target outputs $\mathbf{y}(t)$ corresponding to each input $\mathbf{x}(t)$, our objective is to minimize the squared norm of the difference between the actual outputs and the predicted outputs from the reservoir states:
+
+ \begin{equation}
+    \mathcal{L} = \sum_{t=1}^{T} ||\mathbf{y}(t) - W_{out} \mathbf{h}(t)||^2
+\end{equation}
+
+We can train the output weights $W_{out}$ using ridge regression in closed form as:
+\begin{equation}
+    W_{out} = Y H^T (H H^T + \lambda I)^{-1}
+\end{equation}
+Where $Y \in \mathbb{R}^{N_y \times T}$ is the matrix of target outputs, $H \in \mathbb{R}^{N_r \times T}$ is the matrix of reservoir states collected over time, $\lambda$ is the regularization parameter, and $I$ is the identity matrix.\newline
+
+To prevent overfitting on readout layer, and since the matrix $H$ is often ill-conditioned, we use regularization hyperparameter $\lambda$ \cite{10.2307/1271436} during the training of the output weights.
+What this does is essentially to keep the diagonal of the matrix $H H^T$ away from zero, improving its condition number and making the inversion numerically stable.
+\subsubsection{Transients dynamics}
+It is also possible that random effects from the initialization of the reservoir can lead to suboptimal performance; hence, usually the initial timesteps collected by the reservoir are discarded,
+because the reservoir undergoes a \textit{transient dynamics} phase before the state becomes fully dependent on input history rather than initial conditions.
+In literature, this phase is called \textbf{Washout period} $T_{\text{washout}}$.
+Given the corresponding reservoir states $\{\mathbf{h}(t)\}_{t=1}^{T}$, only the states $\{\mathbf{h}(t)\}_{t=T_{\text{washout}}+1}^{T}$ 
+are used for training the readout layer, the washout period $T_{\text{washout}}$ is empirically determined, usually hundreds or thousands of timesteps are sufficient.
+\subsection{Echo State Property}
+The entire field of RC, particularly ESNs, relies on the assumption that the reservoir's dynamics are stable and that the current state is uniquely determined by the input history.
 The \textbf{Echo State Property} (ESP) \cite{jaeger2001echo} formalizes this requirement, stating that for any bounded input sequence,
  the reservoir state should asymptotically depend only on the input history and not on the initial state.\newline
  Formally, let $\mathbf{x}(t)$ be a bounded input sequence and $\mathbf{h}_1(0)$, $\mathbf{h}_2(0)$ be two different initial reservoir states
@@ -712,8 +780,18 @@ The \textbf{Echo State Property} (ESP) \cite{jaeger2001echo} formalizes this req
     \label{ESP}
     \lim_{t \to \infty} ||\mathbf{h}_1(t) - \mathbf{h}_2(t)|| \to 0 
  \end{equation}
-When this condition holds, the model models behaves as a \textit{fading memory} filter, where the influence of past inputs diminishes over time, in DS theory
-these are called also \textit{contractive systems} \cite{addcitation}. For it to be true, we must impose two conditions, a necessary and a sufficient one, both regarding the spectral properties of the recurrent weight matrix $W_{rec}$.
+When this condition holds, the model behaves as a \textit{fading memory} filter, where the influence of past inputs diminishes over time, in DS theory
+these are also called \textit{contractive systems} \cite{strogatz:2000}. 
+\begin{definition}
+    A function $f: \mathbb{R}^N \times \mathbb{R}^M \to \mathbb{R}^N$ is \textbf{contractive} if there exists a constant $0 \leq k < 1$ such that for all $\mathbf{h}_1, \mathbf{h}_2 \in \mathbb{R}^N$ and $\mathbf{x} \in \mathbb{R}^M$:
+    \begin{equation}
+        ||f(\mathbf{h}_1, \mathbf{x}) - f(\mathbf{h}_2, \mathbf{x})|| \leq k ||\mathbf{h}_1 - \mathbf{h}_2||
+    \end{equation}  
+    And $k$ is called the \textbf{Lipschitz constant} of the function $f$.
+\end{definition}
+Furthermore, the washout period ensures that the reservoir reaches a state where ESP can hold.
+\newline
+For it to be true, we must impose two conditions, a necessary and a sufficient one, both regarding the spectral properties of the recurrent weight matrix $W_{rec}$.
 The necessary condition requires:
 \begin{equation}
     ||\rho(W_{rec})|| < 1
@@ -729,31 +807,229 @@ the spectral radius is always upper bounded by the largest singular value: $\rho
 Although ESP guarantees that the reservoir state depends uniquely on the input history and not on initial conditions, enforcing its sufficient condition,
 $\rho(\mathbf{W}_{\text{rec}}) < 1$, is often too restrictive in practice.
 This bound ensures that the recurrent dynamics are contractive even in the absence of input, thereby guaranteeing stability under all circumstances. 
-However, it also leads to reservoirs with overly damped dynamics, where perturbations decay too quickly and the network loses its ability to store temporal information.
-The sufficient conditions is derived under the assumption of an autonomous system, neglecting the stabilizing effect of the continuous external input.
-Empirically, the most effective reservoirs operate near the edge of chaos and the spectral radius is often set even slightly above $1$ in some cases \cite{cucchi2022hands}.
+However, it also leads to reservoirs with overly damped dynamics, where perturbations decay too quickly, and the network loses its ability to store temporal information.
+The sufficient conditions are derived under the assumption of an autonomous system, neglecting the stabilizing effect of the continuous external input.
+Empirically, the most effective reservoirs operate near the edge of chaos, and the spectral radius is often set even slightly above $1$ in some cases \cite{cucchi2022hands}.
 
-\section{Deep Recurrent Neural Networks}\todo{questa parte va riscritta dopo}
-The concept of \textit{depth} on RNNs is ambiguous and can be extended in multiple ways, as discussed by \cite{pascanu2014constructdeeprecurrentneural}.
-Firstly we say that a deep network applies multiple non-linear transformations to the input data, this is trivial for FNNs,
-but in the case of vanilla \footnote{In literature "vanilla" term refers to non-gated RNNs as the equation \ref{eq:rnn} describes} RNNs, the depth is embedded into the temporal structure, since we apply at each time step the same non-linearity.
-In the picture \ref{fig:rnn_depths} we can see the that there are several ways to introduce depth in RNNs.\newline
-If we implement the depth from the \textit{input-to-hidden} layers, the networks improves disentangling the underlying factors of variations
-from the original input signal, similar to how Convolutional layers in Convolutional Neural Networks (CNNs) extract features hierachically \cite{something}.
-For \textit{hidden-to-output} intermediate layers instead, the networks learn a more compact latent representation, with results in a more efficient summarization of input history into the hidden state that ù
-lead to the output layer, so the readout is simplified.\newline
-Yet another way to introduce depth is the \textit{hidden-to-hidden} transition, which essentially allows the hidden state to rapidly adapt to mode shifts in the input signal, this could be particularly useful in non-stationary environments, however
-a deep transition approach could lead to optimization issues due to the increased depth in the temporal dimension.
+%\section{Deep Reservoir Computing}
+\begin{comment}
+\subsection{Memory Capacity}
+In the literature is often used the \textbf{Memory Capacity} (MC) measure introduced by \cite{jaeger2001echo}, to quantify the ability of a reservoir to remember past inputs.
 \newline
-Finally we can stack multiple recurrent layers on top of each other, that is the main drive of this thesis, this approach encourages the model to learn at different timescales
-with the first layers capturing fast dynamics and the deeper layers capturing slower ones.
+The MC is defined as the sum of squared correlation coefficients between the reservoir output and delayed versions of the input signal:
+\begin{equation}
+    MC = \sum_{k=1}^{\infty} \text{corr}^2 (u(t-k), y_k(t))
+\end{equation}
+\end{comment}
+Where $u(t)$ is the input signal at time $t$, $y_k(t)$ is the reservoir output trained to predict the input delayed by $k$ time steps, and $\textit{corr}$ denotes the Pearson correlation coefficient.\newline
+The MC provides a measure of how well the reservoir can reconstruct past inputs from its current state, indicating its capacity to retain temporal information.
+\newline
+Jeager has also shown a theoretical bound for MC \cite{memorycapacity}, that the MC of a Linear readout RNN with $n$ neurons trained to reconstruct a delayed version of an i.i.d input process, is bounded by $n$.
 
- \todo{Change this image or make a new one or cite it}
- \begin{figure}[H]
-    \centering
-    \includegraphics[width=0.9\textwidth]{images/deep_architectures.png}
-    \caption{Depths in Recurrent Neural Networks represented graphically by \cite{pascanu2014constructdeeprecurrentneural}}
-    \label{fig:rnn_depths}
-\end{figure}
+\section{Deep Echo State Networks}
+In the research field of Reservoir Computing, the concept of depth has been explored to enhance the representational capacity of reservoirs.
+By stacking multiple recurrent layers, the models can capture hierarchical temporal features at different timescales \cite{pascanu2014constructdeeprecurrentneural},
+and improve performance on complex tasks requiring multi-scale processing or longer memory retention.
+\newline
+In \cite{GALLICCHIO201787} \cite{gallicchio2017echo} the authors focus on the analysis of Deep Echo State Networks (DeepESN). 
+By stacking multiple ESN layers, they introduce a different hidden state for each layer, altering intrinsic dynamics and architectural bias.
+Experiments have also shown an increase in memory capability, thus DeepESNs are able to retain more information about past inputs compared to shallow ESNs with the same number of total neurons.
 
-\section{Deep Reservoir Computing}\todo{questo vai nei related works}
+We define a Deep Echo State Network (DeepESN), with leaky integrator neurons, as a stack of $L$ recurrent reservoir layers, where each layer $l$ has its own state vector $\mathbf{h}^{(l)}(t)$.
+Each layer can have a different leaking rate, input scaling (from the previous layer) and spectral radius.
+The input to the first layer is the external input $\mathbf{x}(t)$, while the input to subsequent layers is the state of the previous layer.
+\newline
+The state update equations for a DeepESN are given by:
+\begin{equation}
+    \mathbf{h}^{(l)}(t) = (1 - \alpha^{l}) \mathbf{h}^{(l)}(t-1) + \alpha^{(l)} \tanh(W_{in}^{(l)} \mathbf{x}(t) + W_{rec}^{(l)} \mathbf{h}^{(l)}(t-1) + \mathbf{b}^{(l)})
+\end{equation}
+With $W_{in}^{(1)} \in\ \mathbb{R}^\mathbf{N_r \times N_u}$, when $l\neq1$ $W_{in}^{(l)} \in\ \mathbb{R}^\mathbf{N_r \times N_r}$ 
+the input weights matrix from previous layer, $\alpha^{(l)} \in [0,1]$ the leaking rate,
+ $W_{rec}^{(l)} \in\ \mathbb{R}^\mathbf{N_r \times N_r}$ the recurrent weights matrix, $\mathbf{b}^{(l)} \in\ \mathbb{R}^\mathbf{N_r}$ the bias vector.
+ 
+For the readout phase, we can use the concatenated states from all layers or just the last layer:
+
+% Open big {} and put the concatenated or last layer state as a system of equation in a single begin equation
+\begin{equation}
+\begin{cases}
+    \mathbf{y}(t) = W_{out} [\mathbf{h}^{(1)}(t); \mathbf{h}^{(2)}(t); \ldots; \mathbf{h}^{(L)}(t)] & \text{(concatenated states)} \\
+    \mathbf{y}(t) = W_{out} \mathbf{h}^{(L)}(t) & \text{(last layer state only)}
+\end{cases}
+\end{equation}
+
+
+\subsection{Echo state property of DeepESN}
+ESNs are designed to satisfy the Echo State Property (ESP) \cite{jaeger2001echo}, which ensures that the reservoir's state is uniquely determined by the input history.
+When extending ESNs to DeepESNs, it is crucial to analyse how the ESP is affected by the depth of the network.
+In \cite{gallicchio2017echo}, the authors provide sufficient and necessary conditions for the ESP to hold in DeepESNs.
+They show that the ESP can be guaranteed if each layer of such a model satisfies the ESP individually, and if the inter-layer connections are appropriately scaled.
+Specifically, they derive conditions on the spectral radius of the recurrent weight matrices and the norms of the inter-layer weight matrices to ensure stability and the ESP.
+\newline
+Formally, for a DeepESN with $L$ layers, where each layer $l$ is governed by a leaking rate $a^{(l)}$, a recurrent weight matrix $\mathbf{W}^{(l)}$, and receives input from the previous layer via $\mathbf{W}_{in}^{(l)}$, the conditions are defined as follows.
+
+\paragraph{Necessary Condition}
+The necessary condition for the asymptotic stability of the zero state (and thus for the ESP) relies on the analysis of the system's Jacobian. 
+Due to the hierarchical, feedforward architecture of a standard DeepESN, the Jacobian is a block lower triangular matrix.
+ Consequently, its global spectral radius is determined by the maximum of the spectral radii of the individual layers.
+  The condition is given by:
+\begin{equation}
+    \rho(\mathbf{J}_{DeepESN, x}(0_u, 0)
+     = \max_{l=1,\dots,L} \left( \rho \left( (1-a^{(l)})\mathbf{I} + a^{(l)}\mathbf{W_{rec}}^{(l)} \right) \right) < 1,
+\end{equation}
+where $\rho(\cdot)$ denotes the spectral radius and $\mathbf{I}$, $0_u$ is the zero input, and $0$ is the zero state of the DeepESN.
+ is the identity matrix. This implies that for the network to be stable around 
+ the zero state, every layer must individually satisfy the local stability criterion.
+
+\paragraph{Sufficient Condition}
+The sufficient condition requires the global dynamics of the DeepESN to be contractive. This is ensured if the maximum Lipschitz constant among all layers, denoted as $C^{(l)}$, is less than 1. The contraction coefficients are defined recursively to account for the propagation of signals through the depth of the network:
+\begin{equation}
+    \begin{cases}
+        C^{(1)} = (1-a^{(1)}) + a^{(1)} \|\mathbf{W_{rec}}^{(1)}\| \\
+        C^{(l)} = (1-a^{(l)}) + a^{(l)} \left( C^{(l-1)} \|\mathbf{W}_{in}^{(l)}\| + \|\mathbf{W_{rec}}^{(l)}\| \right) & \text{for } l > 1,
+    \end{cases}
+\end{equation}
+where $\|\cdot\|$ denotes the induced matrix norm (e.g., the spectral norm). The ESP is guaranteed if:
+\begin{equation}
+    \max_{l=1,\dots,L} C^{(l)} < 1.
+\end{equation}
+This indicates that in deeper layers, the contractivity depends not only on the local recurrent weights $\mathbf{W_{rec}}^{(l)}$ but also on the contraction of the previous layer $C^{(l-1)}$ and the magnitude of the inter-layer weights $\mathbf{W}_{in}^{(l)}$.
+\newline
+Because the recursive term involves $C^{(l-1)}$, the contraction coefficient increases with depth, making deeper layers less contractive and able to retain information longer.
+
+\section{Simple Cycle Reservoirs} %Mim
+In \cite{mincomplex}, the authors tackle reservoir design from a minimalistic perspective, the main question from the authors is:
+\begin{quote}
+    \textit{"What is the minimal complexity of reservoir construction for obtaining competitive models and what is the memory capacity of such simplified reservoirs?"}
+\end{quote}
+Instead of using large, randomly initialized reservoirs, they propose much simpler topologies such as \textbf{Simple Cycle Reservoirs} (SCRs),
+ \textbf{Delay Line Reservoirs} (DLRs) and \textbf{Delay Line Reservoirs with feedback connection} (DLRBs), 
+ by just connecting single units in a cycle or in a line with feedback from one layer to the next and vice versa.
+\newline
+The SCR is constructed by connecting $N_r$ neurons in a unidirectional ring, where each neuron is connected to the next one in the cycle, and the last neuron connects back to the
+    first neuron. The recurrent weight matrix $W_{rec}$ for an SCR has the following structure:
+\begin{equation}
+    W_{rec} =
+    \begin{bmatrix}
+        0 & 0 & \cdots & 0 & w \\
+        w & 0 & \cdots & 0 & 0 \\
+        0 & w & \cdots & 0 & 0 \\
+        \vdots & \vdots & \ddots & \vdots & \vdots \\
+        0 & 0 & \cdots & w & 0
+    \end{bmatrix}
+\end{equation}
+Where $w$ is the weight of the connections between neurons in the cycle.
+\newline
+Despite its simplicity, the SCR topology is competitive with traditional reservoir methods at least for linear reservoirs\todo{dal paper dicono che su alcuni dataset come NARMA avevano bisogno di reservoir non lineari}, thus justifying a well-structured topology 
+can have a significant impact on the reservoir's dynamics and performance.\newline
+ The authors also proved a bound for SCR on its memory capacity to be arbitrary
+close to the number of units $N_r$ by properly tuning the input scaling and the recurrent weight $w$.
+With the following bound: \todo{Qui dovrò metterci una ref alla part in cui parlo di MC nel capitolo successivo}
+\begin{equation}
+    MC = N - (1 - r^{2N})
+\end{equation}
+\clearpage
+\section{Antisymmetric RNNs}
+
+Another approach to mitigating the vanishing and exploding gradient problem in recurrent neural networks is the
+\textit{AntisymmetricRNN} proposed by \cite{chang2019antisymmetricrnndynamicalviewrecurrent}.\newline
+The method is based on interpreting RNNs as continuous-time dynamical systems and designing the recurrent weight
+matrix according to stability principles from ODE theory.
+\newline
+The core idea is to constrain the recurrent matrix to be \textbf{antisymmetric}, because antisymmetric matrices have purely imaginary eigenvalues.
+\begin{equation}
+    W_{rec} = - W_{rec}^T
+\end{equation}
+This property ensures that the continuous-time system is \textbf{stable}, meaning that small perturbations in the hidden state do not grow unbounded over time.
+\newline
+Since only being stable is not sufficient to capture long-term dependencies, the authors argue that if the system is dissipative,
+then using such an ODE would result in catastrophic forgetting of past inputs in the forward pass.
+A possible solution is to design a system that operates in a critical regime, such idea is formalized through the following \textbf{critical criterion}:
+\begin{equation}
+    \max_{i} \operatorname{Re}\!\left( \lambda_i(J(t)) \right) \approx 0, 
+    \qquad \forall\, t > 0,
+\end{equation}
+meaning that the real parts of the Jacobian eigenvalues remain close to zero.
+In this regime, long-term dependencies are preserved without inducing instability.\newline
+The proposed ODE system is defined as:
+\begin{equation}
+    h'(t) = \tanh((W_{rec} - W_{rec}^T)h(t) + W_{in}x(t) + b)
+\end{equation}
+\newline
+If we derive the Jacobian of the system, we obtain:
+\begin{equation}
+    J(t) = \operatorname{diag}[{\tanh'((W_{rec} - W_{rec}^T)h(t) + W_{in}x(t) + b)}](W_{rec} - W_{rec}^T)
+\end{equation}
+Since the eigenvalues of an antisymmetric matrix are purely imaginary, and the derivative of the $\tanh$ activation is bounded between $0$ and $1$,
+the eigenvalues of the Jacobian $J(t)$ will have real parts close to zero, satisfying the critical criterion.
+\newline\newline
+This condition for a discretized version of the ODE is very similar to the edge of chaos condition discussed previously for ESNs in sec \ref{sec:esn}, where the spectral radius of the Jacobian is constrained to be close to $1$.
+To ensure stability after discretization with forward Euler method with timestep $\epsilon$, the authors introduce a small diffusion term
+$-\gamma I$, since the eigenvalues of the Jacobian matrix: $|1+ \epsilon\lambda_i(J_t)| > 1$, leading to the following update equation for the hidden state:
+\begin{equation}
+    h(t) = h(t-1) + \epsilon tanh((W_{rec}-W_{rec}^T-\gamma I)h(t-1) + W_{in}x(t)+b_h)
+\end{equation} 
+
+\begin{comment}
+The connection to gradient flow becomes evident by examining the matrix exponential that governs the linearized
+dynamics:
+\begin{equation}
+    e^{J t} = V e^{\Lambda t} V^{-1},
+\end{equation}
+where $\Lambda = \operatorname{diag}(\lambda_1, \ldots, \lambda_n)$.
+The eigenvalues $\lambda_i$ have real parts close to zero, the terms $e^{\lambda_i t}$ neither decay nor grow exponentially.
+Therefore, gradients propagated through time do not decay or explode exponentially.  
+This near-critical, antisymmetric parametrization allows the network to retain long-term information while
+remaining stable during training.
+\end{comment}
+\section{Random Oscillator Networks}
+Random Oscillator Networks (RONs) \cite{pmlr-v238-ceni24a} are a class of physically-inspired reservoir computing models that drive the input signal through
+a network of heterogeneous oscillators, this model for chaotic time series prediction tasks outperformed other randomized approaches on long-term memory for sequence classification.
+The idea behind RONs is to leverage the rich dynamics of coupled oscillators to create a reservoir that, even on a small parameterization regime, can achieve high performance on temporal tasks.
+\newline
+\subsection*{Physical Dissipation and Fading Memory}
+ In RONs, we get the \textit{fading memory} property in the energy dissipation of damped oscillators. 
+ Considering the continuous-time energy function of a single unforced oscillator $\mathcal{E}(t) = \frac{1}{2}\dot{y}^2 + \frac{1}{2}\gamma y^2$, its time derivative is given by:
+\begin{equation}
+    \dot{\mathcal{E}}(t) = -\epsilon \dot{y}^2.
+\end{equation}
+For a strictly positive damping coefficient $\epsilon > 0$, the energy is strictly decreasing ($\dot{\mathcal{E}} \leq 0$), ensuring that the system asymptotically forgets its initial state transient.
+\newline\newline
+The RON is defined as a discretized system of coupled Ordinary Differential Equations (ODEs). Let $\mathbf{y}_k \in \mathbb{R}^N$ and $\mathbf{z}_k \in \mathbb{R}^N$ represent the position and velocity vectors of the $N$ oscillators at time step $k$. 
+The state update is governed by explicit Euler discretization with step size $\tau$:
+
+\begin{equation} \label{eq:RON_update}
+\begin{aligned}
+    \mathbf{y}_{k+1} &= \mathbf{y}_k + \tau \mathbf{z}_{k+1}, \\
+    \mathbf{z}_{k+1} &= \mathbf{z}_k + \tau \left[ \tanh(\mathbf{W}\mathbf{y}_k + \mathbf{V}\mathbf{u}_{k+1} + \mathbf{b}) - \bm{\gamma} \odot \mathbf{y}_k - \bm{\epsilon} \odot \mathbf{z}_k \right].
+\end{aligned}
+\end{equation}
+Here, $\bm{\gamma}, \bm{\epsilon} \in \mathbb{R}^N$ are the heterogeneous stiffness and damping coefficients, respectively, and $\odot$ denotes the Hadamard product. The term $\tanh(\cdot)$ acts as a non-linear forcing function, coupling the oscillators through the recurrent weight matrix $\mathbf{W}$.
+
+\subsection*{Jacobian and Stability Analysis}
+To analyze the stability and the spectral properties of the reservoir, we consider the Jacobian $\mathbf{J}_k$ of the state mapping $\mathcal{F}(\mathbf{y}_k, \mathbf{z}_k)$. By linearizing Eq. (\ref{eq:RON_update}), the Jacobian exhibits a specific block structure:
+
+\begin{equation} \label{eq:RON_Jacobian}
+\mathbf{J}_k = 
+\begin{bmatrix}
+    \frac{\partial \mathbf{y}_{k+1}}{\partial \mathbf{y}_k} & \frac{\partial \mathbf{y}_{k+1}}{\partial \mathbf{z}_k} \\[6pt]
+    \frac{\partial \mathbf{z}_{k+1}}{\partial \mathbf{y}_k} & \frac{\partial \mathbf{z}_{k+1}}{\partial \mathbf{z}_k}
+\end{bmatrix}
+=
+\begin{bmatrix}
+    \mathbf{I} + \tau^2 \mathbf{A}_k & \tau(\mathbf{I} - \tau \text{diag}(\bm{\epsilon})) \\[6pt]
+    \tau \mathbf{A}_k & \mathbf{I} - \tau \text{diag}(\bm{\epsilon})
+\end{bmatrix},
+\end{equation}
+
+where $\mathbf{A}_k = \mathbf{S}_k \mathbf{W} - \text{diag}(\bm{\gamma})$, and $\mathbf{S}_k$
+ is the diagonal matrix of derivatives of the activation function, 
+ $\mathbf{S}_k = \text{diag}(\mathbf{1} - \tanh^2(\dots))$.
+
+This block structure reveals that the eigenvalues of $\mathbf{J}_k$ are clustered in disks centered
+ at $1 - \tau \epsilon$ and $1 - \tau^2 \gamma$.\newline
+  By tuning these hyperparameters, we can constrain the spectrum within
+  the unit circle, facilitating the \textit{edge of stability} regime required for long-term memory tasks.
+  For small values of $\tau$, the eigenvalues are close to $1$, promoting slow decay of information and enhancing memory retention.
+
+
+\section{Euler State Network}
