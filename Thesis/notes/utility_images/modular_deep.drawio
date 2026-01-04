@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:146.0) Gecko/20100101 Firefox/146.0" version="29.2.9">
   <diagram name="Antisymmetric_Deep_ESN" id="lsW3Y_9Fcn5CKZ-gjfW0">
-    <mxGraphModel dx="2278" dy="1860" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
+    <mxGraphModel dx="2564" dy="2012" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="1" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -331,6 +331,9 @@
         </mxCell>
         <mxCell id="K-3emGYxx-k9zcOoXjFd-18" parent="1" style="text;whiteSpace=wrap;html=1;shadow=0;" value="&lt;div&gt;&lt;span&gt;$$ W_{rec}^1 $$&lt;/span&gt;&lt;/div&gt;" vertex="1">
           <mxGeometry height="40" width="180" x="600" y="-60" as="geometry" />
+        </mxCell>
+        <mxCell id="K-3emGYxx-k9zcOoXjFd-24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;arcSize=15;fontFamily=Helvetica;fontSize=14;fontStyle=1;textShadow=1;labelBorderColor=none;labelBackgroundColor=none;" value="$$\textit{Reservoir Layer} $$" vertex="1">
+          <mxGeometry height="70" width="235" x="230" y="870" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
