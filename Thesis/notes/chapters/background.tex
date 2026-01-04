@@ -712,6 +712,7 @@ the use of BPTT and its issues. From a theoretical viewpoint, RC models can be v
  \newline
 Both RC and kernel methods relies on the \textbf{Cover's Theorem} \cite{cover2006geometrical}, which states :
 \begin{quote}
+    \label{quote:cover}
     \textit{"A complex pattern-classification problem, cast in a high-dimensional space nonlinearly, is more likely to be linearly separable than in a low-dimensional space."}
 \end{quote}
 
@@ -770,8 +771,19 @@ because the reservoir undergoes a \textit{transient dynamics} phase before the s
 In literature, this phase is called \textbf{Washout period} $T_{\text{washout}}$.
 Given the corresponding reservoir states $\{\mathbf{h}(t)\}_{t=1}^{T}$, only the states $\{\mathbf{h}(t)\}_{t=T_{\text{washout}}+1}^{T}$ 
 are used for training the readout layer, the washout period $T_{\text{washout}}$ is empirically determined, usually hundreds or thousands of timesteps are sufficient.
+
+\subsection{Separation Property}
+Besides stability, a useful reservoir should also be able to \textit{distinguish} different input histories.
+In the Reservoir Computing literature (especially for Liquid State Machines), this intuition is captured by the \textbf{separation property} (also called \textbf{pointwise separation}) \cite{maass2002realtime}.
+Informally, the reservoir should map different input streams to different internal states, so that a linear readout can discriminate them.
+More precisely, for two bounded input sequences $\mathbf{x}(t)$ and $\tilde{\mathbf{x}}(t)$ that differ at least at one time step, the corresponding reservoir state trajectories $\mathbf{h}(t)$ and $\tilde{\mathbf{h}}(t)$ should become different at some time:
+\begin{equation}
+    \exists\, t \ge 0 \;:\; \mathbf{h}(t) \neq \tilde{\mathbf{h}}(t)
+\end{equation}
+This property is closely related to the common RC intuition that the reservoir acts as a high-dimensional non-linear expansion of the input (cf. \ref{quote:cover}), while the readout performs the final linear separation.
+
 \subsection{Echo State Property}
-The entire field of RC, particularly ESNs, relies on the assumption that the reservoir's dynamics are stable and that the current state is uniquely determined by the input history.
+While separation ensures that different inputs can lead to different internal representations, RC models also require the reservoir dynamics to be \textit{stable} so that states do not depend on arbitrary initial conditions.
 The \textbf{Echo State Property} (ESP) \cite{jaeger2001echo} formalizes this requirement, stating that for any bounded input sequence,
  the reservoir state should asymptotically depend only on the input history and not on the initial state.\newline
  Formally, let $\mathbf{x}(t)$ be a bounded input sequence and $\mathbf{h}_1(0)$, $\mathbf{h}_2(0)$ be two different initial reservoir states
@@ -832,7 +844,8 @@ By stacking multiple recurrent layers, the models can capture hierarchical tempo
 and improve performance on complex tasks requiring multi-scale processing or longer memory retention.
 \newline
 In \cite{GALLICCHIO201787} \cite{gallicchio2017echo} the authors focus on the analysis of Deep Echo State Networks (DeepESN). 
-By stacking multiple ESN layers, they introduce a different hidden state for each layer, altering intrinsic dynamics and architectural bias.
+Having multiple sequentially stacked layers where information can be processed, allows for a different hidden state for each of them. The signal is given to the first sub-reservoir and then
+propagated through the stack, altering intrinsic dynamics and allowing a more expressive architectural bias.
 Experiments have also shown an increase in memory capability, thus DeepESNs are able to retain more information about past inputs compared to shallow ESNs with the same number of total neurons.
 
 We define a Deep Echo State Network (DeepESN), with leaky integrator neurons, as a stack of $L$ recurrent reservoir layers, where each layer $l$ has its own state vector $\mathbf{h}^{(l)}(t)$.
@@ -841,7 +854,7 @@ The input to the first layer is the external input $\mathbf{x}(t)$, while the in
 \newline
 The state update equations for a DeepESN are given by:
 \begin{equation}
-    \mathbf{h}^{(l)}(t) = (1 - \alpha^{l}) \mathbf{h}^{(l)}(t-1) + \alpha^{(l)} \tanh(W_{in}^{(l)} \mathbf{x}(t) + W_{rec}^{(l)} \mathbf{h}^{(l)}(t-1) + \mathbf{b}^{(l)})
+    \mathbf{h}^{(l)}(t) = (1 - \alpha^{(l)}) \mathbf{h}^{(l)}(t-1) + \alpha^{(l)} \tanh(W_{in}^{(l)} \mathbf{x}(t) + W_{rec}^{(l)} \mathbf{h}^{(l)}(t-1) + \mathbf{b}^{(l)})
 \end{equation}
 With $W_{in}^{(1)} \in\ \mathbb{R}^\mathbf{N_r \times N_u}$, when $l\neq1$ $W_{in}^{(l)} \in\ \mathbb{R}^\mathbf{N_r \times N_r}$ 
 the input weights matrix from previous layer, $\alpha^{(l)} \in [0,1]$ the leaking rate,
@@ -859,6 +872,7 @@ For the readout phase, we can use the concatenated states from all layers or jus
 
 
 \subsection{Echo state property of DeepESN}
+\label{sec:deepesn_esp}
 ESNs are designed to satisfy the Echo State Property (ESP) \cite{jaeger2001echo}, which ensures that the reservoir's state is uniquely determined by the input history.
 When extending ESNs to DeepESNs, it is crucial to analyse how the ESP is affected by the depth of the network.
 In \cite{gallicchio2017echo}, the authors provide sufficient and necessary conditions for the ESP to hold in DeepESNs.
