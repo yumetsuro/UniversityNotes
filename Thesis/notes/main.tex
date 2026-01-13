@@ -20,6 +20,7 @@ headsepline, % Uncomment to get a line under the header
 \usepackage{mathpazo} % Use the Palatino font by default
 \usepackage{blindtext}
 \usepackage{amsmath}
+\usepackage{mathtools}
 \usepackage{amssymb}
 \usepackage[toc,page]{appendix}
 \usepackage{tablefootnote}
@@ -186,5 +187,11 @@ headsepline, % Uncomment to get a line under the header
 %\input{chapters/appendix}
 
 \printbibliography
+
+% appendix
+\begin{appendices}
+\chapter{Jacobian derivation of DCR}\label{ch:appendix}
+\input{chapters/appendix2}
+\end{appendices}
 
 \end{document}

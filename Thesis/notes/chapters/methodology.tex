@@ -1,6 +1,6 @@
 % --- Core Variables (with arguments for layer index) ---
-% Usage: \hState{l} -> h^(l)_t
-\newcommand{\hState}[1]{\mathbf{h}^{(#1)}_t}
+% Usage: \hState{l} -> h^(l)(t)
+\newcommand{\hState}[1]{\mathbf{h}^{(#1)}(t)}
 
 % Usage: \Win{l} -> W_in^(l)
 \newcommand{\Win}[1]{\mathbf{W}_{\text{in}}^{(#1)}}
@@ -35,10 +35,11 @@
 
 \newcommand{\WtotCycle}{
     \begin{bmatrix}
-    \Wrec{1} & \mathbf{0} & \cdots & \mathbf{\Wcyc{1}} \\
+    \Wrec{1} & \mathbf{0} & \cdots & \mathbf{\Wcyc{L}} \\
     \Wcyc{2} & \Wrec{2} & \cdots & \mathbf{0} \\
     \vdots & \ddots & \ddots & \vdots \\
-    \mathbf{0} & \cdots & \Wcyc{L} & \Wrec{L}
+    \mathbf{0} & \cdots & \Wcyc{L-1
+    } & \Wrec{L}
     \end{bmatrix}
 }
 
@@ -59,7 +60,7 @@ After having discussed all the background concepts and related works, we can now
 In this chapter we present the idea to treat deep recurrent neural network as \emph{modular deep reservoir} architectures. 
 %We will discuss about modularity in RNNs and the two proposed architectures in details. 
 Rather than treating reservoir as a monolithic recurrent system, we interpret each layer of the deep reservoir as an independent computational module that processes inputs and exchanges information with other modules through structured interconnections.
-The central objective is to study how architectural constraints \ref{...} antisymmetric dynamics with \emph{forward and backward} inter-module coupling, and \ref{...} a \emph{cycle-based} affect stability, memory retention and performance on sequence learning tasks.
+%The central objective is to study how architectural constraints \ref{...} antisymmetric dynamics with \emph{forward and backward} inter-module coupling, and \ref{...} a \emph{cycle-based} affect stability, memory retention and performance on sequence learning tasks.
 \todo{finire di scrivere questo quando avrò un idea di come sara fatta la metodologia}
 
 \section{Modularity in RNNs}
@@ -70,7 +71,7 @@ Such composition allows for a complex global behaviour to emerge from the intera
 At the same time, analyzing the system in terms of local module dynamics can provide control on information flow and interpretability benefits.
 
 Modularity has been extensively studied in neuroscience, where large-scale brain networks exhibit modular organization with specialized regions that acts as hubs for information integration.
-Empirical studies from Bullmore et al. \cite{bullmore2009complex} have shown that neural systems are composed of densely connected subnetworks that interact globally as a sparse system \todo{che sono connesse in modo sparso forse è meglio?}, supporting
+Empirical studies from \cite{bullmore2009complex} have shown that neural systems are composed of densely connected subnetworks that interact globally as a sparse system \todo{che sono connesse in modo sparso forse è meglio?}, supporting
 both integration of information and specialized processing 
 
 More generally, studies in complex systems and network dynamics have shown that modular organization 
@@ -78,22 +79,13 @@ can enhance robustness by inducing a separation of time scales, such that dynami
  confined within subsystems for extended periods before spreading globally. 
  This structure allows perturbations to decay locally and supports stable large-scale 
  dynamics under appropriate stability conditions \cite{Lambiotte_Schaub_2022}.
-
-In this work, we take inspiration from these principles to design deep reservoir architectures, which hierachical structure
+ %% questo va messo o è ripetitivo?
+\begin{comment}
+    In this work, we take inspiration from these principles to design deep reservoir architectures, which hierachical structure
 can be further enriched with modular interconnections promoting richer dynamics and preserving stability and memory.
+\end{comment}
 
 \todo{Forse quando parlo in questo modo della modularità nella tesi dovrei anche dire che stiamo trattando le architetture deep "normali" come se fossero    moduli o è già sottinteso?}
-
-\begin{comment}
-We consider supervised learning on temporal data.
-Given an input sequence $\{\mathbf{u}(t)\}_{t=1}^{T}$ with $\mathbf{u}(t)\in\mathbb{R}^{d_u}$, a reservoir system produces a sequence of hidden states $\{\mathbf{x}(t)\}_{t=1}^{T}$, $\mathbf{x}(t)\in\mathbb{R}^{d_x}$, from which an output sequence $\{\mathbf{y}(t)\}_{t=1}^{T}$ is predicted:
-\begin{equation}
-    \hat{\mathbf{y}}(t) = \mathbf{W}_{\text{out}} \, \boldsymbol{\phi}(\mathbf{z}(t)) + \mathbf{b}_{\text{out}},
-    \label{eq:method:readout}
-\end{equation}
-where $\mathbf{z}(t)$ is a concatenation of features (e.g., reservoir states across modules and optionally the input), and $\boldsymbol{\phi}(\cdot)$ is a (possibly identity) feature map.
-In standard reservoir computing (RC), only the readout parameters $(\mathbf{W}_{\text{out}}, \mathbf{b}_{\text{out}})$ are trained.
-\end{comment}
 %\clearpage
 \section{Deep Modular Reservoirs}
 \label{sec:method:deep_modular}
@@ -102,20 +94,19 @@ Each module $l\in\{1,\dots,L\}$ has state $\mathbf{h}^{(l)}(t)\in\mathbb{R}^{n_l
 The key methodological contribution is to compare two architectures of deep modular reservoirs:
 
 \begin{itemize}
+    \item \textbf{Deep Cycle Reservoir} where we emply \emph{cycle/ring} recurrent topology, inspired by Simple Cycle Reservoirs (SCR), to provide strong memory traces with minimal parameters.
     \item \textbf{Antisymmetric deep reservoir} with \emph{forward and backward} coupling between adjacent modules, designed to promote stable dynamics and improve gradient-free memory propagation.
-    \item \textbf{Cycle deep reservoir} where we emply \emph{cycle/ring} recurrent topology, inspired by Simple Cycle Reservoirs (SCR), to provide strong memory traces with minimal parameters.
 \end{itemize}
 
 \subsection{Global state and dynamics}
-Let $\mathbf{y}(t)$ be the global reservoir state at time $t$ obtained by feeding the input $\mathbf{u}(t)$ into the first module and propagating through the layers.
+Let $\mathbf{H}(t)$ be the global reservoir state at time $t$ obtained by feeding the input $\mathbf{u}(t)$ into the first module and propagating through the layers.
 By stacking the states of all modules, we have the final feature vector used for the readout is made
 \begin{equation}
-    \mathbf{y}(t) = \begin{bmatrix}
-    \mathbf{h}^{(1)}(t) \\
-    \mathbf{h}^{(2)}(t) \\
-    \vdots \\
+    \mathbf{H}(t) = \bigl[
+    \mathbf{h}^{(1)}(t),
+    \mathbf{h}^{(2)}(t),
     \mathbf{h}^{(L)}(t)
-    \end{bmatrix} \in \mathbb{R}^{N}, \quad N = \sum_{l=1}^L n_l.
+    \bigr] \in \mathbb{R}^{N}; \quad N = \sum_{l=1}^L n_l.
     \label{eq:method:feature_concat}
 \end{equation}
 Where $N$ is the total reservoir size and $n_l$ is the size of module $l$.
@@ -124,387 +115,230 @@ obtained after the application of the activation function and leaky integration.
 
 We define the pre-activation vector
 \begin{equation}
+    \label{eq:method:pre_activation}
 \mathbf z(t+1) =
-\mathbf W_{\text{tot}} \mathbf y(t)
-+ \mathbf W_{\text{in}} \mathbf x(t+1)
+\mathbf W_{\text{tot}} \mathbf H(t)
++ \mathbf W_{\text{in}} \mathbf u(t+1)\footnote{\text{This input term is just for the input not the inter-layer connection}}
 + \mathbf b .
 \end{equation}
 
 The reservoir state is then updated as
 \begin{equation}
-\mathbf y(t+1) =
-(1-\alpha)\mathbf y(t) + \alpha f(\mathbf z(t+1)).
+\label{eq:method:state_update_general}
+\mathbf H(t+1) =
+(1-\alpha)\mathbf H(t) + \alpha \tanh(\mathbf z(t+1)).
 \end{equation}
 \begin{equation}
-\mathbf{y}(t+1) = f\left(\mathbf{W}_{\text{tot}} \, \mathbf{y}(t)\right),
+\mathbf{H}(t+1) = \tanh\left(\mathbf{W}_{\text{tot}} \, \mathbf{H}(t)\right),
 \end{equation}
-where $f(\cdot)$ acts element-wise on the state vector and
+where $\tanh(\cdot)$ acts element-wise on the state vector and
 $\mathbf{W}_{\text{tot}} \in \mathbb{R}^{N \times N}$ encodes both intra-module and inter-module connections.
-
-
-where $\mathbf{W}_{\text{tot}} \in \mathbb{R}^{N \times N}$ is a block matrix that encodes both intra-module and inter-module connections.
+ $\mathbf{W}_{\text{tot}} \in \mathbb{R}^{N \times N}$ is a block matrix that encodes both intra-module and inter-module connections.
 For a simple Leaky-ESN with 1 layer, the $\mathbf{W}_{\text{tot}}$ is simply the recurrent weight matrix $\mathbf{W}_{\text{rec}}$ of the reservoir.
 
-So the structure of $\mathbf{W}_{\text{tot}}$ depends on the chosen architecture, a randomly connected module architecture would have 
+Finally, the structure of $\mathbf{W}_{\text{tot}}$ depends on the chosen architecture, a randomly connected module architecture would have 
 a block diagonal structure, plus random connections between modules.
-
 \subsubsection{DeepESN as modular system}
 In the paper from \cite{GALLICCHIO201787} the authors propose to study what happens when treating modules as a stack, 
-hence, in DeepESN architecture with $L$ layers where information is processed hierachically have a matrix for the entire system $W_{\text{DeepESN}}$ in the following form: 
+hence, in DeepESN architecture with $L$ layers where information is processed hierachically have a matrix with \emph{block lower-triangular} form, resulting in: 
 
 \begin{equation}
-    W_{\text{DeepESN}} =\WDeepESN
+    W_{\text{DeepESN}} =\WDeepESN 
 \end{equation}
+\todo{Qui ho chiamato anche $W_{\text{in}}$ le parti inter-layer dovrei cambiarne il nome per non essere confuso con la matrice che manda l'input $u(t)$?}
 
 Where each block on the diagonal represents the recurrent connections of each module, and the sub-diagonal blocks represent the input connections from the previous layer.
 When a single input perturbation is applied, deeper layers retain the perturbation for longer,
  indicating that higher layers capture slower (low‑frequency) temporal components and lower layers capture faster (high‑frequency) components, this is likely due to the fading
  memory effect of the reservoir dynamics.
 This indicates that increasing the distance between the input and subsequent layers is crucial for developing a rich spectrum of temporal dynamics
-The mechanism of capturing different components of frequency spectrum of the signal is very similar to the one observed in Convolutional Neural Networks (CNNs) for image processing, 
-where lower layers capture high-frequency details and higher layers capture low-frequency structures.\todo{forse questo è inutile da dire}
-
+%The mechanism of capturing different components of frequency spectrum of the signal is very similar to the one observed in Convolutional Neural Networks (CNNs) for image processing, 
+%where lower layers capture high-frequency details and higher layers capture low-frequency structures.\todo{forse questo è inutile da dire}
 % insert image of deep esn svg
 \begin{figure}[ht!]
     \centering
     \includegraphics[width=0.5\textwidth]{images/modular_deepesn.pdf}
     \caption{Modular structure of a standard DeepESN. Each layer acts as an independent module with feedforward inter-layer communication.}
 \end{figure}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \section{Deep Cycle Reservoir}
 \label{sec:method:cycle}
-The first architecture we propose is inspired to the work of Rodan and Tino \cite{mincomplex}, discussed in sec. \ref{sec:method:cycle}, they
-introducing simple and deterministic reservoir models, such as the Simple Cycle Reservoir (SCR), which use a fixed ring topology for the recurrent connections.
+We introduce \textbf{Deep Cycle Reservoir} (DCR) as class of deep reservoir, inspired by methods discussed in sec \ref{sec:method:cycle}.
+We tried to apply modularity concepts to a delayed version of SCR.
 
-\subsection{Motivation}
-In a conventional deep ESN, information flows unidirectionally 
+\subsection{Motivation or Discussion?}
+In a conventional deepESN, information flows unidirectionally 
 from the input through the stacked reservoirs to the readout.
 But it lacks a feedback path that might allow higher‑level temporal abstractions
-  to influence lower levels. A cyclic deep reservoir introduces a feedback connection 
-  from the output of the last reservoir layer back to the first layer.
-   The motivation for closing the loop is to allow information processed at deeper layers 
-   (capturing longer‑term or low‑frequency features) to inform the processing of new inputs.
-    This can enrich the reservoir dynamics and, in principle, improve tasks requiring both short and long‑term memory.
+to influence lower levels. A cyclic deep reservoir introduces a feedback connection 
+from the output of the last reservoir layer back to the first layer.
+The motivation for closing the loop is to allow information processed at deeper layers 
+(capturing longer‑term or low‑frequency features) to inform the processing of new inputs.
+This can enrich the reservoir dynamics and, in principle, improve tasks requiring both short and long‑term memory.
 
+However, a naïve instantaneous cycle where the output of the deepest layer at time step $t$
+is fed directly into the first layer at the same time step creates an algebraic loop. 
+In the discrete‑time update equation of an ESN, the next state depends on the previous 
+state and the current input; if the current state of a high‑level layer 
+instantly modifies the state of the first layer, the system simultaneously depends 
+on its own output. Such instantaneous feedback can destabilize the dynamics, (how...?).
 
-\subsection{Deep Cycle}
-We can define the equation for the Deep Cycle Reservoir as follows:
+Moreover, note that when each deepESN layer is
+fed the input directly (as in deepESN‑IA \cite{GALLICCHIO201787}), the intrinsic time‑scale separation is attenuated.
+
+%\subsection{Architecture of Deep Cycle Reservoir}
+\label{sec:method:cycle_architecture}
+We can define the equation for the DCR as follows, omitting biases for simplicity:
 
 \begin{equation}
-    \label{eq:method:cycle_dynamics}
-    \begin{cases}
-    \mathbf{h}^1{(t)} = (1 - \alpha) \mathbf{h}^1{(t-1)} + \alpha \tanh\left(W_{\text{in}}^{(1)} \mathbf{u{(t)}} + W_{\text{rec}}^{(1)} \mathbf{h}^1{(t-1)} + \math{W}_{cyc}^1 \mathbf{h}^{L}{(t-1)}\right) \\  \\
-    \mathbf{h}^l{(t)} = (1 - \alpha) \mathbf{h}^l{(t-1)} + \alpha \tanh\left(W_{\text{in}}^{(l)} \mathbf{u{(t)}} + W_{\text{rec}}^{(l)} \mathbf{h}^l{(t-1)} + \math{W}_{cyc}^l \mathbf{h}^{l-1}{(t-1)}\right) 
-    \end{cases}
+\label{eq:method:cycle_dynamics}
+\begin{aligned}
+\mathbf{h}^{(1)}(t) &= (1-\alpha)\,\mathbf{h}^{(1)}(t-1)
++ \alpha\,\tanh\Big(
+\mathbf{W}_{\text{in}}^{(1)} \mathbf{u}(t)
++ \mathbf{W}_{\text{rec}}^{(1)} \mathbf{h}^{(1)}(t-1)
++ \mathbf{W}_{\text{cyc}}^{(L)} \mathbf{h}^{(L)}(t-1)}
+\Big), \\[0.8em]
+\mathbf{h}^{(l)}(t) &= (1-\alpha)\,\mathbf{h}^{(l)}(t-1)
++ \alpha\,\tanh\Big(
+\mathbf{W}_{\text{in}}^{(l)} \mathbf{u}(t)
++ \mathbf{W}_{\text{rec}}^{(l)} \mathbf{h}^{(l)}(t-1)
++ \mathbf{W}_{\text{cyc}}^{(l-1)} \mathbf{h}^{(l-1)}(t-1)}
+\Big).
+\end{aligned}
 \end{equation}
 
-We have a (cycle) matrix $W_{cycle}$ with:
+We have a global matrix $W_{DCR}$ with:
 
 \begin{equation}
-    W_{cycle}=a\WtotCycle
+    \label{eq:method:dcr}
+    W_{DCR}=\WtotCycle
 \end{equation}
 
 Where each $\Wrec{l}$ is scaled by $\rho$ and $\Wcyc{l}$ is initialized as same as recurrent matrices but can have different $\rho$ scaling factor.
-The $\rho$ controls the effective spectral radius (for a pure permutation cycle, the eigenvalues lie on the unit circle, and scaling by $\rho$ sets their magnitude).
+The $\rho$ controls the effective spectral radius. \footnote{For a pure permutation cycle, the eigenvalues lie on the unit circle, and scaling by $\rho$ sets their magnitude.}
 
-\subsection{Deep coupling for cycle modules}
-We use a forward coupling between modules (and optionally bidirectional coupling as an ablation):
-\begin{align}
-    \tilde{\mathbf{x}}^{(\ell)}(t+1)
-    &= \tanh\!\Big(
-        \mathbf{W}^{(\ell)} \mathbf{x}^{(\ell)}(t)
-        + \mathbf{W}^{(\ell)}_{\text{in}} \mathbf{h}^{(\ell)}(t+1)
-        + \mathbf{C}^{(\ell)} \mathbf{x}^{(\ell-1)}(t)
-        + \mathbf{b}^{(\ell)}
-    \Big),\\
-    \mathbf{x}^{(\ell)}(t+1)
-    &= (1-\alpha_\ell)\mathbf{x}^{(\ell)}(t) + \alpha_\ell \tilde{\mathbf{x}}^{(\ell)}(t+1).
-\end{align}
-This creates a \emph{cycle-based deep reservoir} where each layer has a controlled internal topology and the depth contributes compositional temporal features.
+\subsection{Inter-layer coupling}
+We use a forward coupling between modules:
 
-
-% proof of bounding eigenvlaues
-\begin{proof}
-    \section{Stability Analysis of Deep Cycle Reservoir via Gershgorin Circle Theorem}
-
-To guarantee the Echo State Property (ESP) and asymptotic stability of the Deep Cycle Reservoir, we analyze the spectral radius of the system's Jacobian. We consider a deep architecture with $L$ layers, where the state update for the $l$-th layer is given by:
-
-\begin{equation}
-    \mathbf{h}^{(t)}_l = (1-\alpha)\mathbf{h}^{(t-1)}_l + \alpha \tanh\left( \mathbf{W}_{in}^{(l)}\mathbf{u}^{(t)} + \mathbf{W}_{rec}^{(l)}\mathbf{h}^{(t-1)}_l + \mathbf{W}_{proj}^{prev}\mathbf{h}^{(t-1)}_{prev} \right)
-\end{equation}
-
-where $\mathbf{h}_{prev}$ denotes $\mathbf{h}_{l-1}$ for $l > 1$, and $\mathbf{h}_{L}$ for the first layer $l=1$ (closing the cycle).
-
-\subsection{Jacobian Construction}
-The effective global weight matrix $\mathbf{J}$ governing the linearized dynamics of the coupled system is a block-circulant-like matrix:
-
-\begin{equation}
-    \mathbf{J} = \bigoplus_{l=1}^L \left[ (1-\alpha)\mathbf{I} + \alpha \mathbf{W}_{rec}^{(l)} \right] + \alpha \mathbf{W}_{cycle}
-\end{equation}
-
-where $\mathbf{W}_{cycle}$ contains the inter-layer projection blocks $\mathcal{W}_{proj}$ on the sub-diagonal (and top-right).
-
-\subsection{Gershgorin Bound Derivation}
-According to the Gershgorin Circle Theorem, the spectrum of $\mathbf{J}$, $\sigma(\mathbf{J})$, is contained within the union of discs $D_i(c_i, R_i)$, where $c_i$ is the diagonal entry and $R_i$ is the sum of the absolute values of the off-diagonal entries of the $i$-th row.
-
-For a neuron $k$ in layer $l$, the center $c_{l,k}$ and radius $R_{l,k}$ are derived as follows:
-
-\begin{enumerate}
-    \item \textbf{Center ($c_{l,k}$):} 
-    Assuming the recurrent weight matrix $\mathbf{W}_{rec}^{(l)}$ has a zero main diagonal (as in the Simple Cycle Reservoir topology), the diagonal comes solely from the leakage term:
-    \begin{equation}
-        c_{l,k} = 1 - \alpha
-    \end{equation}
-    
-    \item \textbf{Radius ($R_{l,k}$):}
-    The radius is the sum of the magnitudes of incoming weights from two sources: the recurrent connections within layer $l$ and the projection connections from the previous layer in the cycle.
-    \begin{equation}
-        R_{l,k} = \alpha \left( \sum_{j} |(\mathbf{W}_{rec}^{(l)})_{kj}| + \sum_{p} |(\mathcal{W}_{proj})_{kp}| \right)
-    \end{equation}
-\end{enumerate}
-
-\subsection{Initialization Specifics}
-We evaluate the bound based on the specific initialization schemes used in this work:
-
-\textbf{Case 1: Simple Cycle Reservoir (SCR) Topology} \\
-Using the initialization from \texttt{scr.py}, the recurrent matrix $\mathbf{W}_{rec}$ forms a ring where each row has exactly one non-zero element with magnitude $r$. The projection matrix $\mathcal{W}_{proj}$ is initialized (via \texttt{utils.py}) such that the maximum absolute row sum is bounded by a projection strength $\gamma$.
-\begin{align}
-    \sum_{j} |(\mathbf{W}_{rec}^{(l)})_{kj}| &= r \\
-    \sum_{p} |(\mathcal{W}_{proj})_{kp}| &\le \gamma
-\end{align}
-Substituting these into the Gershgorin radius:
-\begin{equation}
-    R_{l,k} = \alpha (r + \gamma)
-\end{equation}
-
-\textbf{Stability Condition} \\
-For stability, we require the spectral radius $\rho(\mathbf{J}) < 1$. By the theorem, it suffices that the largest Gershgorin disc lies entirely within the unit circle. Since the center is at $1-\alpha$ (on the positive real axis), the condition becomes:
-\begin{equation}
-    c_{l,k} + R_{l,k} < 1 \implies (1 - \alpha) + \alpha(r + \gamma) < 1
-\end{equation}
-
-Simplifying the inequality, we obtain the sufficient condition for the Deep Cycle Reservoir:
-\begin{equation}
-    \boxed{r + \gamma < 1}
-\end{equation}
-
-This result proves that in a Deep Cycle architecture initialized with SCR blocks, the sum of the recurrent weight $r$ and the effective projection strength $\gamma$ must be strictly less than 1 to theoretically guarantee the Echo State Property via Gershgorin analysis.
-\end{proof}
-
-
-\section{Deep Antisymmetric Reservoir}
-\label{sec:method:antisymmetric}
-
-\subsection{Motivation}
-Antisymmetric (or skew-symmetric) connectivity can constrain the dynamics in a way that mitigates exploding trajectories.
-Intuitively, purely antisymmetric linear dynamics preserve energy in continuous time; in practice, discrete-time nonlinear systems may still benefit from the improved conditioning and stability induced by such constraints.
-
-\subsection{Module dynamics}
-For module $\ell$, we use a leaky update of the form:
-\begin{align}
-    \tilde{\mathbf{x}}^{(\ell)}(t+1)
-    &= \tanh\!\Big(
-        \mathbf{W}^{(\ell)} \mathbf{x}^{(\ell)}(t)
-        + \mathbf{W}^{(\ell)}_{\text{in}} \mathbf{h}^{(\ell)}(t+1)
-        + \mathbf{C}^{(\ell)}_{\rightarrow}\mathbf{x}^{(\ell-1)}(t)
-        + \mathbf{C}^{(\ell)}_{\leftarrow}\mathbf{x}^{(\ell+1)}(t)
-        + \mathbf{b}^{(\ell)}
-    \Big), \label{eq:method:antisym_pre}\\
-    \mathbf{x}^{(\ell)}(t+1)
-    &= (1-\alpha_\ell)\mathbf{x}^{(\ell)}(t) + \alpha_\ell \tilde{\mathbf{x}}^{(\ell)}(t+1),
-    \label{eq:method:antisym_leak}
-\end{align}
-where $\alpha_\ell\in(0,1]$ is a leak rate.
-We set $\mathbf{x}^{(0)}(t)\equiv \mathbf{0}$ and $\mathbf{x}^{(L+1)}(t)\equiv \mathbf{0}$ (or omit missing terms at the boundaries).
-The signal $\mathbf{h}^{(\ell)}(t+1)$ is the input to module $\ell$:
-\begin{equation}
-    \mathbf{h}^{(1)}(t+1) = \mathbf{u}(t+1), \qquad
-    \mathbf{h}^{(\ell)}(t+1) = \mathbf{x}^{(\ell-1)}(t) \ \text{for}\ \ell\ge 2
-\end{equation}
-(or an alternative design depending on the experiment; this is explicitly controlled in ablations).
-
-\subsection{Antisymmetric parametrization}
-To construct an antisymmetric recurrent matrix, we sample a raw matrix $\mathbf{A}^{(\ell)}$ and set:
-\begin{equation}
-    \mathbf{W}^{(\ell)} = \gamma_\ell \left(\mathbf{A}^{(\ell)} - \mathbf{A}^{(\ell)\top}\right),
-    \label{eq:method:antisym_W}
-\end{equation}
-where $\gamma_\ell>0$ controls the effective scale (optionally followed by spectral normalization).
-Coupling matrices $\mathbf{C}^{(\ell)}_{\rightarrow}$ (forward) and $\mathbf{C}^{(\ell)}_{\leftarrow}$ (backward) are initialized as sparse random matrices and rescaled by coupling strengths $c_{\rightarrow}$ and $c_{\leftarrow}$.
-This yields a \emph{bidirectionally coupled} deep reservoir, enabling information flow from lower to higher modules and feedback from higher to lower modules.
-
-\subsection{Coupling ablations}
-To isolate the effect of bidirectionality, we evaluate:
-\begin{itemize}
-    \item \textbf{Forward-only}: $\mathbf{C}^{(\ell)}_{\leftarrow}=\mathbf{0}$.
-    \item \textbf{Backward-only}: $\mathbf{C}^{(\ell)}_{\rightarrow}=\mathbf{0}$.
-    \item \textbf{Bidirectional}: both terms active.
-\end{itemize}
-
-\section{Initialization and Hyperparameters}
-\label{sec:method:hyperparams}
-
-Across both architectures, we control:
-\begin{itemize}
-    \item \textbf{Module sizes} $\{n_\ell\}_{\ell=1}^L$ and depth $L$.
-    \item \textbf{Leak rates} $\alpha_\ell$ (shared or per-layer).
-    \item \textbf{Input scaling} for $\mathbf{W}^{(\ell)}_{\text{in}}$ and coupling scaling for $\mathbf{C}$ matrices.
-    \item \textbf{Spectral scaling}: $\gamma_\ell$ for antisymmetric modules or $\rho_\ell$ for cycle modules.
-    \item \textbf{Readout regularization} $\lambda$ in Eq.~\eqref{eq:method:ridge}.
-\end{itemize}
-
-All random matrices are initialized from zero-mean distributions (Gaussian or uniform) and then rescaled to match target norms/sparsity.
-We repeat experiments across multiple random seeds to estimate variance.
-
-\section{Training and Evaluation Protocol}
-\label{sec:method:protocol}
-
-\subsection{Data preprocessing}
-Inputs are standardized per feature (mean $0$, variance $1$) when applicable.
-For classification tasks, targets are one-hot encoded; for regression, targets are optionally standardized and rescaled back for reporting.
-
-\subsection{Washout}
-To reduce dependence on the initial state, we discard an initial \emph{washout} segment of length $T_{\text{w}}$.
-Only states $\{\mathbf{z}(t)\}_{t=T_{\text{w}}+1}^{T}$ are used for training and evaluation.
-
-\subsection{Metrics}
-We report:
-\begin{itemize}
-    \item \textbf{Classification}: accuracy (and macro-F1 when class imbalance is present).
-    \item \textbf{Regression}: mean squared error (MSE) and normalized RMSE (when appropriate).
-    \item \textbf{Memory}: memory capacity (MC) or task-specific memory measures when included in the benchmark suite.
-\end{itemize}
-
-\subsection{Baselines}
-We compare the proposed architectures against:
-\begin{itemize}
-    \item A standard single-layer ESN with comparable total state dimension.
-    \item A deep ESN with forward-only coupling (when the proposed model is bidirectional).
-    \item A structured SCR-like single module (when evaluating the benefit of depth).
-\end{itemize}
-
-\section{Ablation Studies}
-\label{sec:method:ablations}
-
-We perform controlled ablations to attribute performance gains:
-\begin{enumerate}
-    \item \textbf{Coupling directionality}: forward vs backward vs bidirectional.
-    \item \textbf{Structure vs randomness}: antisymmetric/cycle $\mathbf{W}^{(\ell)}$ vs dense random $\mathbf{W}^{(\ell)}$ under matched scaling.
-    \item \textbf{Depth vs width}: varying $L$ while keeping total state size $\sum_\ell n_\ell$ fixed.
-    \item \textbf{Readout features}: last-layer-only vs concatenation across layers (Eq.~\eqref{eq:method:feature_concat}).
-\end{enumerate}
-
-\section{Implementation Notes}
-\label{sec:method:implementation}
-
-All models are implemented in Python with vectorized state updates.
-For reproducibility, experiments log the random seed, hyperparameters, and the exact dataset split.
-Unless otherwise specified, only the linear readout is trained, enabling efficient training via closed-form ridge regression (Eq.~\eqref{eq:method:ridge}).
-
-\section{Summary}
-\label{sec:method:summary}
-
-The methodology evaluates two modular deep reservoir families:
-(1) antisymmetric modules with bidirectional coupling to study stability and information flow,
-and (2) cycle-based (SCR-like) modules to study the effect of strong structural priors.
-Both are trained with identical readout procedures and compared under matched experimental controls to isolate architectural effects.
-
-\subsection{Modular Interpretation of Deep Reservoir Architectures}
-
-All architectures considered in this work can be interpreted as \emph{modular dynamical systems}, where each reservoir layer acts as an autonomous computational module.
-Each module consists of a fixed number of recurrent units that process incoming signals and exchange information with other modules according to a prescribed connectivity pattern.
-
-Let each module $l \in \{1,\dots,L\}$ be associated with a state vector
-$\mathbf{h}^{(l)}_t \in \mathbb{R}^{N_l}$, where $N_l$ is the number of units in the layer.
-Modules interact exclusively through linear projections of their internal states, while nonlinear processing occurs locally within each module.
-
-This modular view allows the architecture to be analyzed in terms of structured interconnections between subsystems, rather than as a monolithic recurrent network.
-
-\subsection{Standard DeepESN: Hierarchical Modularity}
-
-In a standard DeepESN without cyclic or antisymmetric connections, information flows strictly forward across layers.
-The global recurrent matrix has a \emph{block lower-triangular} structure:
-\begin{equation}
-\mathbf{W}_{\text{tot}} =
-\begin{bmatrix}
-\mathbf{W}_{rec}^{(1)} & \mathbf{0} & \cdots & \mathbf{0} \\
-\mathbf{W}_{in}^{(2)} & \mathbf{W}_{rec}^{(2)} & \cdots & \mathbf{0} \\
-\vdots & \ddots & \ddots & \vdots \\
-\mathbf{0} & \cdots & \mathbf{W}_{in}^{(L)} & \mathbf{W}_{rec}^{(L)}
-\end{bmatrix}.
-\end{equation}
-
-Each diagonal block represents the internal dynamics of a module, while sub-diagonal blocks model feedforward communication between adjacent modules.
-This structure implies that the Jacobian of the system is block lower-triangular, and its spectral radius is governed by the most unstable module.
-
-\begin{figure}[t]
+\begin{figure}[ht!]
     \centering
-    % TODO: insert DeepESN modular diagram
-    \fbox{\parbox{0.8\linewidth}{\centering Placeholder for DeepESN modular architecture diagram}}
-    \caption{Modular structure of a standard DeepESN. Each layer acts as an independent module with feedforward inter-layer communication.}
-    \label{fig:deepesn-modular}
+    \label{fig:deep_cycle_reservoir}
+    \includegraphics[width=0.5\textwidth]{images/deep_cycle_reservoir.pdf}
+    \caption{Deep Cycle Reservoir...}
 \end{figure}
 
-\subsection{Cycle-Connected DeepESN: Ring Modularity}
 
-When cyclic connectivity is introduced, the modular hierarchy is closed into a ring.
-The first module receives feedback from the last module, yielding a block-circulant structure:
+This creates a \emph{delayed deep cycle reservoir} where each layer has a controlled internal topology and exchanges 
+information with the previous layer in the cycle.
+As we can see from eq. \ref{eq:method:cycle_dynamics}, the first layer receives
+ feedback from both the last layer at the previous timestep, thus closing the cycle, and the current input.
+For the remaining layers, each layer receives input at the current step and
+ the previous layer's state at the previous step plus it's recurrent state.
+
+Thus our architecture has a \emph{ring topology} across depth, but is more similar to a DeepESN-IA \cite{GALLICCHIO201787}
+ and a Delayed SCR \cite{mincomplex}.
+We are losing the distance between input and deeper layer, 
+but doing so, help to create a strong memory trace across depth.
+\todo{aggiungo immagini di distanza tra stati e memory capacity?}
+
+\subsection{Stability analysis of Deep Cycle Reservoir}
+\label{sec:method:dcr_analysis}
+In this section, we extend the analysis of standard ESN dynamics to the proposed DCR.
+We follow the theoretical framework established in \cite{gallicchio2017echo}, 
+ adapting the study of stability and contractivity to the specific case of cyclic modular connectivity.
+Is important to address the dynamics of such systems, since it affects both the capability to learn relevant information and
+keeping past information in the memory without losing it too quickly.
+We will study the stability of DCR, by linearizing its dynamics, and deriving conditions for ESP and asymptotic stability.
+
+\todo{forse questa parte va messa dopo}
+Finally we analyze the spectral radius of the system's Jacobian.
+Thus need to derive the Jacobian matrix $\mathbf{J}$ of equation \ref{eq:method:cycle_dynamics}.
+\subsubsection{Echo State Property of Deep Cycle Reservoir}
+\label{sec:method:esp_def}
+To formally characterize the stability of the DCR, we adopt the definition of the ESP as formulated for deep architectures in \cite{gallicchio2017echo}. 
+We introduce the notation $\hat{F}$ to denote the iterated version of the DCR global state transition function defined in Eq. \ref{eq:method:state_update_general}.
+
+Given an input sequence of arbitrary finite length $N_s$, denoted as $\mathbf{s} \in (\mathbb{R}^{N_U})^*$, and a global initial state $\mathbf{H} \in \mathbb{R}^{N}$, the function 
+$\hat{F}(\mathbf{s}, \mathbf{H})$ represents the global state of the network after being driven 
+by the sequence $\mathbf{s}$ starting from $\mathbf{H}$.
+
+The iterated map is defined recursively:
 \begin{equation}
-\mathbf{W}_{\text{tot}} =
-\begin{bmatrix}
-\mathbf{W}_{rec}^{(1)} & \mathbf{0} & \cdots & \mathbf{P}^{(1)} \\
-\mathbf{W}_{in}^{(2)} & \mathbf{W}_{rec}^{(2)} & \cdots & \mathbf{0} \\
-\vdots & \ddots & \ddots & \vdots \\
-\mathbf{0} & \cdots & \mathbf{W}_{in}^{(L)} & \mathbf{W}_{rec}^{(L)}
-\end{bmatrix},
+\label{eq:method:iterated_map}
+\hat{F} : (\mathbb{R}^{N_U})^* \times \mathbb{R}^{N} \to \mathbb{R}^{N}
 \end{equation}
-where $\mathbf{P}^{(1)}$ denotes the projection from the last module to the first.
 
-This ring topology removes the strict feedforward ordering of modules and enables global feedback across depth, significantly altering the spectrum of $\mathbf{W}_{\text{tot}}$ and the resulting memory dynamics.
-
-\begin{figure}[t]
-    \centering
-    % TODO: insert Cycle DeepESN diagram
-    \fbox{\parbox{0.8\linewidth}{\centering Placeholder for cyclic modular architecture diagram}}
-    \caption{Cycle-connected DeepESN. Modules are arranged in a ring topology, enabling feedback across depth.}
-    \label{fig:cycle-modular}
-\end{figure}
-
-\subsection{Antisymmetric Modular Coupling}
-
-In the antisymmetric architecture, modules interact bidirectionally with neighboring modules through antisymmetric couplings.
-The global recurrent matrix can be written as:
 \begin{equation}
-\mathbf{W}_{\text{tot}} =
-\mathbf{W}_{\text{diag}} +
-\epsilon
-\begin{bmatrix}
-\mathbf{0} & -\mathbf{C}^\top & \cdots & \mathbf{0} \\
-\mathbf{C} & \mathbf{0} & \ddots & \vdots \\
-\vdots & \ddots & \ddots & -\mathbf{C}^\top \\
-\mathbf{0} & \cdots & \mathbf{C} & \mathbf{0}
-\end{bmatrix}
-- \gamma \mathbf{I},
+\hat{F}(\mathbf{s}, \mathbf{H}) = 
+\begin{cases} 
+\mathbf{H} & \text{if } \mathbf{s} = [] \\
+F(\mathbf{u}(k), \hat{F}([\mathbf{u}(1), \dots, \mathbf{u}(k-1)], \mathbf{H})) & \text{if } \mathbf{s} = [\mathbf{u}(1), \dots, \mathbf{u}(k)]
+\end{cases}
 \end{equation}
-where $\mathbf{W}_{\text{diag}}$ contains the block-diagonal recurrent matrices of each module.
+where $[]$ denotes the null sequence.
 
-This construction enforces near-skew-symmetry of the inter-module dynamics, which theoretically promotes marginal stability and critical behavior.
-Each module remains locally nonlinear, while global interactions preserve structured energy exchange across layers.
+Accordingly, the ESP for the Deep Cycle Reservoir is defined as follows:
 
-\begin{figure}[t]
-    \centering
-    % TODO: insert antisymmetric modular diagram
-    \fbox{\parbox{0.8\linewidth}{\centering Placeholder for antisymmetric modular architecture diagram}}
-    \caption{Antisymmetric modular coupling across layers. Each module exchanges state information with its neighbors through skew-symmetric projections.}
-    \label{fig:antisymmetric-modular}
-\end{figure}
+\begin{definition}[Echo State Property of DCR]
+\label{def:esp_dcr}
+Assuming a Deep Cycle Reservoir whose global dynamics are governed by the function $F$. 
+The network has \emph{echo states} if for any input sequence of length $k$, $\mathbf{s}_k = [\mathbf{u}(1), \dots, \mathbf{u}(k)]$, 
+and for all pairs of initial global states $\mathbf{H}, \mathbf{H}' \in \mathbb{R}^{N}$, then:
+\begin{equation}
+||\hat{F}(\mathbf{s}_k, \mathbf{H}) - \hat{F}(\mathbf{s}_k, \mathbf{H}')|| \to 0 \quad \text{as} \quad k \to \infty.
+\end{equation}
+\end{definition}
 
-\subsection{Extension to Randomized Oscillators Networks}
+From a dynamical systems perspective, the DCR implements an input-driven discrete-time non-linear dynamical system $F$,
+ mapping the external input $\mathbf{u}(t)$ and the global state $\mathbf{H}(t-1)$ to the next state $\mathbf{H}(t)$:
+\begin{equation}
+    \mathbf{H}(t) = F(\mathbf{u}(t), \mathbf{H}(t-1)).
+\end{equation}
+As defined in Eq. \ref{eq:method:cycle_dynamics}, the global state transition is 
+governed by the global weight matrix $\mathbf{W}_{\text{cycle}}$ defined in \ref{sec:method:}.
 
-The same modular decomposition applies to RON and DeepRON architectures.
-Each layer represents a second-order dynamical module, and the global system can be expressed by stacking first-order representations of position and velocity states.
+\subsubsection{Local Linearization of DCR Dynamics (Jacobian)}
+To investigate the stability of the DCR, we analyze the local first-order approximation of the system.
+The linearized dynamics of the DCR around a state $\mathbf{H}_0 \in \mathbb{R}^{N}$ (assuming zero input for stability analysis)
+are governed by the Jacobian matrix of the state transition function $\mathbf{J}(t) = \frac{\partial \mathbf{H}(t)}{\partial \mathbf{H}(t-1)}$.
 
-Inter-module connectivity (feedforward, cyclic, or antisymmetric) affects only the linear coupling terms, while local oscillator dynamics remain unchanged.
-This allows a direct comparison between discrete-time (ESN) and continuous-time-inspired (RON) reservoirs under a unified modular framework.
+Considering the block structure of the DCR, where connections exist not only between subsequent layers
+ (feedforward) but also from the last layer to the first (feedback), the Jacobian $\mathbf{J}(t)$ 
+ takes the form of a \textbf{block-cyclic matrix}. Linearizing around the zero state ($\mathbf{H}_0 = \mathbf{0}$) where $\tanh'(0)=1$, the Jacobian simplifies to (for a detailed derivation see Appendix \ref{ch:appendix-A}):
+
+\begin{equation}
+\mathbf{J}(\mathbf{0}) =
+\begin{pmatrix}
+(1-\alpha)\mathbf{I} + \alpha\mathbf{W}_{\text{rec}}^{(1)} & \mathbf{0} & \cdots & \mathbf{0} & \alpha\mathbf{W}_{\text{cyc}}^{(1)} \\
+\alpha\mathbf{W}_{\text{cyc}}^{(2)} & (1-\alpha)\mathbf{I} + \alpha\mathbf{W}_{\text{rec}}^{(2)} & \cdots & \mathbf{0} & \mathbf{0} \\
+\mathbf{0} & \alpha\mathbf{W}_{\text{cyc}}^{(3)} & \ddots & \vdots & \vdots \\
+\vdots & \ddots & \ddots & (1-\alpha)\mathbf{I} + \alpha\mathbf{W}_{\text{rec}}^{(L-1)} & \mathbf{0} \\
+\mathbf{0} & \cdots & \mathbf{0} & \alpha\mathbf{W}_{\text{cyc}}^{(L)} & (1-\alpha)\mathbf{I} + \alpha\mathbf{W}_{\text{rec}}^{(L)}
+\end{pmatrix}
+\end{equation}
+
+This can be written compactly as:
+\begin{equation}
+    \mathbf{J}_{F,\mathbf{0}} = (1-\alpha)\mathbf{I} + \alpha \mathbf{W}_{\text{DCR}},
+\end{equation}
+
+% do theorem instead textbf
+\begin{theorem}
+\label{thm:nec_esp_dcr}
+(Necessary condition for the Deep Cycle Reservoir to satisfy the ESP of DCR). 
+Assume a DCR as in \ref{eq:method:cycle_dynamics} with global state transition function $F$.
+and a zero input. Then a necessary condition for ESP to hold is given by:
+\end{theorem} 
+\begin{equation}
+    \rho(\mathbf{J}_{F,\mathbf{0}}) = \rho\left( (1-\alpha)\mathbf{I} + \alpha \mathbf{W}_{\text{DCR}} \right) < 1.
+    \label{eq:method:nec_cond_dcr}
+\end{equation}
+For a proof, see Appendix \ref{ch:appendix-A}.
+
+\emph{Remark on Coupling:} unlike standard DeepESNs, where the spectrum is the union of the spectra of individual layers
+ (due to the triangular Jacobian), the cycle in the DCR couples the eigenvalues of all layers.
+  Consequently, $\rho(\mathbf{J}_{F,\mathbf{0}})$ is \textbf{not} simply $\max_l \rho(\text{layer}_l)$.
+   Stability in a DCR is a global property; an unstable feedback loop can drive the system to chaos even 
+   if individual modules satisfy the standard ESP condition locally.

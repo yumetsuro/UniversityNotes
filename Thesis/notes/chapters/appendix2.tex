@@ -1,0 +1,248 @@
+\label{ch:appendix-A}
+
+This appendix derives the Jacobian and both necessary and practical sufficient conditions for the Echo State Property (ESP) of the
+\emph{Deep Cycle Reservoir} (DCR) described in Chapter~\ref{chap:methodology}. 
+
+\section{Model definition}
+\label{sec:dcr-definition}
+
+Let the input be $\mathbf{u}(t)\in\mathbb{R}^{N_U}$ and consider $L$ reservoir modules with states
+\[
+\mathbf{h}^{(l)}(t)\in\mathbb{R}^{n_l},\qquad l=1,\dots,L.
+\]
+The global reservoir state introduced in Eq.~\eqref{eq:method:feature_concat} is the concatenation
+\[
+\mathbf{H}(t) \coloneqq \big[\mathbf{h}^{(1)}(t),\dots,\mathbf{h}^{(L)}(t)\big] \in \mathbb{R}^{N},\quad N=\sum_{l=1}^L n_l.
+\]
+
+All modules share the same leak rate $\alpha\in(0,1]$, and the element-wise nonlinearity is $\tanh(\cdot)$.
+The pre-activation of the first module matches Eq.~\eqref{eq:method:cycle_dynamics}:
+\begin{align}
+\mathbf{z}^{(1)}(t) &=
+\mathbf{W}_{\text{rec}}^{(1)} \mathbf{h}^{(1)}(t-1)
++ \mathbf{W}_{\text{in}}^{(1)} \mathbf{u}(t)
++ \mathbf{W}_{\text{cyc}}^{(L)} \mathbf{h}^{(L)}(t-1)
++ \mathbf{b}^{(1)}, \label{eq:dcr-z1}\\
+\mathbf{z}^{(l)}(t) &=
+\mathbf{W}_{\text{rec}}^{(l)} \mathbf{h}^{(l)}(t-1)
++ \mathbf{W}_{\text{in}}^{(l)} \mathbf{u}(t)
++ \mathbf{W}_{\text{cyc}}^{(l-1)} \mathbf{h}^{(l-1)}(t-1)
++ \mathbf{b}^{(l)},\qquad l=2,\dots,L. \label{eq:dcr-zl}
+\end{align}
+Each module is updated through the leaky integration rule
+\begin{equation}
+\mathbf{h}^{(l)}(t) = (1-\alpha)\,\mathbf{h}^{(l)}(t-1) + \alpha\,\tanh\big(\mathbf{z}^{(l)}(t)\big).
+\label{eq:dcr-leak}
+\end{equation}
+
+\paragraph{Remark (time indexing for the inter-module links).}
+All inter-module terms depend on $\mathbf{h}^{(\cdot)}(t-1)$, so the global map $\mathbf{H}(t)=F\big(\mathbf{u}(t),\mathbf{H}(t-1)\big)$ is well-defined without introducing algebraic loops, exactly as discussed in Section~\ref{sec:method:cycle}.
+
+\section{Jacobian of the global state map of DCR}
+\label{sec:dcr-jacobian}
+
+For a fixed input $\mathbf{u}(t)$, define the state transition map
+\[
+\mathbf{H}(t) = F\big(\mathbf{u}(t),\mathbf{H}(t-1)\big).
+\]
+The Jacobian with respect to the previous global state is
+\[
+\mathbf{J}(t) \coloneqq \frac{\partial \mathbf{H}(t)}{\partial \mathbf{H}(t-1)} \in \mathbb{R}^{N\times N}.
+\]
+
+\subsection{Layerwise derivatives}
+
+Let
+\[
+\mathbf{D}^{(l)}(t) = \mathrm{diag}\!\big(\tanh'(\mathbf{z}^{(l)}(t))\big) \in \mathbb{R}^{n_l\times n_l}.
+\]
+From \eqref{eq:dcr-leak}--\eqref{eq:dcr-zl} we obtain, for the first module,
+\begin{align}
+\frac{\partial \mathbf{h}^{(1)}(t)}{\partial \mathbf{h}^{(1)}(t-1)}
+&= (1-\alpha) \mathbf{I}_{n_1} + \alpha \mathbf{D}^{(1)}(t)\, \mathbf{W}_{\text{rec}}^{(1)}, \label{eq:dcr-j11}\\
+\frac{\partial \mathbf{h}^{(1)}(t)}{\partial \mathbf{h}^{(L)}(t-1)}
+&= \alpha \mathbf{D}^{(1)}(t)\, \mathbf{W}_{\text{cyc}}^{(L)}. \label{eq:dcr-j1L}
+\end{align}
+For every deeper module $l\ge 2$ we have
+\begin{align}
+\frac{\partial \mathbf{h}^{(l)}(t)}{\partial \mathbf{h}^{(l)}(t-1)}
+&= (1-\alpha) \mathbf{I}_{n_l} + \alpha \mathbf{D}^{(l)}(t)\, \mathbf{W}_{\text{rec}}^{(l)}, \label{eq:dcr-jll}\\
+\frac{\partial \mathbf{h}^{(l)}(t)}{\partial \mathbf{h}^{(l-1)}(t-1)}
+&= \alpha \mathbf{D}^{(l)}(t)\, \mathbf{W}_{\text{cyc}}^{(l-1)}. \label{eq:dcr-jl-lminus1}
+\end{align}
+
+Introduce the block matrices
+\begin{align}
+\mathbf{R}^{(l)}(t) &\coloneqq (1-\alpha) \mathbf{I}_{n_l} + \alpha \mathbf{D}^{(l)}(t)\, \mathbf{W}_{\text{rec}}^{(l)}, \label{eq:dcr-R}\\
+\mathbf{P}^{(l)}(t) &\coloneqq \alpha \mathbf{D}^{(l)}(t)\, \mathbf{W}_{\text{cyc}}^{(l-1)},\qquad l=2,\dots,L, \label{eq:dcr-P}\\
+\mathbf{C}^{(1)}(t) &\coloneqq \alpha \mathbf{D}^{(1)}(t)\, \mathbf{W}_{\text{cyc}}^{(L)}. \label{eq:dcr-C}
+\end{align}
+
+\subsection{Block structure}
+
+Let $\mathbf{J}_{l,k}(t)\coloneqq \partial \mathbf{h}^{(l)}(t)/\partial \mathbf{h}^{(k)}(t-1)$. Using \eqref{eq:dcr-j11}--\eqref{eq:dcr-jl-lminus1} we obtain
+\begin{align}
+\mathbf{J}_{1,1}(t) &= \mathbf{R}^{(1)}(t), &
+\mathbf{J}_{1,L}(t) &= \mathbf{C}^{(1)}(t), &
+\mathbf{J}_{1,k}(t) &= \mathbf{0}\quad (k\notin\{1,L\}), \label{eq:dcr-J-row1}\\
+\mathbf{J}_{l,l}(t) &= \mathbf{R}^{(l)}(t), &
+\mathbf{J}_{l,l-1}(t) &= \mathbf{P}^{(l)}(t), &
+\mathbf{J}_{l,k}(t) &= \mathbf{0}\quad (k\notin\{l,l-1\}), \label{eq:dcr-J-lower}
+\end{align}
+for $l=2,\dots,L$. Consequently, the Jacobian has the block form
+\[
+\mathbf{J}(t) =
+\begin{bmatrix}
+\mathbf{R}^{(1)}(t) & \mathbf{0} & \cdots & \mathbf{0} & \mathbf{C}^{(1)}(t) \\
+\mathbf{P}^{(2)}(t) & \mathbf{R}^{(2)}(t) & \ddots & \vdots & \mathbf{0} \\
+\vdots & \ddots & \ddots & \mathbf{0} & \vdots \\
+\mathbf{0} & \cdots & \mathbf{P}^{(L)}(t) & \mathbf{R}^{(L)}(t) & \mathbf{0}
+\end{bmatrix},
+\]
+which is block lower-bidiagonal with an additional non-zero block in the top-right corner coming from the cycle.
+
+\begin{align}
+\mathbf{R}^{(l)} &= (1-\alpha)\mathbf{I}_{n_l} + \alpha \mathbf{W}_{\text{rec}}^{(l)},\\
+\mathbf{P}^{(l)} &= \alpha \mathbf{W}_{\text{cyc}}^{(l-1)},\qquad l=2,\dots,L,\\
+\mathbf{C}^{(1)} &= \alpha \mathbf{W}_{\text{cyc}}^{(L)}.
+\end{align}
+
+For compactness, we define the global DCR weight matrix $\mathbf{W}_{\text{DCR}}\in\mathbb{R}^{N\times N}$ as
+\begin{equation}
+\mathbf{W}_{\text{DCR}} \coloneqq
+\begin{bmatrix}
+\mathbf{W}_{\text{rec}}^{(1)} & \mathbf{0} & \cdots & \mathbf{0} & \mathbf{W}_{\text{cyc}}^{(L)} \\
+\mathbf{W}_{\text{cyc}}^{(1)} & \mathbf{W}_{\text{rec}}^{(2)} & \ddots & \vdots & \mathbf{0} \\
+\vdots & \ddots & \ddots & \mathbf{0} & \vdots \\
+\mathbf{0} & \cdots & \mathbf{W}_{\text{cyc}}^{(L-1)} & \mathbf{W}_{\text{rec}}^{(L)} & \mathbf{0}
+\end{bmatrix},
+\label{eq:dcr-WDCR}
+\end{equation}
+where the off-diagonal blocks implement the cyclic couplings and the diagonal blocks are the intra-module recurrent weights.
+
+Assuming a null input sequence $\mathbf{u}(t) = \mathbf{0}$ and analyzing the system around the zero state $\mathbf{H} = \mathbf{0}$, we have $\tanh(0)=0$ and $\tanh'(0)=1$, implying $\mathbf{D}^{(l)}(t) = \mathbf{I}_{n_l}$ at $\mathbf{H}=\mathbf{0}$.
+Substituting this into the block definitions \eqref{eq:dcr-R}--\eqref{eq:dcr-C} yields
+
+
+With this notation, the Jacobian of the linearized system at $\mathbf{H}=\mathbf{0}$ can be written as
+\begin{equation}
+\mathbf{J}_{F,\mathbf{0}} = (1-\alpha)\mathbf{I} + \alpha\,\mathbf{W}_{\text{DCR}}.
+\label{eq:dcr-J-linearised}
+\end{equation}
+
+\section{Special case: no cycle}
+\label{sec:dcr-nocycle}
+
+If $\mathbf{W}_{\text{cyc}}^{(L)}=\mathbf{0}$ (and, more generally, $\mathbf{W}_{\text{cyc}}^{(l)}=\mathbf{0}$ for all $l$), the top-right block vanishes and $\mathbf{J}(t)$ becomes block lower-triangular. In this case the eigenvalues of $\mathbf{J}_{F,\mathbf{0}}$ are simply the union of the spectra of the diagonal blocks. The ESP then reduces to the classical layer-wise requirement
+\[
+\max_{l=1,\dots,L} \rho\!\big((1-\alpha)\mathbf{I} + \alpha\mathbf{W}_{\text{rec}}^{(l)}\big) < 1,
+\]
+recovered by dropping the coupling term in the sufficient condition \eqref{eq:dcr-sufficient} below.
+
+\begin{comment}
+    
+\section{A sufficient ESP condition via induced norms}
+\label{sec:dcr-esp}
+
+For $\tanh$, we have $0 < \tanh'(x)\le 1$ for all $x$, hence $\|\mathbf{D}^{(l)}(t)\|_2 \le 1$. Consequently,
+\begin{align}
+\|\mathbf{R}^{(l)}(t)\|_2 &\le (1-\alpha) + \alpha\,\|\mathbf{W}_{\text{rec}}^{(l)}\|_2, \label{eq:dcr-bound-R}\\
+\|\mathbf{P}^{(l)}(t)\|_2 &\le \alpha\,\|\mathbf{W}_{\text{cyc}}^{(l-1)}\|_2, \label{eq:dcr-bound-P}\\
+\|\mathbf{C}^{(1)}(t)\|_2 &\le \alpha\,\|\mathbf{W}_{\text{cyc}}^{(L)}\|_2. \label{eq:dcr-bound-C2}
+\end{align}
+
+Let $\Delta \mathbf{H}(t) \coloneqq \mathbf{H}(t)-\bar{\mathbf{H}}(t)$ be the difference between two trajectories driven by the same input. A standard sufficient condition for incremental stability (and therefore ESP) is the existence
+a contraction constant $\gamma<1$ such that:
+\begin{equation}
+\|\mathbf{J}(t)\|_2 \le \gamma < 1,\qquad \forall t. \label{eq:dcr-contract}
+\end{equation}
+
+Using the block structure in \eqref{eq:dcr-J-row1}--\eqref{eq:dcr-J-lower} and applying a block-row bound on the induced norm (each block row contains at most one diagonal and one incoming off-diagonal block), we obtain
+\[
+\|\mathbf{J}(t)\|_2
+\;\le\;
+\max_{l=1,\dots,L}
+\bigl(
+\|\mathbf{R}^{(l)}(t)\|_2
++
+\|\mathbf{W}_{\text{cyc}}^{\text{in}(l)}\|_2
+\bigr),
+\]
+where, for notational convenience,
+\[
+\mathbf{W}_{\text{cyc}}^{\text{in}(1)} \coloneqq \mathbf{W}_{\text{cyc}}^{(L)},\qquad
+\mathbf{W}_{\text{cyc}}^{\text{in}(l)} \coloneqq \mathbf{W}_{\text{cyc}}^{(l-1)}\quad\text{for }l\ge 2.
+\]
+
+Combining this with \eqref{eq:dcr-bound-R}--\eqref{eq:dcr-bound-C2}, and taking the worst case over time (i.e., $\|\mathbf{D}^{(l)}(t)\|_2\le 1$), we recover the practical sufficient ESP condition stated in Section~\ref{sec:method:dcr_analysis}:
+\begin{equation}
+\max_{l=1,\dots,L} \left[ (1-\alpha) + \alpha\,\|\mathbf{W}_{\text{rec}}^{(l)}\|_2 + \alpha\,\|\mathbf{W}_{\text{cyc}}^{\text{in}(l)}\|_2 \right] < 1.
+\label{eq:dcr-sufficient}
+\end{equation}
+Intuitively, this condition enforces that, for every module, the combined effect of intra-module recurrence and incoming cyclic coupling remains contractive once the leak factor has been applied.
+ 
+\end{comment}
+% -------------------------------------------------------------------------
+
+\section{Bounding the spectral radius via Gershgorin theorem}
+\label{sec:method:gershgorin_bound}
+In pratical RC scenario, often, only necessary conditions for the ESP can be verified, as sufficient conditions tend to be too restrictive.
+Here we provide a method to estimate an upper bound on the spectral radius of the DCR global weight matrix $\mathbf{W}_{\text{DCR}}$ defined in \eqref{eq:dcr-WDCR}. 
+One such bound is provided by the Gershgorin circle theorem.
+
+\begin{theorem}[Gershgorin Circle Theorem]
+Let $\mathbf{A} \in \mathbb{C}^{N \times N}$ be a square matrix with entries $a_{ij}$. Every eigenvalue $\lambda$ of $\mathbf{A}$ lies within at least one of the Gershgorin discs $D_i(\mathbf{A})$, defined as closed discs in the complex plane centered at $a_{ii}$ with radius $R_i = \sum_{j \neq i} |a_{ij}|$.
+Consequently, the spectral radius is bounded by
+\begin{equation}
+    \rho(\mathbf{A}) \le \max_{i} \left( |a_{ii}| + \sum_{j \neq i} |a_{ij}| \right).
+\end{equation}
+\end{theorem}
+
+\subsection{Application to the Deep Cycle Reservoir}
+
+We apply this theorem to the global weight matrix $\mathbf{W}_{\text{DCR}} \in \mathbb{R}^{N \times N}$ defined in \eqref{eq:dcr-WDCR}. Although $\mathbf{W}_{\text{DCR}}$ has a block-cyclic structure, the Gershgorin theorem operates on each of the $N$ \emph{scalar} rows of the full matrix. Since $N = \sum_{l=1}^L n_l$, each row corresponds to a specific unit (i.e., a specific component of some module's state vector). Concretely, for the $i$-th unit within module $l$, the corresponding row of $\mathbf{W}_{\text{DCR}}$ contains:
+\begin{itemize}
+    \item \textbf{Intra-module (recurrent) weights:} the $i$-th row of $\mathbf{W}_{\text{rec}}^{(l)}$, representing incoming connections \emph{from} other units within the same module $l$ \emph{to} unit $i$;
+    \item \textbf{Inter-module (cycle) weights:} the $i$-th row of $\mathbf{W}_{\text{cyc}}^{\text{in}(l)}$, representing incoming connections \emph{from} all units in the preceding module \emph{to} unit $i$ (where $\text{in}(l) = l-1$ for $l > 1$, and $\text{in}(1) = L$).
+\end{itemize}
+
+For the $i$-th unit in module $l$, the diagonal entry of $\mathbf{W}_{\text{DCR}}$ is $(\mathbf{W}_{\text{rec}}^{(l)})_{ii}$, while the off-diagonal entries consist of all other recurrent weights in that row plus all cycle weights. Applying the Gershgorin bound yields
+\begin{equation}
+    \rho(\mathbf{W}_{\text{DCR}}) \le \max_{l=1,\dots,L} \left( \max_{i=1,\dots,n_l} \left\{ \big|(\mathbf{W}_{\text{rec}}^{(l)})_{ii}\big| + \sum_{k \neq i} \big|(\mathbf{W}_{\text{rec}}^{(l)})_{ik}\big| + \sum_{m=1}^{n_{\text{in}(l)}} \big|(\mathbf{W}_{\text{cyc}}^{\text{in}(l)})_{im}\big| \right\} \right),
+    \label{eq:method:gershgorin_bound_formula}
+\end{equation}
+where $n_{\text{in}(l)}$ denotes the number of units in the module feeding into module $l$.
+
+\begin{comment}
+    
+\subsection{Implication for initialization}
+
+The bound \eqref{eq:method:gershgorin_bound_formula} provides a practical \emph{sufficient condition} for keeping $\rho(\mathbf{W}_{\text{DCR}})$ below a desired threshold. In particular, to guarantee that the necessary condition for ESP based on the linearization,
+\[
+\rho(\mathbf{J}_{F,\mathbf{0}}) = \rho\big((1-\alpha)\mathbf{I} + \alpha\mathbf{W}_{\text{DCR}}\big) < 1,
+\]
+holds, it is enough that the global block-cyclic matrix $\mathbf{W}_{\text{DCR}}$ remains strictly stable.
+
+In our implementation, each recurrent block $\mathbf{W}_{\text{rec}}^{(l)}$ and each cyclic block $\mathbf{W}_{\text{cyc}}^{(l)}$ is drawn from the same random distribution and then scaled \emph{once} so that all blocks share a common target spectral radius,
+\[
+\rho\big(\mathbf{W}_{\text{rec}}^{(l)}\big)
+\;\approx\;
+\rho\big(\mathbf{W}_{\text{cyc}}^{(l)}\big)
+\;\approx\;
+\rho_0,
+\qquad \text{for all } l.
+\]
+No further normalization (such as row-wise scaling or post-processing of the matrices) is performed. Consequently, the structure of $\mathbf{W}_{\text{DCR}}$ itself---rather than any imposed normalization scheme—governs the stability properties of the full reservoir.
+
+Since $\mathbf{W}_{\text{DCR}}$ is formed by combining one recurrent block and one incoming cyclic block per layer, the Gershgorin bound reflects the fact that each row inherits contributions from \emph{both} matrices drawn from the same distribution. At initialization, the typical Gershgorin radius associated with a DCR layer therefore aggregates two random effects of comparable magnitude (one recurrent, one cyclic), which leads to a larger effective spectrum for the global matrix:
+\[
+\rho(\mathbf{W}_{\text{DCR}})
+\;\lesssim\;
+\text{(recurrent contribution)} \;+\; \text{(cyclic contribution)}.
+\]
+
+Qualitatively, even if each individual block is safely inside the unit circle (i.e., $\rho_0 < 1$), the block-cyclic architecture causes these contributions to \emph{accumulate} as the layers are stacked. Because of this accumulation, the global spectral radius $\rho(\mathbf{W}_{\text{DCR}})$ naturally lies closer to $1$ than the spectral radius of the individual blocks used to build it.
+
+This phenomenon implies a practical \emph{stability budget}: when the same initialization scale is used for all recurrent and cyclic blocks, increasing the cycle strength or increasing the number of layers shifts the global dynamics toward the boundary of stability, even if each block is individually well within it. This behaviour is intrinsic to the cyclic architecture and explains why deep, cyclic reservoirs tend to operate near the edge of stability under uniform block-wise initialization.
+\end{comment}
+
