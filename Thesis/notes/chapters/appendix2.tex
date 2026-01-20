@@ -1,3 +1,25 @@
+
+\newcommand{\WtotCycle}{
+    \begin{bmatrix}
+    \Wrec{1} & \mathbf{0} & \cdots & \mathbf{\Wcyc{1}} \\
+    \Wcyc{2} & \Wrec{2} & \cdots & \mathbf{0} \\
+    \vdots & \ddots & \ddots & \vdots \\
+    \mathbf{0} & \cdots & \Wcyc{L
+    } & \Wrec{L}
+    \end{bmatrix}
+}
+
+% add to the diagonal the W_rec^l 
+\newcommand{\WtotAntisym}{
+    \begin{bmatrix}
+    \Wrec{1}-\gamma I & -\epsilon\Cbwd{1}^\top & \cdots & \mathbf{0} \\
+    \epsilon\Cfwd{2} & \Wrec{2}-\gamma I & \ddots & \vdots \\
+    \vdots & \ddots & \ddots & -\epsilon\Cbwd{L-1}^\top \\
+    \mathbf{0} & \cdots & \epsilon\Cfwd{L} & \Wrec{L}-\gamma I
+    \end{bmatrix}
+}
+
+
 \label{ch:appendix-A}
 
 This appendix derives the Jacobian and both necessary and practical sufficient conditions for the Echo State Property (ESP) of the
@@ -35,9 +57,9 @@ Each module is updated through the leaky integration rule
 \label{eq:dcr-leak}
 \end{equation}
 
-\paragraph{Remark (time indexing for the inter-module links).}
+\begin{remark} On Time indexing for the inter-module links.
 All inter-module terms depend on $\mathbf{h}^{(\cdot)}(t-1)$, so the global map $\mathbf{H}(t)=F\big(\mathbf{u}(t),\mathbf{H}(t-1)\big)$ is well-defined without introducing algebraic loops, exactly as discussed in Section~\ref{sec:method:cycle}.
-
+\end{remark}
 \section{Jacobian of the global state map of DCR}
 \label{sec:dcr-jacobian}
 
@@ -100,6 +122,8 @@ for $l=2,\dots,L$. Consequently, the Jacobian has the block form
 \end{bmatrix},
 \]
 which is block lower-bidiagonal with an additional non-zero block in the top-right corner coming from the cycle.
+Here $\mathbf{R}^{(l)}(t)$ are the \textit{recurrent} diagonal blocks, $\mathbf{P}^{(l)}(t)$ are the \textit{cyclic} sub-diagonal blocks and
+$\mathbf{C}^{(1)}(t)$ is the cyclic top-right block.
 
 \begin{align}
 \mathbf{R}^{(l)} &= (1-\alpha)\mathbf{I}_{n_l} + \alpha \mathbf{W}_{\text{rec}}^{(l)},\\
@@ -109,13 +133,7 @@ which is block lower-bidiagonal with an additional non-zero block in the top-rig
 
 For compactness, we define the global DCR weight matrix $\mathbf{W}_{\text{DCR}}\in\mathbb{R}^{N\times N}$ as
 \begin{equation}
-\mathbf{W}_{\text{DCR}} \coloneqq
-\begin{bmatrix}
-\mathbf{W}_{\text{rec}}^{(1)} & \mathbf{0} & \cdots & \mathbf{0} & \mathbf{W}_{\text{cyc}}^{(L)} \\
-\mathbf{W}_{\text{cyc}}^{(1)} & \mathbf{W}_{\text{rec}}^{(2)} & \ddots & \vdots & \mathbf{0} \\
-\vdots & \ddots & \ddots & \mathbf{0} & \vdots \\
-\mathbf{0} & \cdots & \mathbf{W}_{\text{cyc}}^{(L-1)} & \mathbf{W}_{\text{rec}}^{(L)} & \mathbf{0}
-\end{bmatrix},
+\mathbf{W}_{\text{DCR}} \coloneqq \WtotCycle
 \label{eq:dcr-WDCR}
 \end{equation}
 where the off-diagonal blocks implement the cyclic couplings and the diagonal blocks are the intra-module recurrent weights.
@@ -138,6 +156,23 @@ If $\mathbf{W}_{\text{cyc}}^{(L)}=\mathbf{0}$ (and, more generally, $\mathbf{W}_
 \max_{l=1,\dots,L} \rho\!\big((1-\alpha)\mathbf{I} + \alpha\mathbf{W}_{\text{rec}}^{(l)}\big) < 1,
 \]
 recovered by dropping the coupling term in the sufficient condition \eqref{eq:dcr-sufficient} below.
+
+\section{Special Case: no recurrent}
+Instead of removing the cycle, if we remove the recurrent connections, i.e., $\mathbf{W}_{\text{rec}}^{(l)}=\mathbf{0}$ for all $l$, then the Jacobian becomes
+\[
+\mathbf{J}(t) = (1-\alpha)\mathbf{I} + \alpha
+\begin{bmatrix} 
+\mathbf{0} & \mathbf{0} & \cdots & \mathbf{0} & \mathbf{W}_{\text{cyc}}^{(L)} \\
+\mathbf{W}_{\text{cyc}}^{(1)} & \mathbf{0} & \ddots & \vdots & \mathbf{0} \\
+\vdots & \ddots & \ddots & \mathbf{0} & \vdots \\
+\mathbf{0} & \cdots & \mathbf{W}_{\text{cyc}}^{(L-1)} & \mathbf{0} & \mathbf{0}
+\end{bmatrix}.
+\]
+
+The ESP condition then depends solely on the cyclic coupling weights. This configuration in the case of single units is the same as in the paper \cite{mincomplex}, 
+where we find the find same behaviour of SCR (Simple Cycle Reservoirs) on MC task. 
+ a ring of interconnected feedforward layers, where each layer's output feeds into the next, forming a closed loop. The stability analysis in this case focuses on the spectral properties of the cyclic weight matrices and their influence on the overall system dynamics.
+
 
 \begin{comment}
     
@@ -246,3 +281,559 @@ Qualitatively, even if each individual block is safely inside the unit circle (i
 This phenomenon implies a practical \emph{stability budget}: when the same initialization scale is used for all recurrent and cyclic blocks, increasing the cycle strength or increasing the number of layers shifts the global dynamics toward the boundary of stability, even if each block is individually well within it. This behaviour is intrinsic to the cyclic architecture and explains why deep, cyclic reservoirs tend to operate near the edge of stability under uniform block-wise initialization.
 \end{comment}
 
+% =========================================================================
+% DEEP ANTISYMMETRIC RESERVOIR (DAR) APPENDIX
+% =========================================================================
+
+\chapter{Jacobian Derivation for Deep Antisymmetric Reservoir}
+\label{ch:appendix-B}
+
+This appendix derives the Jacobian and stability conditions for the Echo State Property (ESP) of the \emph{Deep Antisymmetric Reservoir} (DAR) described in Chapter~\ref{chap:methodology}. The derivation follows the same approach used for the DCR in Appendix~\ref{ch:appendix-A}.
+
+\section{Model definition}
+\label{sec:dar-definition}
+
+Let the input be $\mathbf{u}(t)\in\mathbb{R}^{N_U}$ and consider $L$ reservoir modules with states
+\[
+\mathbf{h}^{(l)}(t)\in\mathbb{R}^{n_l},\qquad l=1,\dots,L.
+\]
+The global reservoir state is the concatenation
+\[
+\mathbf{H}(t) \coloneqq \big[\mathbf{h}^{(1)}(t),\dots,\mathbf{h}^{(L)}(t)\big] \in \mathbb{R}^{N},\quad N=\sum_{l=1}^L n_l.
+\]
+
+All modules share the same leak rate $\alpha\in(0,1]$, and the element-wise nonlinearity is $\tanh(\cdot)$.
+As introduced in Eq.~\eqref{eq:method:antisym_leak}, the pre-activation of each module includes:
+\begin{itemize}
+    \item A \textbf{current input term} from the previous layer at time $t$;
+    \item A \textbf{local memory term} with dissipation $-\gamma\mathbf{I}$;
+    \item An \textbf{antisymmetric coupling term} with strength $\epsilon$ connecting adjacent modules at time $t-1$.
+\end{itemize}
+
+The pre-activation for the first module is:
+\begin{equation}
+\mathbf{z}^{(1)}(t) =
+\mathbf{W}_{\text{in}}^{(1)} \mathbf{u}(t)
++ \big(\mathbf{W}_{\text{rec}}^{(1)} - \gamma \mathbf{I}\big) \mathbf{h}^{(1)}(t-1)
+- \epsilon \mathbf{C}^{\top(1)} \mathbf{h}^{(2)}(t-1)
++ \mathbf{b}^{(1)}.
+\label{eq:dar-z1}
+\end{equation}
+
+For intermediate modules $l=2,\dots,L-1$:
+\begin{equation}
+\mathbf{z}^{(l)}(t) =
+\mathbf{W}_{\text{in}}^{(l)} \mathbf{h}^{(l-1)}(t)
++ \big(\mathbf{W}_{\text{rec}}^{(l)} - \gamma \mathbf{I}\big) \mathbf{h}^{(l)}(t-1)
++ \epsilon \mathbf{C}^{(l)} \mathbf{h}^{(l-1)}(t-1)
+- \epsilon \mathbf{C}^{\top(l)} \mathbf{h}^{(l+1)}(t-1)
++ \mathbf{b}^{(l)}.
+\label{eq:dar-zl}
+\end{equation}
+
+For the last module $l=L$:
+\begin{equation}
+\mathbf{z}^{(L)}(t) =
+\mathbf{W}_{\text{in}}^{(L)} \mathbf{h}^{(L-1)}(t)
++ \big(\mathbf{W}_{\text{rec}}^{(L)} - \gamma \mathbf{I}\big) \mathbf{h}^{(L)}(t-1)
++ \epsilon \mathbf{C}^{(L)} \mathbf{h}^{(L-1)}(t-1)
++ \mathbf{b}^{(L)}.
+\label{eq:dar-zL}
+\end{equation}
+
+Each module is updated through the leaky integration rule:
+\begin{equation}
+\mathbf{h}^{(l)}(t) = (1-\alpha)\,\mathbf{h}^{(l)}(t-1) + \alpha\,\tanh\big(\mathbf{z}^{(l)}(t)\big).
+\label{eq:dar-leak}
+\end{equation}
+
+\section{Jacobian of the global state map of DAR}
+\label{sec:dar-jacobian}
+
+For a fixed input $\mathbf{u}(t)$, define the state transition map
+\[
+\mathbf{H}(t) = F\big(\mathbf{u}(t),\mathbf{H}(t-1)\big).
+\]
+The Jacobian with respect to the previous global state is
+\[
+\mathbf{J}(t) \coloneqq \frac{\partial \mathbf{H}(t)}{\partial \mathbf{H}(t-1)} \in \mathbb{R}^{N\times N}.
+\]
+
+\subsection{Layerwise derivatives}
+
+Let
+\[
+\mathbf{D}^{(l)}(t) = \mathrm{diag}\!\big(\tanh'(\mathbf{z}^{(l)}(t))\big) \in \mathbb{R}^{n_l\times n_l}.
+\]
+
+From \eqref{eq:dar-leak}--\eqref{eq:dar-zL}, we compute the partial derivatives for each module.
+
+\paragraph{First module ($l=1$):}
+\begin{align}
+\frac{\partial \mathbf{h}^{(1)}(t)}{\partial \mathbf{h}^{(1)}(t-1)}
+&= (1-\alpha) \mathbf{I}_{n_1} + \alpha \mathbf{D}^{(1)}(t)\, \big(\mathbf{W}_{\text{rec}}^{(1)} - \gamma \mathbf{I}\big), \label{eq:dar-j11}\\
+\frac{\partial \mathbf{h}^{(1)}(t)}{\partial \mathbf{h}^{(2)}(t-1)}
+&= -\alpha \epsilon \mathbf{D}^{(1)}(t)\, \mathbf{C}^{\top(1)}. \label{eq:dar-j12}
+\end{align}
+
+\paragraph{Intermediate modules ($l=2,\dots,L-1$):}
+\begin{align}
+\frac{\partial \mathbf{h}^{(l)}(t)}{\partial \mathbf{h}^{(l-1)}(t-1)}
+&= \alpha \epsilon \mathbf{D}^{(l)}(t)\, \mathbf{C}^{(l)}, \label{eq:dar-jl-lminus1}\\
+\frac{\partial \mathbf{h}^{(l)}(t)}{\partial \mathbf{h}^{(l)}(t-1)}
+&= (1-\alpha) \mathbf{I}_{n_l} + \alpha \mathbf{D}^{(l)}(t)\, \big(\mathbf{W}_{\text{rec}}^{(l)} - \gamma \mathbf{I}\big), \label{eq:dar-jll}\\
+\frac{\partial \mathbf{h}^{(l)}(t)}{\partial \mathbf{h}^{(l+1)}(t-1)}
+&= -\alpha \epsilon \mathbf{D}^{(l)}(t)\, \mathbf{C}^{\top(l)}. \label{eq:dar-jl-lplus1}
+\end{align}
+
+\paragraph{Last module ($l=L$):}
+\begin{align}
+\frac{\partial \mathbf{h}^{(L)}(t)}{\partial \mathbf{h}^{(L-1)}(t-1)}
+&= \alpha \epsilon \mathbf{D}^{(L)}(t)\, \mathbf{C}^{(L)}, \label{eq:dar-jL-Lminus1}\\
+\frac{\partial \mathbf{h}^{(L)}(t)}{\partial \mathbf{h}^{(L)}(t-1)}
+&= (1-\alpha) \mathbf{I}_{n_L} + \alpha \mathbf{D}^{(L)}(t)\, \big(\mathbf{W}_{\text{rec}}^{(L)} - \gamma \mathbf{I}\big). \label{eq:dar-jLL}
+\end{align}
+
+\subsection{Block structure}
+
+Introduce the block matrices for convenience:
+\begin{align}
+\mathbf{R}^{(l)}(t) &\coloneqq (1-\alpha) \mathbf{I}_{n_l} + \alpha \mathbf{D}^{(l)}(t)\, \big(\mathbf{W}_{\text{rec}}^{(l)} - \gamma \mathbf{I}\big), \label{eq:dar-R}\\
+\mathbf{F}^{(l)}(t) &\coloneqq \alpha \epsilon \mathbf{D}^{(l)}(t)\, \mathbf{C}^{(l)},\qquad l=2,\dots,L, \label{eq:dar-F}\\
+\mathbf{B}^{(l)}(t) &\coloneqq -\alpha \epsilon \mathbf{D}^{(l)}(t)\, \mathbf{C}^{\top(l)},\qquad l=1,\dots,L-1. \label{eq:dar-B}
+\end{align}
+
+Here $\mathbf{R}^{(l)}(t)$ represents the diagonal (self-recurrence) blocks, $\mathbf{F}^{(l)}(t)$ the forward coupling from layer $l-1$ to layer $l$, and $\mathbf{B}^{(l)}(t)$ the backward coupling from layer $l+1$ to layer $l$.
+
+Let $\mathbf{J}_{l,k}(t)\coloneqq \partial \mathbf{h}^{(l)}(t)/\partial \mathbf{h}^{(k)}(t-1)$. The non-zero blocks are:
+\begin{align}
+\mathbf{J}_{l,l}(t) &= \mathbf{R}^{(l)}(t), \qquad l=1,\dots,L, \label{eq:dar-J-diag}\\
+\mathbf{J}_{l,l-1}(t) &= \mathbf{F}^{(l)}(t), \qquad l=2,\dots,L, \label{eq:dar-J-sub}\\
+\mathbf{J}_{l,l+1}(t) &= \mathbf{B}^{(l)}(t), \qquad l=1,\dots,L-1. \label{eq:dar-J-super}
+\end{align}
+
+Consequently, the Jacobian has a \textbf{block tridiagonal} structure:
+\[
+\mathbf{J}(t) =
+\begin{bmatrix}
+\mathbf{R}^{(1)}(t) & \mathbf{B}^{(1)}(t) & \mathbf{0} & \cdots & \mathbf{0} \\
+\mathbf{F}^{(2)}(t) & \mathbf{R}^{(2)}(t) & \mathbf{B}^{(2)}(t) & \ddots & \vdots \\
+\mathbf{0} & \mathbf{F}^{(3)}(t) & \ddots & \ddots & \mathbf{0} \\
+\vdots & \ddots & \ddots & \mathbf{R}^{(L-1)}(t) & \mathbf{B}^{(L-1)}(t) \\
+\mathbf{0} & \cdots & \mathbf{0} & \mathbf{F}^{(L)}(t) & \mathbf{R}^{(L)}(t)
+\end{bmatrix}.
+\]
+
+
+\subsection{Linearization at the zero state}
+
+Assuming a null input sequence $\mathbf{u}(t) = \mathbf{0}$ and analyzing the system around the zero state $\mathbf{H} = \mathbf{0}$, we have $\tanh(0)=0$ and $\tanh'(0)=1$, implying $\mathbf{D}^{(l)}(t) = \mathbf{I}_{n_l}$ at $\mathbf{H}=\mathbf{0}$.
+
+Substituting this into the block definitions \eqref{eq:dar-R}--\eqref{eq:dar-B} yields:
+\begin{align}
+\mathbf{R}^{(l)} &= (1-\alpha)\mathbf{I}_{n_l} + \alpha \big(\mathbf{W}_{\text{rec}}^{(l)} - \gamma \mathbf{I}\big), \label{eq:dar-R-lin}\\
+\mathbf{F}^{(l)} &= \alpha \epsilon \mathbf{C}^{(l)},\qquad l=2,\dots,L, \label{eq:dar-F-lin}\\
+\mathbf{B}^{(l)} &= -\alpha \epsilon \mathbf{C}^{\top(l)},\qquad l=1,\dots,L-1. \label{eq:dar-B-lin}
+\end{align}
+
+For compactness, we define the global DAR weight matrix $\mathbf{W}_{\text{DAR}}\in\mathbb{R}^{N\times N}$ as:
+\begin{equation}
+\mathbf{W}_{\text{DAR}} \coloneqq
+\begin{bmatrix}
+\mathbf{W}_{\text{rec}}^{(1)}-\gamma \mathbf{I} & -\epsilon\mathbf{C}^{\top(1)} & \cdots & \mathbf{0} \\
+\epsilon\mathbf{C}^{(2)} & \mathbf{W}_{\text{rec}}^{(2)}-\gamma \mathbf{I} & \ddots & \vdots \\
+\vdots & \ddots & \ddots & -\epsilon\mathbf{C}^{\top(L-1)} \\
+\mathbf{0} & \cdots & \epsilon\mathbf{C}^{(L)} & \mathbf{W}_{\text{rec}}^{(L)}-\gamma \mathbf{I}
+\end{bmatrix},
+\label{eq:dar-WDAR}
+\end{equation}
+where the diagonal blocks contain the damped recurrent weights and the off-diagonal blocks implement the antisymmetric inter-module couplings.
+
+With this notation, the Jacobian of the linearized system at $\mathbf{H}=\mathbf{0}$ can be written as:
+\begin{equation}
+\mathbf{J}_{F,\mathbf{0}} = (1-\alpha)\mathbf{I} + \alpha\,\mathbf{W}_{\text{DAR}}.
+\label{eq:dar-J-linearised}
+\end{equation}
+
+\section{Role of antisymmetric structure in stability}
+\label{sec:dar-antisym-stability}
+
+The antisymmetric coupling structure of DAR has important implications for stability that differ from DCR.
+
+\subsection{General case with recurrent weights}
+
+In practice, each module has non-zero recurrent weights $\mathbf{W}_{\text{rec}}^{(l)}$. The spectrum of $\mathbf{W}_{\text{DAR}}$ is then determined by the interplay between:
+\begin{itemize}
+    \item The spectra of the individual recurrent blocks $\mathbf{W}_{\text{rec}}^{(l)}$;
+    \item The dissipation strength $\gamma$;
+    \item The coupling strength $\epsilon$ and structure of $\mathbf{C}^{(l)}$.
+\end{itemize}
+
+Unlike DCR, where the cyclic coupling can amplify spectral radius through eigenvalue coupling across all layers, the antisymmetric structure of DAR tends to \emph{regularize} the spectrum by introducing imaginary components that do not contribute to spectral radius growth.
+
+\section{Comparison with DCR Jacobian structure}
+\label{sec:dar-dcr-comparison}
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Property} & \textbf{DCR} & \textbf{DAR} \\
+\midrule
+Block structure & Cyclic (lower bidiag. + top-right) & Tridiagonal \\
+Information flow & Unidirectional with cycle & Bidirectional \\
+Off-diagonal coupling & $\mathbf{W}_{\text{cyc}}^{(l)}$ (forward only per row) & $\pm\epsilon\mathbf{C}^{(l)}$ (symmetric positions) \\
+Stability mechanism & Spectral radius control & Antisymmetric + dissipation \\
+\bottomrule
+\end{tabular}
+\caption{Structural comparison of DCR and DAR Jacobians.}
+\label{tab:dcr-dar-comparison}
+\end{table}
+
+The key difference is that DAR's tridiagonal structure with antisymmetric off-diagonal blocks provides a natural energy-preserving mechanism (in the continuous-time limit), while DCR's cyclic structure creates longer-range temporal dependencies but requires more careful spectral radius management.
+
+\section{Introduction}
+
+Reservoir Computing architectures are dynamical systems in which the recurrent
+weights are fixed and only an output layer is trained.  When stacks of
+reservoir layers are coupled with additional connections, analysing stability
+requires controlling the spectral radius of a global Jacobian matrix.  In the
+\emph{Deep Cycle Reservoir} (DCR) each reservoir module feeds into the next and
+also receives a delayed feedback from the last module, resulting in a
+\emph{block–circulant} global weight matrix \cite{thesis:wdcr}.  In the
+\emph{Deep Antisymmetric Reservoir} (DAR) adjacent modules exchange
+information through antisymmetric couplings while each module is damped by a
+diagonal term, producing a block tridiagonal (Hessenberg) matrix
+\cite{thesis:wdar}.
+
+This document derives rigorous upper bounds on the spectral radius of the
+Jacobian matrices of DCR and DAR.  These bounds are expressed in terms of the
+spectral radii (or operator norms) of the local recurrent weights, cycle
+couplings and antisymmetric couplings, and they provide simple conditions for
+ensuring the echo‑state property (ESP).  In particular, we prove that under
+the assumption that all modules are identically scaled, the spectral radius of
+the DCR Jacobian is bounded by the sum of the radii of the recurrent and
+cycle weights.  For the DAR, the spectral radius is bounded by the radius of
+the recurrent weights plus the damping term and twice the coupling strength.
+
+\section{Notation and Preliminaries}
+
+We consider a deep reservoir composed of $L$ modules.  Each module $l$ has
+state dimension $n$, so the global state dimension is $N=Ln$.  We denote by
+$W_{\mathrm{rec}}^{(l)}\in\mathbb{R}^{n\times n}$ the local recurrent weight
+matrix of module~$l$ and by $W_{\mathrm{cyc}}^{(l)}\in\mathbb{R}^{n\times n}$
+the “cycle” matrix feeding the $(l\!+\n+1)$‑st module into module~$l$ (with indices taken modulo~$L$).  When
+$W_{\mathrm{rec}}^{(l)}=W_{\mathrm{rec}}$ and $W_{\mathrm{cyc}}^{(l)}=W_{\mathrm{cyc}}$ are
+independent of~$l$, the global DCR weight matrix defined in the thesis
+\cite{thesis:wdcr} becomes the block–circulant matrix
+\begin{equation}
+  W_{\mathrm{DCR}}
+  =
+  \begin{bmatrix}
+    W_{\mathrm{rec}} & 0            & \cdots & 0            & W_{\mathrm{cyc}} \\
+    W_{\mathrm{cyc}} & W_{\mathrm{rec}} & 0      & \cdots & 0            \\
+    0            & W_{\mathrm{cyc}} & W_{\mathrm{rec}} & \ddots & \vdots       \\
+    \vdots       & \ddots      & \ddots & \ddots & 0            \\
+    0            & \cdots      & 0      & W_{\mathrm{cyc}} & W_{\mathrm{rec}}
+  \end{bmatrix},
+  \label{eq:block_circ}
+\end{equation}
+where the cycle connection from the last module to the first appears in the
+top–right block.  In the thesis this matrix is displayed explicitly for
+general $W_{\mathrm{rec}}^{(l)}$ and $W_{\mathrm{cyc}}^{(l)}$ in Eq.~(3.7)
+\cite{thesis:wdcr}.  When all blocks share the same spectral radius
+$\rho_{\mathrm{rec}}=\rho(W_{\mathrm{rec}})$ and $\rho_{\mathrm{cyc}}=\rho(W_{\mathrm{cyc}})$,
+matrix~\eqref{eq:block_circ} is block–circulant.
+
+For the DAR, each module receives the current input from the previous module
+and retains past information through an antisymmetric coupling with adjacent
+modules.  The global recurrent matrix given in Eq.~(3.16) of the thesis
+\cite{thesis:wdar} has the block tridiagonal form
+\begin{equation}
+  W_{\mathrm{DAR}}
+  =
+  \begin{bmatrix}
+    W_{\mathrm{rec}} - \gamma I & -\varepsilon C^{\mathsf{T}} & 0 & \cdots & 0 \\
+    \varepsilon C & W_{\mathrm{rec}} - \gamma I & -\varepsilon C^{\mathsf{T}} & \ddots & \vdots \\
+    0 & \varepsilon C & W_{\mathrm{rec}} - \gamma I & \ddots & 0 \\
+    \vdots & \ddots & \ddots & \ddots & -\varepsilon C^{\mathsf{T}} \\
+    0 & \cdots & 0 & \varepsilon C & W_{\mathrm{rec}} - \gamma I
+  \end{bmatrix},
+  \label{eq:dar_matrix}
+\end{equation}
+where $C\in\mathbb{R}^{n\times n}$ is an arbitrary coupling matrix, $\varepsilon>0$ controls the
+coupling strength and $\gamma\in\mathbb{R}$ is a damping parameter.  Each module
+is therefore locally nonlinear but exchanges information with its neighbours
+through the antisymmetric block $(C - C^{\mathsf{T}})$.  In what follows we
+assume that $W_{\mathrm{rec}}$ has spectral radius $\rho_{\mathrm{rec}}$ and that $C$ has
+spectral norm $\sigma_{\max}(C)$.
+
+The dynamics of both architectures are given by
+\[ H(t) = (1-\alpha) H(t-1) + \alpha\,\tanh\bigl( W_{\mathrm{global}} H(t-1) + W_{\mathrm{in}} u(t) \bigr), \]
+where $W_{\mathrm{global}}$ is either $W_{\mathrm{DCR}}$ or $W_{\mathrm{DAR}}$, $\alpha\in(0,1]$ is the
+leaky rate and $\tanh$ acts elementwise.  Linearising this map around the
+zero state and using $\tanh'(0)=1$ yields the Jacobian
+\begin{equation}
+  J_{F,0} = (1-\alpha) I + \alpha W_{\mathrm{global}}.
+  \label{eq:jacobian}
+\end{equation}
+The stability (or Echo–State Property) of the reservoir dynamics requires
+\(\rho(J_{F,0})<1\), so bounding the spectral radius of $W_{\mathrm{global}}$ is
+sufficient.
+
+\section{Block–Circulant Matrices and the DCR Bound}
+
+\subsection{Diagonalisation of block–circulant matrices}
+
+The weight matrix of the DCR in Eq.~\eqref{eq:block_circ} is block–circulant.
+A central result about block–circulant matrices states that their eigenvalues
+can be obtained from the eigenvalues of a finite set of smaller matrices.
+Specifically, if $C=\mathrm{circ}(C_0, C_1,\dots,C_{L-1})$ is block–circulant with
+$L$ block rows and columns, then Lemma~A.1 from Barsukow \emph{et
+al.} \cite{barsukow2025} (reproduced here for completeness) shows that the
+eigenvalues of $C$ are given by the eigenvalues of matrices
+\(\sum_{r=0}^{L-1} \omega_k^r C_r\), where $\omega_k=e^{2\pi i k/L}$ are the $L$‑th roots
+of unity:
+
+\begin{lemma}[Eigenvalues of block–circulant matrices\cite{barsukow2025}]
+\label{lem:block_circ}
+Let $C=\mathrm{circ}(C_0,C_1,\dots,C_{L-1})$ be an $L\times L$ block–circulant
+matrix, where each $C_r\in\mathbb{C}^{n\times n}$.  Then for each $k\in\{0,\dots,L-1\}$,
+consider the matrix
+\[ D_k \;=\; \sum_{r=0}^{L-1} \omega_k^r C_r, \qquad \omega_k = e^{2\pi i k/L}. \]
+Every eigenvalue of $C$ is an eigenvalue of some $D_k$, and all eigenvalues of
+$C$ are obtained in this way \cite[Eq.~(A.2)]{barsukow2025}.  Moreover,
+$C$ admits a block diagonalisation by the discrete Fourier transform matrix,
+which brings it to the block diagonal form \cite[Eq.~(A.7)]{barsukow2025}.
+\end{lemma}
+
+For the DCR weight matrix\,
+$W_{\mathrm{DCR}}$ in Eq.~\eqref{eq:block_circ} we identify
+$C_0 = W_{\mathrm{rec}}$ and $C_{L-1}=W_{\mathrm{cyc}}$ while $C_r=0$ for
+$1 \leq r \leq L-2$.  Lemma~\ref{lem:block_circ} then shows that the spectrum
+of $W_{\mathrm{DCR}}$ is the union of the spectra of the $L$ matrices
+\begin{equation}
+  D_k = W_{\mathrm{rec}} + \omega_k^{-1} W_{\mathrm{cyc}},
+  \qquad k=0,1,\dots,L-1.
+  \label{eq:Dk}
+\end{equation}
+Here $\omega_k^{-1}=\bar{\omega}_k$ lies on the unit circle.  Therefore,
+\begin{equation}
+  \rho\bigl(W_{\mathrm{DCR}}\bigr)
+  = \max_{0\leq k<L} \rho(D_k).
+  \label{eq:rho_dcr}
+\end{equation}
+
+\subsection{Bounding the spectral radius of $D_k$}
+
+To derive a useful bound from Eq.~\eqref{eq:rho_dcr}, we study the spectral
+radius of $D_k = W_{\mathrm{rec}} + \omega_k^{-1} W_{\mathrm{cyc}}$.  Since
+$|\omega_k|=1$, multiplication by $\omega_k^{-1}$ does not change the singular
+values or spectral norm of $W_{\mathrm{cyc}}$.  Let $\|\cdot\|$ denote any
+sub‑multiplicative matrix norm.  By the triangle inequality,
+\(\|D_k\| \leq \|W_{\mathrm{rec}}\| + \|W_{\mathrm{cyc}}\|\).  Moreover, the spectral
+radius of a matrix is bounded by any sub‑multiplicative norm: $\rho(A)
+\leq \|A\|$.  Combining these facts yields
+\begin{equation}
+  \rho(D_k) \leq \|D_k\| \leq \|W_{\mathrm{rec}}\| + \|W_{\mathrm{cyc}}\|.
+  \label{eq:triangle_bound}
+\end{equation}
+If $W_{\mathrm{rec}}$ and $W_{\mathrm{cyc}}$ are normal matrices (for instance,
+when they are drawn from an orthogonal ensemble and scaled), then their
+spectral radii coincide with their operator norms $\|\cdot\|_2$.
+Assuming that all recurrent blocks satisfy $\rho(W_{\mathrm{rec}})=\rho_{\mathrm{rec}}$ and all
+cycle blocks satisfy $\rho(W_{\mathrm{cyc}})=\rho_{\mathrm{cyc}}$, and choosing
+the 2‑norm we obtain
+\begin{equation}
+  \rho(D_k) \leq \|W_{\mathrm{rec}}\|_2 + \|W_{\mathrm{cyc}}\|_2
+  = \rho_{\mathrm{rec}} + \rho_{\mathrm{cyc}},
+  \qquad k=0,\dots,L-1.
+  \label{eq:dk_bound}
+\end{equation}
+Inserting this bound into Eq.~\eqref{eq:rho_dcr} shows that the spectral radius
+of the block‑circulant weight matrix obeys
+\begin{equation}
+  \rho(W_{\mathrm{DCR}})
+  \leq \rho_{\mathrm{rec}} + \rho_{\mathrm{cyc}}.
+  \label{eq:dcr_weight_bound}
+\end{equation}
+\subsection{Implications for the DCR Jacobian}
+
+Recall that the Jacobian of the DCR at the origin is
+$J_{F,0}=(1-\alpha) I + \alpha W_{\mathrm{DCR}}$ (Eq.~\eqref{eq:jacobian}).  Its
+spectral radius can be bounded using the triangle inequality:
+\begin{equation}
+  \rho(J_{F,0}) = \rho\bigl((1-\alpha) I + \alpha W_{\mathrm{DCR}}\bigr)
+  \leq (1-\alpha) + \alpha \rho(W_{\mathrm{DCR}}).
+  \label{eq:jacobian_bound}
+\end{equation}
+Substituting Eq.~\eqref{eq:dcr_weight_bound} into
+Eq.~\eqref{eq:jacobian_bound} gives the following theorem.
+
+\begin{theorem}[Upper bound for the DCR Jacobian]
+\label{thm:dcr}
+Consider a Deep Cycle Reservoir whose global weight matrix is the
+block–circulant matrix \eqref{eq:block_circ} with diagonal block
+$W_{\mathrm{rec}}$ and cycle block $W_{\mathrm{cyc}}$, each having spectral
+radii $\rho_{\mathrm{rec}}$ and $\rho_{\mathrm{cyc}}$ respectively.  The Jacobian of
+the DCR at the origin is $J_{F,0}=(1-\alpha) I + \alpha W_{\mathrm{DCR}}$.
+Then
+\begin{equation}
+  \rho(J_{F,0}) \leq (1-\alpha) + \alpha\,(\rho_{\mathrm{rec}} + \rho_{\mathrm{cyc}}).
+  \label{eq:dcr_final_bound}
+\end{equation}
+In particular, a sufficient condition for the DCR to possess the echo–state
+property (ESP) is
+\( (1-\alpha) + \alpha\,(\rho_{\mathrm{rec}} + \rho_{\mathrm{cyc}}) < 1. \)
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:block_circ}, the spectrum of $W_{\mathrm{DCR}}$ is the union
+of the spectra of $D_k = W_{\mathrm{rec}} + \omega_k^{-1} W_{\mathrm{cyc}}$.
+Equation~\eqref{eq:dk_bound} shows that $\rho(D_k) \leq \rho_{\mathrm{rec}} +
+\rho_{\mathrm{cyc}}$ for all $k$.  Consequently
+\(\rho(W_{\mathrm{DCR}}) \leq \rho_{\mathrm{rec}} + \rho_{\mathrm{cyc}}\).  Using
+Eq.~\eqref{eq:jacobian} and the fact that
+\(\rho(A + B) \leq \rho(A) + \|B\|\) for a multiple of the identity, we obtain
+\eqref{eq:jacobian_bound}.  Combining these inequalities yields the bound
+\eqref{eq:dcr_final_bound}.  The ESP condition follows from requiring
+\(\rho(J_{F,0})<1\).
+\end{proof}
+
+\section{Block Gershgorin Discs and the DAR Bound}
+
+\subsection{Block Gershgorin theorem}
+
+To analyse the global matrix $W_{\mathrm{DAR}}$ in Eq.~\eqref{eq:dar_matrix}, we
+use the block Gershgorin theorem, a generalisation of Gershgorin's circle
+theorem to block‑partitioned matrices.  Following Sokół and Park
+\cite[Appendix~A.1]{sokol2020}, let $A$ be an $N\times N$ matrix partitioned
+into $L\times L$ blocks $A_{ij}$ such that each diagonal block $A_{ii}$ is
+self‑adjoint.  For each diagonal block let $\lambda_k(A_{ii})$ denote its
+eigenvalues, and let $\sigma_{\max}(A_{ij})$ be the largest singular value of
+the off‑diagonal blocks.  Then the eigenvalues of $A$ lie inside the union of
+Gershgorin discs centred at the eigenvalues of the diagonal blocks with radii
+equal to the sum of singular values of the off‑diagonal blocks
+\cite[Eq.~(20)]{sokol2020}:
+\begin{equation}
+  \lambda(A) \subset \bigcup_{i=1}^L \bigcup_{k=1}^{p_i} \Bigl\{
+  \lambda : \bigl|\lambda - \lambda_k(A_{ii})\bigr| \leq \sum_{j\neq i}
+  \sigma_{\max}(A_{ij})\Bigr\},
+  \label{eq:block_gersh}
+\end{equation}
+where $p_i$ is the size (number of eigenvalues) of $A_{ii}$.  In particular,
+for the largest eigenvalue of $A$ one has the inclusion (Eq.~(22) in
+\cite{sokol2020})
+\begin{equation}
+  \rho(A) \leq \max_{1\leq i\leq L} \Bigl(\rho(A_{ii}) + \sum_{j\neq i}
+  \sigma_{\max}(A_{ij})\Bigr).
+  \label{eq:block_gersh_bound}
+\end{equation}
+
+\subsection{Bounding $W_{\mathrm{DAR}}$ via block Gershgorin}
+
+Applying Eq.~\eqref{eq:block_gersh_bound} to the DAR weight matrix
+$W_{\mathrm{DAR}}$ in Eq.~\eqref{eq:dar_matrix}, we treat the diagonal blocks as
+$A_{ii} = W_{\mathrm{rec}} - \gamma I$.  Each diagonal block is shifted by
+$-\gamma I$, so its eigenvalues are $\lambda_k(W_{\mathrm{rec}}) - \gamma$ and
+its spectral radius is bounded by $\rho_{\mathrm{rec}} + |\gamma|$.  The
+off‑diagonal blocks are $A_{i,i-1} = \varepsilon C$ and
+$A_{i,i+1} = -\varepsilon C^{\mathsf{T}}$; all other off‑diagonal blocks are
+zero.  Because the singular values of $C$ and $C^{\mathsf{T}}$ coincide,
+$\sigma_{\max}(\varepsilon C) = \varepsilon\,\sigma_{\max}(C)$ and
+$\sigma_{\max}(-\varepsilon C^{\mathsf{T}}) = \varepsilon\,\sigma_{\max}(C)$.
+Therefore, in every block row the sum of the singular values of the off‑diagonal
+blocks is $2\varepsilon\,\sigma_{\max}(C)$.  From Eq.~\eqref{eq:block_gersh_bound}
+we obtain
+\begin{equation}
+  \rho(W_{\mathrm{DAR}})
+  \leq \max\bigl\{\rho_{\mathrm{rec}} + |\gamma| + 2\varepsilon\sigma_{\max}(C)\bigr\}.
+  \label{eq:dar_weight_bound}
+\end{equation}
+\subsection{Implications for the DAR Jacobian}
+
+Using the Jacobian formula \eqref{eq:jacobian}, the spectral radius of the
+DAR Jacobian satisfies
+\(\rho(J_{F,0}) \leq (1-\alpha) + \alpha\,\rho(W_{\mathrm{DAR}})\).  Combining this
+with Eq.~\eqref{eq:dar_weight_bound} yields our second main result.
+
+\begin{theorem}[Upper bound for the DAR Jacobian]
+\label{thm:dar}
+Consider a Deep Antisymmetric Reservoir with global weight matrix
+$W_{\mathrm{DAR}}$ as in Eq.~\eqref{eq:dar_matrix}, where each local recurrent
+matrix $W_{\mathrm{rec}}$ has spectral radius $\rho_{\mathrm{rec}}$, $C$ has
+singular value $\sigma_{\max}(C)$, the coupling strength is
+$\varepsilon>0$ and the damping parameter is $\gamma\in\mathbb{R}$.  Then the
+spectral radius of the Jacobian at the origin satisfies
+\begin{equation}
+  \rho(J_{F,0}) \leq (1-\alpha) + \alpha\bigl(\rho_{\mathrm{rec}} + |\gamma| +
+  2\varepsilon\,\sigma_{\max}(C)\bigr).
+  \label{eq:dar_final_bound}
+\end{equation}
+In particular, a sufficient condition for the DAR to satisfy the ESP is
+\[
+  (1-\alpha) + \alpha\bigl(\rho_{\mathrm{rec}} + |\gamma| +
+  2\varepsilon\,\sigma_{\max}(C)\bigr) < 1.
+\]
+\end{theorem}
+
+\begin{proof}
+The block Gershgorin theorem (Eq.~\eqref{eq:block_gersh_bound}) applied to
+$W_{\mathrm{DAR}}$ yields the bound on $\rho(W_{\mathrm{DAR}})$ in
+Eq.~\eqref{eq:dar_weight_bound}.  Substituting this bound into the triangle
+inequality for the Jacobian in Eq.~\eqref{eq:jacobian_bound} gives
+\eqref{eq:dar_final_bound}.  The ESP condition follows by requiring
+\(\rho(J_{F,0}) < 1\).
+\end{proof}
+
+\section{Discussion and Practical Considerations}
+
+The bounds derived above explain why the DCR and DAR must satisfy more
+stringent conditions than independent (non‑cyclic) deep reservoirs.  In a
+standard deep ESN, the Jacobian matrix is block upper‑triangular and its
+spectral radius equals the maximum spectral radius of the diagonal blocks.  By
+contrast, the cycle in the DCR couples all modules: eigenvalues of the global
+matrix come from sums of the recurrent and cycle matrices with complex phase
+factors.  Even if each module individually satisfies $\rho(W_{\mathrm{rec}}) < 1$, a
+large cycle coupling $W_{\mathrm{cyc}}$ can push
+$\rho(W_{\mathrm{DCR}})$ above~1 \cite{thesis:wdcr}.  Theorem~\ref{thm:dcr}
+quantifies this effect and shows that scaling both $W_{\mathrm{rec}}$ and
+$W_{\mathrm{cyc}}$ so that their radii sum to less than~1 is sufficient for
+stability.  In practice one may set $\rho_{\mathrm{cyc}}$ to be a fraction of
+$\rho_{\mathrm{rec}}$ to balance memory across the cycle.
+
+For the DAR, the antisymmetric couplings behave similarly to a discrete
+diffusion term.  Each diagonal block is shifted by $-\gamma I$, pulling the
+eigenvalues towards the origin.  The off–diagonal couplings add discs of
+radius $2\varepsilon\,\sigma_{\max}(C)$ to the Gershgorin bound.  Thus, large
+coupling or small damping can destabilise the system even if the local
+recurrent matrices are contractive.  Theorem~\ref{thm:dar} provides an
+explicit trade‑off between the recurrent spectral radius $\rho_{\mathrm{rec}}$,
+damping $|\gamma|$ and coupling strength $\varepsilon$ to ensure
+\(\rho(J_{F,0})<1\).
+
+\paragraph{Choice of norms.}  Throughout our derivations we have used the
+triangle inequality and the fact that the spectral radius is bounded by the
+operator norm.  If the local recurrent and coupling matrices are normal (e.g.,
+drawn from orthogonal or symmetric distributions), then their spectral radii
+coincide with their operator norms.  If this is not the case, our bounds still
+hold with $\rho_{\mathrm{rec}}$ and $\rho_{\mathrm{cyc}}$ replaced by the
+corresponding operator norms $\|W_{\mathrm{rec}}\|$ and $\|W_{\mathrm{cyc}}\|$.
+In practice one often scales random matrices to have a desired spectral
+radius, and for large random matrices the spectral norm concentrates near
+the desired radius.
+
+\section{Conclusion}
+
+We have provided rigorous derivations of upper bounds for the spectral radius
+of the Jacobian matrices of the Deep Cycle Reservoir and Deep Antisymmetric
+Reservoir.  By exploiting the block–circulant structure of the DCR and
+applying Lemma~\ref{lem:block_circ}, we showed that the global spectrum is
+obtained by diagonalising small matrices $D_k$ and derived the bound
+\eqref{eq:dcr_final_bound}.  For the DAR, we applied the block Gershgorin
+theorem to obtain the bound \eqref{eq:dar_final_bound}.  These results
+translate into simple, interpretable conditions on the leaky rate $\alpha$,
+recurrent spectral radius $\rho_{\mathrm{rec}}$, cycle radius
+$\rho_{\mathrm{cyc}}$, coupling strength $\varepsilon$ and damping parameter
+$\gamma$ that guarantee contractive dynamics.  They may be used directly in
+hyper‑parameter selection for deep reservoir computing.

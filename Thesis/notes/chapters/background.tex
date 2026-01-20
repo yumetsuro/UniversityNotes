@@ -500,6 +500,7 @@ Computational graphs are often used to represent the structure of RNNs. These ar
 Where nodes represent random variables, and edges represent dependencies between them, similarly, we can think 
 to RNNs as a specialization of these probabilistic models, but with a parameterized approach to the dependencies.
 \newline
+
 % RNNs definitions
 An RNNs equation at time step $t$ is defined as:
 \begin{equation}
@@ -718,8 +719,7 @@ Both RC and kernel methods relies on the \textbf{Cover's Theorem} \cite{cover200
 
 \subsection{Echo State Networks}
 \label{sec:esn}
-ESNs are a specific type of fully connected RNN, where only a small part of recurrent connections in the hidden layer is active, inducing sparsity, and only the output weights are trained.
-%In the previous section we talked about the possibility to project trough a rich reservoir of dynamics the input signal trough a ESN, but how really we can build such reservoir?\newline
+ESNs are a specific type of RNNs, where only a small part of recurrent connections in the hidden layer is active, creating a sparse connectivity pattern.
 A common approach to build rich reservoirs \cite[Ch 10.8]{lecun2015deep} is to design the recurrence within a state-space system that operates in the \textit{edge of chaos} regime as described by \cite{NIPS2004_f8da71e5} \cite{LANGTON1986120}.
  The idea is to constrain the eigenvalues of the system's Jacobian matrix $\mathbf{J}$ to be close to $1$. As we previously mentioned in sec \ref{sec:rnn_long_term_dependencies},
  we want to enforce this condition on: $\mathbf{J}_t = \frac{\partial \mathbf{h}_{t}}{\partial \mathbf{h}_{t-1}}$.
@@ -732,9 +732,10 @@ A common approach to build rich reservoirs \cite[Ch 10.8]{lecun2015deep} is to d
  \begin{equation}
     W_{rec} = \frac{\rho_{desired}}{\rho(W_{rec}^{init})} W_{rec}^{init}
  \end{equation}
-Even the $W_{in} \in \mathbb{R}^{N_r \times N_u}$ matrix is usually scaled by an important hyperparameter called \textbf{input scaling} $\omega_{in}$, which controls the influence of the input signal on the reservoir dynamics.
-This parameter is crucial because it affects how the reservoir responds to different input magnitudes and can impact the overall performance of the ESN.
-A common practice is to scale $W_{in}$ as follows:
+The input weight matrix $W_{in} \in \mathbb{R}^{N_r \times N_u}$ is usually scaled by an hyperparameter called \textbf{input scaling} $\omega_{in}$, 
+which controls how the input signal influences the reservoir dynamics to be in a linear or non-linear regime for small or large input magnitudes respectively.
+This parameter is crucial because it affects how the reservoir responds to different input magnitudes and can impact the overall performance of the ESN on various tasks.
+We scale $W_{in}$ as follows:
 \begin{equation}
     W_{in} = \omega_{in} W_{in}^{init} \\
     % or norm 2
@@ -742,11 +743,11 @@ A common practice is to scale $W_{in}$ as follows:
  % ripetitivo
  %By choosing $\rho_{desired}$ close to $1$, we are promoting rich dynamics that are sensitive to input variations while still being stable enough to retain information over time.
 
-A more general formulation is the Leaky ESN is given by \cite{JAEGER2007335}, which introduces a leaking rate $\alpha \in [0,1]$ to control the speed of the reservoir dynamics:
+A more general formulation is the Leaky Integrator ESN is given by \cite{JAEGER2007335}, which introduces a leaking rate $\alpha \in ]0,1]$ to control the response speed of the reservoir dynamics:
 \begin{equation}
-    \mathbf{h}(t) = (1 - \alpha) \mathbf{h}(t-1) + \alpha \tanh(W_{in}\mathbf{x}(t) + W_{rec}\mathbf{h}(t-1) + \mathbf{b})
+    \mathbf{h}(t) = (1 - \alpha) \mathbf{h}(t-1) + \alpha \tanh(W_{in}\mathbf{u}(t) + W_{rec}\mathbf{h}(t-1) + \mathbf{b})
 \end{equation}
-When $\alpha = 1$, the Leaky ESN reduces to the standard ESN, while for $\alpha < 1$, the reservoir state updates more slowly, allowing it to capture longer-term dependencies in the input sequence.
+When $\alpha = 1$, the Leaky ESN reduces to the standard ESN, while for $\alpha < 1$, the reservoir state updates more slowly, behaving as a low-pass filter, thus allowing it to capture longer-term dependencies in the input sequence.
 \subsubsection{Tikhonov Regularization}
  Once the reservoir is initialized, we can use it to process input sequences and collect the reservoir states over time.
 After we computed the reservoir states $\mathbf{h}(t)$ for the entire input sequence, we have to find $W_{out}$ that maps the reservoir states to the desired output.
@@ -801,7 +802,6 @@ these are also called \textit{contractive systems} \cite{strogatz:2000}.
     \end{equation}  
     And $k$ is called the \textbf{Lipschitz constant} of the function $f$.
 \end{definition}
-Furthermore, the washout period ensures that the reservoir reaches a state where ESP can hold.
 \newline
 For it to be true, we must impose two conditions, a necessary and a sufficient one, both regarding the spectral properties of the recurrent weight matrix $W_{rec}$.
 The necessary condition requires:
@@ -943,6 +943,7 @@ With the following bound: \todo{Qui dovrò metterci una ref alla part in cui par
 \end{equation}
 \clearpage
 \section{Antisymmetric RNNs}
+\label{sec:antisymmetric_rnn}
 
 Another approach to mitigating the vanishing and exploding gradient problem in recurrent neural networks is the
 \textit{AntisymmetricRNN} proposed by \cite{chang2019antisymmetricrnndynamicalviewrecurrent}.\newline

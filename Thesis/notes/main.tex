@@ -72,6 +72,7 @@ headsepline, % Uncomment to get a line under the header
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
 \newtheorem{proposition}{Proposition}
+\newtheorem*{remark}{Remark}
 
 \addbibresource{bibliography.bib} % The filename of the bibliography
 
@@ -89,7 +90,7 @@ headsepline, % Uncomment to get a line under the header
 \definecolor{LightGreen}{rgb}{0.88,1,0.88}
 \definecolor{LightRed}{rgb}{1,0.88,0.88}
 
-\thesistitle{Modular Deep Reservoir Computing} % Your thesis title, this is used in the title and abstract, print it elsewhere with \ttitle
+\thesistitle{Exploring Deep Reservoir Computing with structured modular architectures} % Your thesis title, this is used in the title and abstract, print it elsewhere with \ttitle
 \supervisor{Prof. Claudio Gallicchio\\Dott. Andrea Ceni\\Dott. Andrea Cossu, } % Your supervisor's name, this is used in the title page, print it elsewhere with \supname
 \examiner{} % Your examiner's name, this is not currently used anywhere in the template, print it elsewhere with \examname
 \degree{Master's Degree} % Your degree name, this is used in the title page and abstract, print it elsewhere with \degreename
@@ -159,6 +160,17 @@ headsepline, % Uncomment to get a line under the header
 \vfill
 \begin{center}
 	\Large \textbf{Abstract}
+	\\[0.5cm]
+	\normalsize
+% Enter abstract of your thesis here, this will appear on the title page
+In this thesis, we present a two novel architecture for Reservoir Computing (RC) called Deep Cycle Reservoir (DCR)
+and Deep Antisymmetric Reservoir (DAR).
+ Both architectures are inspired by recent advances in RC field and use deep layer construction with 
+ a structured modular topology.
+ We evaluate the proposed models on several benchmark tests for RC, showing that they are able to
+ outperform on memory capacity and long term prediction tasks the comparing state-of-the-art shallow and deep RC architectures.
+ Extensive analysis is carried out to compare the performance of the proposed models with other RC architectures,
+ providing insights on the role of modularity and depth in RC.
 \end{center}
 ...
 \vfill
