@@ -56,20 +56,19 @@
 % !TeX root = ../../main.tex
 \label{chap:methodology}
 After having discussed all the background concepts and related works, we can now move on to the methodology used in this work.
-In this chapter we present the idea to treat deep reservoir networks as \emph{modular reservoir} architectures. 
-Rather than treating reservoir as a monolithic recurrent system, we interpret each layer of the deep reservoir as an independent computational module that processes inputs and exchanges information with others through structured interconnections.
-\todo{finire di scrivere questo quando avrò un idea di come sara fatta la metodologia}
+In this chapter, we present the idea to treat deep reservoir networks as \emph{modular reservoir} architectures. 
+Rather than treating the reservoir as a monolithic recurrent system, we interpret each layer of the deep reservoir as an independent computational module that processes inputs and exchanges information with others through structured interconnections.
 
 \section{Modularity in RNNs}
 \label{sec:method:modularity}
 In dynamical systems theory, a system is said to be \emph{modular} if it can be decomposed into distinct 
-subsystems (modules) each of which has its own internal dynamics while also interacting with other modules.
-Such composition allows for a complex global behaviour to emerge from the interactions of simpler components.
-Analyzing the system in terms of global dynamics and being capable to modify it by working on single parts, can provide control on information flow and interpretability benefits.
+subsystems (modules), each of which has its own internal dynamics while also interacting with other modules.
+Such a composition allows for a complex global behaviour to emerge from the interactions of simpler components.
+Analyzing the system in terms of global dynamics and being capable of modifying it by working on single parts can provide control on information flow and interpretability benefits.
 
-Modularity has been extensively studied in neuroscience, where large-scale brain networks exhibit modular organization with specialized regions that acts as hubs for information integration.
+Modularity has been extensively studied in neuroscience, where large-scale brain networks exhibit modular organization with specialized regions that act as hubs for information integration.
 Empirical studies from \cite{bullmore2009complex} have shown that neural systems are composed of densely connected subnetworks that interact globally as a sparse system, supporting
-both integration of information and specialized processing 
+both the integration of information and specialized processing 
 
 More generally, studies in complex systems and network dynamics have shown that modular organization 
 can enhance robustness by inducing a separation of time scales, such that dynamical processes remain
@@ -91,7 +90,7 @@ Each module $l\in\{1,\dots,L\}$ has state $\mathbf{h}^{(l)}(t)\in\mathbb{R}^{n_l
 The key methodological contribution is to compare two architectures:
 \todo{Forse dovrei togliere qui la menzione alle due architetture nuove perchè poi ripeto le medesime informazioni nei loro paragrafi}
 \begin{itemize}
-    \item \textbf{Deep Cycle Reservoir} where we emply \emph{cycle/ring} recurrent topology, inspired by Simple Cycle Reservoirs (SCR), to provide strong memory traces with minimal parameters.
+    \item \textbf{Deep Cycle Reservoir} where we employ \emph{cycle/ring} recurrent topology, inspired by Simple Cycle Reservoirs (SCR), to provide strong memory traces with minimal parameters.
     \item \textbf{Deep Antisymmetric Reservoir} with \emph{forward and backward} coupling between adjacent modules, designed to promote stable dynamics and improve gradient-free memory propagation.
 \end{itemize}
 
@@ -115,7 +114,7 @@ We define the pre-activation vector
     \label{eq:method:pre_activation}
 \mathbf z(t+1) =
 \mathbf W_{\text{tot}} \mathbf H(t)
-+ \mathbf W_{\text{in}} \mathbf u(t+1)\footnote{\text{This input term is just for the input not the inter-layer connection}}
++ \mathbf W_{\text{in}} \mathbf u(t+1)\footnote{\text{This input term is just for the input, not the inter-layer connection}}
 + \mathbf b .
 \end{equation}
 
@@ -125,17 +124,15 @@ The reservoir state is then updated as
 \mathbf H(t+1) =
 (1-\alpha)\mathbf H(t) + \alpha \tanh(\mathbf z(t+1)).
 \end{equation}
-\begin{equation}
-\mathbf{H}(t+1) = \tanh\left(\mathbf{W}_{\text{tot}} \, \mathbf{H}(t)\right),
-\end{equation}
+
 where $\tanh(\cdot)$ acts element-wise on the state vector and
 $\mathbf{W}_{\text{tot}} \in \mathbb{R}^{N \times N}$ encodes both intra-module and inter-module connections.
 For 1 layer Leaky-ESN, the $\mathbf{W}_{\text{tot}}$ reduces to the standard recurrent weight matrix $\mathbf{W}_{\text{rec}}$.
 
 \clearpage
-\subsubsection{DeepESN as modular system}
-In \cite{GALLICCHIO201787} the authors conduct an empirical analysis on ESNs with stacked reservoirs. 
-By stacking $L$ layers, and providing a hierachically information processing between them, we obtain a matrix with \emph{block lower-triangular} form, resulting in: 
+\subsubsection{DeepESN as a modular system}
+In \cite{GALLICCHIO201787}, the authors conduct an empirical analysis on ESNs with stacked reservoirs. 
+By stacking $L$ layers, and providing a hierarchical information processing between them, we obtain a matrix with \emph{block lower-triangular} form, resulting in: 
 
 \begin{equation}
     W_{\text{DeepESN}} =\WDeepESN 
@@ -146,20 +143,20 @@ When a single input perturbation is applied, deeper layers retain the perturbati
  indicating that higher layers capture slower (low‑frequency) temporal components and lower layers capture faster (high‑frequency) components, this is likely due to the fading
  memory effect of the reservoir dynamics.
 This indicates that increasing the distance between the input and subsequent layers is crucial for developing a rich spectrum of temporal dynamics.
- In the figure \ref{fig:deep_esn_modular} below we can see the modular structure of a standard DeepESN.
+ In the figure \ref{fig:deep_esn_modular} below, such an architecture is shown.
 \vspace{1cm}
 
 \begin{figure}[ht!]
-    \label{fig:deep_esn_modular}
     \centering
     \includegraphics[width=0.5\textwidth]{images/modular_deepesn.pdf}
     \caption{In DeepESN, each layer acts as an independent module with feedforward inter-layer communication.}
+    \label{fig:deep_esn_modular}
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \clearpage
 \section{Deep Cycle Reservoir}
 \label{sec:method:cycle}
-We introduce \textbf{Deep Cycle Reservoir} (DCR) as class of deep reservoir, inspired by methods discussed in sec \ref{sec:method:cycle}.
+We introduce \textbf{Deep Cycle Reservoir} (DCR) as a class of deep reservoir, inspired by methods discussed in sec \ref{sec:method:cycle}.
 We tried to apply modularity concepts to a delayed version of SCR.
 
 \subsection{Discussion}
@@ -173,15 +170,15 @@ The motivation for closing the loop is to allow information processed at deeper 
 This can enrich the reservoir dynamics and, in principle, improve tasks requiring both short and long‑term memory.
 
 However, an instantaneous cycle where the output of the deepest layer at time step $t$
-is fed directly into the first layer at the same time step $t$, require to know the current state of the deepest layer, that for
+is fed directly into the first layer at the same time step $t$, require to know the current state of the deepest layer, which for
 the first timestep is not available.\newline
 In the discrete‑time update equation of an ESN, the next state depends on the previous 
 state and the current input; if the current state of a high‑level layer 
-instantly modifies the state of the first layer, it creates a dependency loop on it own output.  
-A naive solution consists in using a delayed step as cycle connection.
+instantly modifies the state of the first layer, it creates a dependency loop on its own output.  
+A naive solution consists of using a delayed step as a cycle connection.
 
-We also allow to each layer to receive the input directly because we don't want the delayed information to overwrite the current input.
-Notably, that results in losing the distance between input and deeper layers, as happens for deepESN‑IA \cite{GALLICCHIO201787},
+We also allow each layer to receive the input directly because we don't want the delayed information to overwrite the current input.
+Notably, this results in losing the distance between input and deeper layers, as happens for deepESN‑IA \cite{GALLICCHIO201787},
 where the intrinsic time‑scale separation is attenuated. \todo{Qui magari posso mettere i plot della distanza tra stati}
 
 %\subsection{Architecture of Deep Cycle Reservoir}
@@ -213,37 +210,36 @@ We have a global matrix $W_{DCR}$ with:
     W_{DCR}=\WtotCycle
 \end{equation}
 
-Where each $\Wrec{l}$ is scaled by $\rho$ and $\Wcyc{l}$ is initialized as same as recurrent matrices but can have different $\rho$ scaling factor.
+Where each $\Wrec{l}$ is scaled by $\rho$ and $\Wcyc{l}$ is initialized in the same way as recurrent matrices.
 The $\rho$ controls the effective spectral radius. \todo{metto qualche immagine dello spectral radius dei sistemi?} \footnote{For a pure permutation cycle, the eigenvalues lie on the unit circle, and scaling by $\rho$ sets their magnitude.}
 
 \subsection{Cyclic inter-module coupling}
-As we can see from the picture \ref{fig:deep_cycle_reservoir}, each module receives input from the previous layer and feedback from the last layer, forming a cyclic structure.
+As we can see from the figure \ref{fig:deep_cycle_reservoir}, each module receives input from the previous layer and feedback from the last layer, forming a cyclic structure.
 
 \begin{figure}[ht!]
     \centering
-    \label{fig:deep_cycle_reservoir}
     \includegraphics[width=0.8\textwidth]{images/deep_cycle_reservoir.pdf}
     \caption{Graphical representation of Deep Cycle Reservoir architecture. Each module receives input from the previous layer and feedback from the last layer, forming a cyclic structure.}
+    \label{fig:deep_cycle_reservoir}
 \end{figure}
 
 
 This creates a \emph{delayed deep cycle reservoir} where each layer has a controlled internal topology and exchanges past
 information with the previous layer in the cycle.
- the first layer receives
+ The first layer receives
  feedback from the last layer at the previous timestep, thus closing the cycle, and the current input.
 For the remaining layers, each layer receives input at the current step and
- the previous layer's state at the previous step plus it's recurrent state.
+ the previous layer's state at the previous step, plus its recurrent state.
 
-Thus our architecture has a \emph{ring topology} across depth, but is more similar to a DeepESN-IA \cite{GALLICCHIO201787}
+\todo{questa parte ripete molto quello che ho già detto in precedenza forse la dovrei togliere...}Thus our architecture has a \emph{ring topology} across depth, but is more similar to a DeepESN-IA \cite{GALLICCHIO201787}
  and a delayed SCR \cite{mincomplex}.
-By construction we impose this trade-off, by losing the distance between input and deeper layer, 
-but doing so, help to create a strong memory trace across depth.
+By construction, we impose this trade-off by losing the distance between the input and deeper layers, however, doing so helps to create a strong memory trace across depth.
 
-Is interesting to note that by removing the diagonal blocks $\Wrec{l}$ we obtain a pure cyclic reservoir with no internal recurrence, 
-where each module only depends on the previous module in the cycle. In case of having just one unit per module, we recover the SCR architecture, this ablation will be further discussed
-in the experimental section \ref{sec:experiments:ablation}.\todo{Qui ho brevemente menzionato il caso "zero recurrence" di cui parlavamo in cui toglievamo la parte ricorrente dal cycle, va bene un cenno cosi piccolo con un estensione nella sezione esperimenti?}
+Is interesting to note that by removing the diagonal blocks $\Wrec{l}$, we obtain a pure cyclic reservoir with no internal recurrence, 
+where each module only depends on the previous module in the cycle. In the case of having just one unit per module, we recover the SCR architecture; this ablation will be further discussed
+in the experimental section. \todo{(Aggiungere ref dopo all'experimental section dopo...)} \todo{Qui ho brevemente menzionato il caso "zero recurrence" di cui parlavamo, in cui toglievamo la parte ricorrente dal cycle, va bene un cenno cosi piccolo con un estensione nella sezione esperimenti?}
 
-\todo{aggiungo immagini di distanza tra stati e memory capacity?}
+\todo{aggiungo immagini di distanza tra stati?}
 
 \subsection{Stability analysis of Deep Cycle Reservoir}
 \label{sec:method:dcr_analysis}
@@ -252,10 +248,9 @@ We follow the theoretical framework established in \cite{gallicchio2017echo},
  adapting the study of stability to the specific case of cyclic modular connectivity.
 Is important to address the dynamics of such systems, since it affects both the capability to learn relevant information and
 keeping past information in the memory without losing it too quickly.
-We will study the stability of DCR, by linearizing its dynamics, and deriving necessary conditions for ESP.
+We will study the stability of DCR by linearizing its dynamics and deriving necessary conditions for ESP.
 
-\todo{forse questa parte va messa dopo}
-Finally we analyze the spectral radius of the system's Jacobian.
+Finally, we analyze the spectral radius of the system's Jacobian.
 Thus need to derive the Jacobian matrix $\mathbf{J}$ of equation \ref{eq:method:cycle_dynamics}.
 \subsubsection{Echo State Property of Deep Cycle Reservoir}
 \label{sec:method:esp_def}
@@ -353,7 +348,7 @@ This can be written compactly as:
 \label{thm:nec_esp_dcr}
 (Necessary condition for the Deep Cycle Reservoir to satisfy the ESP of DCR). 
 Assume a DCR as in \ref{eq:method:cycle_dynamics} with global state transition function $F$.
-and a zero input. Then a necessary condition for ESP to hold is given by:
+and a zero input. Then, a necessary condition for ESP to hold is given by:
 \end{theorem} 
 \begin{equation}
     \rho(\mathbf{J}_{F_{DCR},\mathbf{0}}) = \rho\left( (1-\alpha)\mathbf{I} + \alpha \mathbf{W}_{\text{DCR}} \right) < 1.
@@ -373,24 +368,24 @@ Unlike standard DeepESNs, where the spectrum is the union of the spectra of indi
 \section{Deep Antisymmetric Reservoir}
 \label{sec:method:antisymmetric}
 In this section, we present the \textbf{Deep Antisymmetric Reservoir} (DAR), another modular deep reservoir,
-where modules are coupled such that information can flow bidirectionally between adjacent layers. We inspire to this design from well-know property
+where modules are coupled such that information can flow bidirectionally between adjacent layers. We took inspiration from well-known properties of
 skew-symmetric matrices in dynamical systems. Other works have explored antisymmetric matrices applied to RC as in \cite{kozachkov2022rnns}.
-\subsection{Motivation}
+\subsection{Discussion}
 Antisymmetric (or skew-symmetric) connectivity can constrain the dynamics in a way that mitigates exploding trajectories.
 Intuitively, purely antisymmetric linear dynamics preserve energy in continuous time; in practice, 
 discrete-time nonlinear systems may still benefit from the improved conditioning and stability induced by such constraints.
 
-As discussed previously in sec. \ref{sec:antisymmetric_rnn}, keeping a system in critical regime, preserve long-term dependancies 
-and help the system to maitain stability over perturbations. Other works tried this idea on RC, as in \cite{gallicchio2024euler} where the author
-propose to construct the reservoir with an antisymmetric recurrent matrix.
+As discussed previously in sec. \ref{sec:antisymmetric_rnn}, keeping a system in a critical regime, preserves long-term dependancies 
+and helps the system to maintain stability over perturbations. Other works tried this idea on RC, as in \cite{gallicchio2024euler}, where the author
+proposes to construct the reservoir with an antisymmetric recurrent matrix.
 \newline
 Our idea, instead, consist of dividing the modules in two parts: the first extends the memory about past information with the antisymmetric coupling,
 this should help to promote a stable information flow between layers, and the second part integrates the new input to the system through recurrent connections, each module can still retain past
-information from adjacent layers along the new information coming from the input.\todo{da rivedere...}
+information from adjacent layers along the new information coming from the input.
 
 \subsection{Information Flow in DAR}
-With the DAR we have a hierarchical information flow, where each module receives input from the previous layer's state at the current time step.
-To improve memory retention and stability the coupling act on previous time step states of adjacent layers.
+With the DAR, we have a hierarchical information flow, where each module receives input from the previous layer's state at the current time step.
+To improve memory retention and stability, the coupling acts on the previous time step states of adjacent layers.
 The input to the $l$-th module, denoted $\mathbf{h}^{(l)}(t)$, is defined as:
 \begin{equation}
     \mathbf{h}^{(l)}(t) = 
@@ -414,7 +409,7 @@ allowing each module to process both current and past information from neighbori
 where we have introduced the coupling terms $(C^{(l)} - C^{\top (l)})$ for bidirectional interaction between adjacent modules with $\epsilon$ scaling
 the coupling strength and a dissipation term $-I\gamma$ to the recurrent weights to control stability.
 
-A more clear description is given by the fig. \ref{fig:antisymmetric-modular}.
+A clearer description is given by the fig. \ref{fig:antisymmetric-modular}.
 %% h^0 is input and then input to h^l is h^(l-1)
 \begin{comment}
 \begin{equation}
@@ -490,7 +485,7 @@ where $\mathbf{W}_{\text{DAR}}$ is defined in Eq. \ref{eq:method:DAR_matrix}.
 \label{thm:nec_esp_dar}
 (Necessary condition for the Deep Antisymmetric Reservoir to satisfy the ESP). 
 Assume a DAR as in \ref{eq:method:antisym_leak} with global state transition function $F$.
-and a zero input. Then a necessary condition for ESP to hold is given by:
+and a zero input. Then, a necessary condition for ESP to hold is given by:
 \end{theorem} 
 \begin{equation}
     \rho(\mathbf{J}_{F,\mathbf{0}}) = \rho\left( (1-\alpha)\mathbf{I} + \alpha \mathbf{W}_{\text{DAR}} \right) < 1.
@@ -499,48 +494,69 @@ and a zero input. Then a necessary condition for ESP to hold is given by:
 
 \section{Deep Random Oscillators Network}
 \label{sec:method:dron}
-In this section, we extend the modular depth framework previously established for ESN-based reservoirs to the Random Oscillators Network (RON) architecture, as introduced in sec. \ref{sec:method:ron}.
+In this section, we extend the modular depth framework previously established for ESN-based reservoirs to the Random Oscillators Network (RON) architecture.
 The objective is to combine the benefits of hierarchical depth with the oscillatory dynamics inherent to RONs.
 Subsequently, we extend the two previously proposed structured modular architectures (cyclic and antisymmetric) to the oscillatory reservoir setting.
 
 \subsection{Discussion}
 The shallow RON architecture effectively captures long-term dependencies through its second-order oscillatory dynamics, achieving competitive performance with minimal computational overhead.
-However, shallow RONs require precise hyperparameter tuning, being sensible especially on the $\tau$ discretization parameter, to operate in an optimal dynamical regime.
+However, shallow RONs require precise hyperparameter tuning, being sensitive especially to the $\tau$ discretization parameter, to operate in an optimal dynamical regime.
 
 In analogy to DeepESN, a \textbf{Deep Random Oscillators Network} (DeepRON) should exhibit richer temporal representations at multiple time scales, 
 leveraging the hierarchical filtering of information across successive layers. 
 Crucially, following the principles established in \cite{GALLICCHIO201787}, the depth-induced temporal differentiation arises naturally from the layered architecture.
 This increased representational capacity, however, comes at the cost of a larger hyperparameter space.
-In principle, each layer $l \in \{1, \dots, L\}$ may have distinct oscillator parameters $(\bm{\gamma}^{(l)}, \bm{\epsilon}^{(l)})$, discretization step $\bm{\tau}^{(l)}$, spectral radius $\rho^{(l)}$, and inter scaling $\sigma^{(l)}$.
+In principle, each layer $l \in \{1, \dots, L\}$ may have distinct oscillator parameters $(\bm{\gamma}^{(l)}, \bm{\epsilon}^{(l)})$, discretization step $\bm{\tau}^{(l)}$, spectral radius $\rho^{(l)}$, and inter scaling $\omega_{inter}^{(l)}$.
 To mitigate this complexity and facilitate systematic experimentation, we adopt a \emph{homogeneous layer configuration}\footnote{The same applies to the other models presented in our work.}: 
 all layers share identical hyperparameters, differing only in their random initialization of the reservoir weights.
 This design choice preserves the computational efficiency characteristic of reservoir computing while enabling the study of depth-induced temporal differentiation. 
 
 \subsubsection{DeepRON Dynamics}
 Let $\mathbf{y}^{(l)}_k \in \mathbb{R}^{N_l}$ and $\mathbf{z}^{(l)}_k \in \mathbb{R}^{N_l}$ denote the position and velocity states of the oscillators in layer $l$ at discrete time step $k$. \todo{Per quanto riguarda qui utilizzo k come time step per essere più consistente con la notazione del paper, dovrei usare t per i timestep ed usare la stessa notazione degli altri modelli della tesi?}
-The input to each layer is defined hierarchically: layer $l=1$ receives the external input $\mathbf{u}_k$, while subsequent layers receive the position state of the preceding layer, i.e., $\mathbf{y}^{(l-1)}_k$.
+The input to each layer is defined hierarchically: layer $l=1$ receives the external input $\mathbf{u}_k$, while subsequent layers receive the state of the preceding layer, i.e., $[\mathbf{y}^{(l-1)}_k, \mathbf{z}_k^{(l-1)}]$.
 
 The dynamics of each layer are governed by the following discretized second-order system by using the Euler method with step size $\tau$:
 \begin{equation}
 \label{eq:method:deepron_dynamics}
 \begin{aligned}
-    \mathbf{z}^{(l)}_{k+1} &= \mathbf{z}^{(l)}_k + \tau \left[ \tanh\left(\mathbf{W}^{(l)}\mathbf{y}^{(l)}_k + \mathbf{V}^{(l)}\mathbf{x}^{(l)}_{k+1} \right) - \bm{\gamma} \odot \mathbf{y}^{(l)}_k - \bm{\epsilon} \odot \mathbf{z}^{(l)}_k \right]\footnote{We are again omitting the bias $\mathbf{b}^{(l)}$ for simplicity.}, \\
+    \mathbf{z}^{(l)}_{k+1} &= \mathbf{z}^{(l)}_k + \tau \left[ \tanh\left(\mathbf{W}^{(l)}\mathbf{y}^{(l)}_k + \mathbf{V}^{(l)}\mathbf{x}^{(l)}_{k+1} \right) - \bm{\gamma} \odot \mathbf{y}^{(l)}_k - \bm{\epsilon} \odot \mathbf{z}^{(l)}_k \right], \\
     \mathbf{y}^{(l)}_{k+1} &= \mathbf{y}^{(l)}_k + \tau \mathbf{z}^{(l)}_{k+1},
 \end{aligned}
 \end{equation}
-where the layer input $\mathbf{x}^{(l)}_k$ is defined as:
+
+Following the formulation of RON, the state of each DeepRON layer
+is defined as the concatenation of position and velocity variables.
+For layer $l$, we introduce the layer state
 \begin{equation}
-    \mathbf{x}^{(l)}_k = 
-    \begin{cases} 
-        \mathbf{u}_k & \text{if } l = 1, \\
-        \mathbf{y}^{(l-1)}_k & \text{if } l > 1.
-    \end{cases}
+    \mathbf{X}^{(l)}_k =
+    \begin{pmatrix}
+        \mathbf{y}^{(l)}_k \\
+        \mathbf{z}^{(l)}_k
+    \end{pmatrix}
+    \in \mathbb{R}^{2N_l},
+\end{equation}
+which fully characterises the second-order dynamics of the oscillators in that layer.
+
+The global state of the DeepRON is then obtained by stacking the states of all layers, yielding
+\begin{equation}
+    \mathbf{X}_k =
+    \begin{pmatrix}
+        \mathbf{X}^{(1)}_k \\
+        \mathbf{X}^{(2)}_k \\
+        \vdots \\
+        \mathbf{X}^{(L)}_k
+    \end{pmatrix}
+    \in \mathbb{R}^{2N},
+    \quad
+    N = \sum_{l=1}^{L} N_l.
 \end{equation}
 
+\begin{comment}
 The global state of the DeepRON is obtained by concatenating the position states across all layers:
 \begin{equation}
     \mathbf{Y}_k = \left[\mathbf{y}^{(1)}_k, \mathbf{y}^{(2)}_k, \ldots, \mathbf{y}^{(L)}_k\right] \in \mathbb{R}^{N}, \quad N = \sum_{l=1}^{L} N_l.
 \end{equation}
+\end{comment}
 
 \section{Deep Cycle Oscillator}
 \label{sec:method:dco}
@@ -560,11 +576,10 @@ The dynamics of the DCO are given by:
 \end{equation}
 
 Here, $\mathbf{W}_{\text{cyc}}^{(l)}$ denotes the inter-layer cycle connection matrix.
-The first layer receives feedback from the last layer's state at the previous time step, $\mathbf{y}^{(L)}_k$.
-Each layer also receives the external input $\mathbf{u}_{k+1}$ directly, we are using the same exact architecture shown in fig. \ref{fig:deep_cycle_reservoir}.
+The first layer receives feedback from the last layer's state at the previous time step, $[\mathbf{y}^{(L)}_k,\mathbf{z}^{(L)}_k]$.
+Each layer also receives the external input $\mathbf{u}_{k+1}$ directly, and we are using the same exact architecture shown in fig. \ref{fig:deep_cycle_reservoir}.
 
-\todo{Provare queste architetture modulari su RON, essendo già un architettura che ha bisogno di un buon tuning, potrebbe essere vantaggioso soltanto quando si può può avere garanzie sulla stabilità, più avanti sulla parte sperimentale farò presente che DeepRON e le altre due architetture sono poco stabili 
-per come queste sono construite ma non ho comunque garanzie teoriche sulla stabilità effettiva, posso dire che è molto difficile però bilanciare i parametri su architetture cosi complicate e con cosi tanti hyperparametri}
+\todo{Provare queste architetture modulari su RON, essendo già un architettura che ha bisogno di un buon tuning, potrebbe essere vantaggioso soltanto quando si può può avere garanzie sulla stabilità, più avanti sulla parte sperimentale farò presente che DeepRON e le altre due architecture basate su RON sono poco stabili, non ho comunque garanzie teoriche sulla stabilità effettiva, posso dire che è molto difficile però bilanciare i parametri su architetture cosi complicate e con cosi tanti hyperparametri}
 
 %Following the same reasoning of DCR, the spectral radious of the entirely system is not simply the max of the spectral radious of each layer, moreover in this case the architeture
 %is even more sensible to instabilities because of the discretization of the oscillator dynamics.
@@ -587,18 +602,17 @@ The dynamics of the DAO are governed by:
 \end{equation}
 \todo{dovrei dare nomi diversi ai gamma ed epsilon introdotti per non confonderli con quelli degli oscillatori, va bene questa scelta oppure rischio di confondere il lettore?}
 where $\mathbf{C}^{(l)} \in \mathbb{R}^{N_l \times N_{l-1}}$ is the coupling matrix from layer $l-1$ to layer $l$, 
-$\epsilon_c > 0$ controls the coupling strength, and $\gamma_c \geq 0$ is a dissipation term for stability, since the antisymmetry
-grant stability only in continuous time, we need to add dissipation because discretization errors tend to produce unstable spiraling behaviour in state space which
-can diverge, at the same time we get can have more control on the contractivity so that our system has a fading memory effect.\todo{di questo non sono sicuro, il termine diffusivo muove verso sinistra gli autovalori quindi potrebbe anche far si che il sistema diverga comunque...}
+$\epsilon_c > 0$ controls the coupling strength, and $\gamma_c \geq 0$ is a dissipation term for stability, antisymmetry
+grants stability only in continuous time; in our case, discretization errors tend to produce unstable spiraling behaviour in the state space. At the same time, we gain some control over the contractility of our system, resulting in a fading memory.\todo{di questo non sono sicuro, il termine diffusivo muove verso sinistra gli autovalori quindi potrebbe anche far si che il sistema diverga comunque...}
 
-For boundary layers, we set $\mathbf{y}^{(0)}_k = \mathbf{0}$ and $\mathbf{y}^{(L+1)}_k = \mathbf{0}$.
+For boundary layers, we set $\mathbf{y}^{(0)}_k = \mathbf{0}$ and $\mathbf{y}^{(L+1)}_k = \mathbf{0}$, we do the same for the velocity.
 
 
 The antisymmetric structure $(\mathbf{C}^{(l)}, -(\mathbf{C}^{(l)})^\top)$ induces near-conservative dynamics between adjacent modules.
-Combined with the oscillatory intra-module dynamics that is core of RONs, DAO could solve some instability problems of DeepRON,
-since by introducing only purely imaginary eigenvalues we only get rotations in the state space, moreover the position and velocity of our oscillators 
-tends to be conserved over time lasting longer, this can have both positive and negative effects, keeping information that is not useful anymore much longer could
-be detrimental for the performance, but at the same time, it could help to keep very long-term dependancies.
+Combined with the oscillatory intra-module dynamics that are core of RONs, DAO could solve some instability problems of DeepRON,
+since by introducing only purely imaginary eigenvalues, we only get rotations in the state space, moreover, the position and velocity of our oscillators 
+tends to be conserved over time, lasting longer, this can have both positive and negative effects, keeping information that is not useful anymore much longer could
+be detrimental to the performance, but at the same time, it could help to keep very long-term dependancies.
 
 
 \section{Summary}\todo{Ripeto troppo qui?}
@@ -606,7 +620,7 @@ In this chapter, we have introduced novel deep reservoir architectures
  that extend the principles of modular depth to both standard ESN and Random Oscillators Network frameworks.
 
 We leave a detailed stability analysis of DeepRON and other architectures for future work, 
-since for the moment we focussed on empirical evaluation.
+since, for the moment, we focused on empirical evaluation.
 
 The DCR implements a modular ring topology in which all layers can be updated in parallel, 
 since each module depends only on past states of other modules rather than on their current activations.
@@ -622,4 +636,4 @@ in which neighboring layers are coupled bidirectionally through structured antis
 
 From a dynamical perspective, we have derived a necessary stability
 condition based on the Jacobian spectral radius of both architectures (Eq. \ref{eq:method:nec_cond_dcr} and \ref{eq:method:nec_cond_dar}).
-However, we don't provide specific bound on their spectral radius. \todo{Nel lavoro noi non cambiamo il rho dei moduli singolarmente, ma ogni modulo ha lo stesso raggio, probabilmente nei lavori futuri si può provare ad avere modularità completamente indipendenti anche sugli hyperparametri} 
+However, we don't provide a specific bound on their spectral radius. \todo{Nel lavoro noi non cambiamo il rho dei moduli singolarmente, ma ogni modulo ha lo stesso raggio, probabilmente nei lavori futuri si può provare ad avere modularità completamente indipendenti anche sugli hyperparametri} 
