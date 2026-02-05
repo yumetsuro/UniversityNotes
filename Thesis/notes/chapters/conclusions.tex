@@ -1,0 +1,37 @@
+
+
+
+In this thesis, we investigated deep reservoir computing architectures over two different topological structures:
+ cyclic and antisymmetric coupled modules.
+This work extends the previous study on depth in recurrent neural networks and reservoir computing, 
+addressing the problem of how depth can be effectively utilized in untrained recurrent systems.
+
+Our aim was to introduce structured modular connectivity patterns that can help with information propagation and manipulation across multiple layers,
+the inherent ability of deep reservoirs to not only capture sequential dependancies but also to develop a richer representation of different temporal scales,
+made us ask if introducing a feedback mechanism across layers, such as we do in \DCR\@ could help with long-term memory and subsequentially to search for an architecture that
+can achieve a longer memory retention in another way by introducing antisymmetric coupling between adjacent layers, as in \DAR.
+
+From a theoretical standpoint, we derived the Jacobian of the global state transition map and established the necessary 
+conditions for the Echo State Property (ESP).
+Highlighting that in structured modular reservoirs, stability is a global property of the entire architecture rather than a layerwise condition.
+
+Empirically, we evaluated the proposed architectures on memory capacity analysis, long temporal dependency benchmarks, and time-series tasks.
+ Results show that structured modularity can enhance memory capacity and improve performance on tasks requiring long-term dependencies.
+In particular, cyclic coupling reinforces global memory traces, while antisymmetric coupling helps with maintaining
+
+Overall, we demonstrate that depth in reservoir computing can be exploited in a variety of ways, 
+by carefully structuring a design in which topology directly affects how the model can process data and how information can flow, such that the memory of the model can be enhanced.
+
+
+\section{Future Work}
+
+Several research directions emerge from this study. 
+\begin{itemize}
+    \item Tighter theoretical characterizations of stability for block-cyclic and antisymmetric reservoirs could be developed beyond spectral radius bounds.
+    \item Heterogeneous layer configurations may restore explicit time-scale differentiation while preserving structured feedback. 
+    \item Mechanisms for controlled forgetting could mitigate excessive memory accumulation in strongly coupled modular systems. 
+    \item Structured modular reservoirs offer promising directions for energy-efficient and hybrid reservoir computing systems.
+\end{itemize}
+
+The geometry of connectivity, therefore, emerges as a central design principle for deep reservoir architectures,
+bridging dynamical systems theory and efficient sequence modeling.

@@ -5,22 +5,29 @@
 \definecolor{newmodel}{RGB}{220,235,255} % light blue
 % define colorbox for the baseline e new model
 
-
+% define shortcutS for DeepCycleESN, DeepAntiESN, DeepCycleRON, DeepAntiRON
+%% Model's Names
+\newcommand{\DCR}{DeepCycleESN}
+\newcommand{\DCRalt}{$\mathrm{DeepESN_{Cycle}$}}
+\newcommand{\DAR}{DeepAntisymESN}
+\newcommand{\DARalt}{$\mat/\hrm{DeepESN_{Antisym}$}}
+\newcommand{\DCO}{DeepCycleRON}
+\newcommand{\DCOalt}{$\mathrm{DeepRON_{Cycle}$}}
+\newcommand{\DAO}{DeepAntisymRON}
+\newcommand{\DAOalt}{$\mathrm{DeepRON_{Antisym}$}}
 
 \label{ch:experiments}
 \section{Introduction}
 This chapter describes the hyperparameter optimization procedure employed to fairly compare different reservoir computing architectures across multiple benchmark tasks. 
-%We utilized Bayesian optimization via the Optuna framework to systematically explore the hyperparameter space for each model
-%variant while maintaining a fixed parameter budget of approximately 100,000 reservoir parameters.
-In our empirical evaluation process aimed to assess the performances of the architectures proposed in Chapter \ref{ch:methodology}.
-We consider (i) memory based tasks such as: short-term memory capacity (MC), long temporal dependacies with sequential classification bechmarks (Adiac, FordA, FordB, sMNIST, psMNIST and npCIFAR-10),
- and (ii) supervised benchmarks spanning synthetic temporal regression (NARMA, Mackey--Glass, Lorenz96).
-\section{Memory Tasks}
+In our empirical evaluation process aimed to assess the performance of the architectures proposed in Chapter \ref{ch:methodology}.
+We consider a memory based tasks such as: short-term memory capacity (MC), long temporal dependacies with sequential classification benchmarks (FordA, FordB, sMNIST, psMNIST, and npCIFAR-10),
+ and a temporal regression (Mackey--Glass).
+
+\section{Memory Capacity}
+\label{sec:exp:mc}
 Memory is a fundamental aspect of recurrent neural networks, the capability of retaining and utilizing past information for currently processing inputs
 is crucial for tasks involving temporal dependencies.
-\subsection{Memory Capacity}
-\label{sec:exp:mc}
-Memory Capacity (MC) taks was introduced by Jeager in \cite{memorycapacity}, to quantify the capacity of recurrent networks to represent past inputs by correlating the past events of an i.i.d. input
+The Memory Capacity (MC) task was introduced by Jeager in \cite{memorycapacity} to quantify the capacity of recurrent networks to represent past inputs by correlating the past events of an i.i.d. input
 stream with the network output. We assess short-term memory as follows:
 
 Let $u(t)\sim \mathcal{U}[-0.8,0.8]$ be an i.i.d. input stream driving the system of discrete time steps $T=6000$ and let $x(t)\in\mathbb{R}^N$ be the state at time $t$.
@@ -38,26 +45,25 @@ and the total memory capacity as
 \end{equation}
 
 \paragraph{Experimental Setting}
-In order to compute and compare MC of our models with others, we adopted the same setting widely used in RC community, using a reservoir size of $N_{r}=100$ units linearly activated and trained by Ridge Regression, 
+In order to compute and compare the MC of our models with others, we adopted the same setting widely used in the RC community, using a reservoir size of $N_{r}=100$ units linearly activated and trained by Ridge Regression, 
 setting the total lag $k=200$ (twice reservoir size) from equation \ref{eq:mc_k}, the reason behind this choice is that the maximum
 MC achievable by an N-unit linear reservoir is bounded by $N$, a proof is provided by \cite[Proposition 2.]{memorycapacity}.
 
-For the warmup period, we discarded the first $T_{\mathrm{wash}}=100$ timesteps to remove dependacies on initial conditions.  
-The readout weights are trained on $5000$ timesteps and then we evaluted the test MC on the last $900$ timesteps.
-Since we are interested to exactly recall the target signal, we set the regularization parameter $\lambda=0$ in the Ridge Regression.
+For the warmup period, we discarded the first $T_{\mathrm{wash}}=100$ timesteps to remove dependencies on initial conditions.  
+The readout weights are trained on $5000$ timesteps, and then we evaluated the test MC on the last $900$ timesteps.
+Since we are interested in exactly recalling the target signal, we set the regularization parameter $\lambda=0$ in the Ridge Regression.
 
 For the remaining hyperparameters, we performed a random search to estimate the most important parameters affecting the MC performance, often
-being spectral radious and input scaling. We left the leakage rate $\alpha = 1.0$.
+being the spectral radius and input scaling. We left the leakage rate $\alpha = 1.0$, $\omega_{in}$ and $\omega_{inter}$ both fixed at $0.1$ and for oscillators $0.01$
 
-Our experiment were repeated over different number of layer by keeping the same number of total reservoir neurons, so 1 layer with $N_{r}=100$ units, 2 layers with $N_{r}=50$ units each, 4 layers with $N_{r}=25$ and so on.
+Our experiment was repeated over different numbers of layers by keeping the same number of total reservoir neurons, so 1 layer with $N_{r}=100$ units, 2 layers with $N_{r}=50$ units each, 4 layers with $N_{r}=25$, and so on.
 
 
-\paragraph{Reported results}
-We report $\mathrm{MC}$ and optionally the curve $\mathrm{MC}_k$ vs.\ $k$ to characterize how memory decays with delay.
+%\paragraph{Reported results}
+%We report $\mathrm{MC}$ and optionally the curve $\mathrm{MC}_k$ vs.\ $k$ to characterize how memory decays with delay.
 
 \subsection{Results}
-In order to asses if adding modularity in deep reservoir architecture can improve performances in terms of memory capacity,
-we compare our results between the best configuration for each architecture.
+In order to assess whether adding modularity in deep reservoir architecture can improve performance in terms of memory capacity, we compare our results between the best configuration for each architecture.
 
 %add table here % with ARCHITECTURE, MEMORY CAPACITY TRAIN/TEST
 \begin{table}[htbp!]
@@ -68,94 +74,67 @@ we compare our results between the best configuration for each architecture.
 \toprule
 \textbf{Architecture} & \textbf{Train MC} & \textbf{Test MC} \\
 \midrule
-DeepESN & 55.8 $\pm$ 2.64 & 53.01 $\pm$ 2.45  \\
-DCR & 99.1 $\pm$ 0.1 & \textbf{99} $\pm$ 0.1 \\
-DAR & $54.65 \pm 2.7$  & $51.83 \pm 2.8$  \\  
+DeepESN & 60.3 $\pm$ 2.64 & 56.01 $\pm$ 2.45  \\
+\DCR & 99.1 $\pm$ 0.1 & \underline{\textbf{99}} $\pm$ 0.1 \\
+\DAR & 60.51 $\pm$ 2.16 & 57.83 $\pm$ 2.8  \\  
 % add line here for different architectures
 \midrule 
-DeepRON & $49.14 \pm 2.2$  & $43.25 \pm 3.1$   \\    
-DCO & 41.9 $\pm$ 2.13 & 38.86 $\pm$ 2.52 \\
-DAO & 48.16 $\pm$ 2.16 & 44.5 $\pm$ 3.8 \\
+DeepRON & $50.58 \pm 2.2$  & $47.55 \pm 3.1$   \\    
+\DCO & 41.9 $\pm$ 2.13 & 38.86 $\pm$ 2.52 \\
+\DAO & 53.35 $\pm$ 2.16 & \underline{\textbf{52.10}} $\pm$ 1.8 \\
 \bottomrule
 \end{tabular}
+
 \end{table}
 
-The results in Table \ref{tab:mc_results} show that with the proposed DCR we are able to achieve the same performance of the SCR, this is true because in the case of linear DCR with 1 unit per layer we get exactly
-the same architecture of SCR.
-The other variant with antisymmetric coupling, instead, doesn't achieve very high performances in terms of memory MC,
- with respect to the DeepESN. 
- For the Oscillator based reservoirs, we can't recover the same behaviour in case of cycle architecture as for DeepESN, this is probably due to the fact that the oscillators dynamics need to be carefully tuned layerwise
- to achieve higher performances. 
- In DeepRONs we can control the eigenvalues location by tuning the $\gamma$ and $\epsilon$ parameters, but the system becomes good only in a small regime of parameters, so further investigation is needed
- on a eterogeneous setting of deep oscillator reservoirs. 
+The results in Table \ref{tab:mc_results} show that with the proposed \DCR\@ we are able to achieve the same performance as the SCR. This is true because in the case of linear \DCR\@ with 1 unit per layer, we get back exatly SCR model.
+The \DAR\@, instead, doesn't improve in terms of memory MC, with respect to the DeepESN. 
+%We observed a behaviour in the first steps of certain architecture variants where %at the first delays the network struggle to reconstruct the signal, because of %the past states brought by antisymmetric contributions, if the $\epsilon$ is too %high we can risk to add interference. 
 
-In the figure \ref{fig:mc_dcr_layers} below we can see the MC curves for DCR as we increase the number of layers, in this example we fixed $\rho=0.5$ to ensure contractivity, for what we said in \ref{sec:method:cycle_architecture} a too high 
-spectral radius can lead to a global system with much higher spectral radius. \todo{metto un immagine anche per vedere cosa succede quando aumento man mano il raggio spettrale finche non va oltre 1?}
-The 100 units in cycle perfectly recall the input up to delay 99, as soon we halve the number of layers having 2 units in each layer (yellow line in the figure), the performances drop but still remain high, yielding a test of $MC = 67.3$.
+For the oscillator-based reservoirs, we can't recover the same behaviour in case of \textit{cycle} architecture as for ESNs; this is probably due to the fact that the oscillators' dynamics need to be carefully tuned layerwise to achieve higher performances. But for \DAR\@ the antisymmetric coupling helps with the
+In particular, in DeepRONs, the eigenvalues' location are decided by tuning the $\gamma$ and $\epsilon$ parameters. Such a system is very sensitive to those hyperparameters in this task, so further investigation is needed to decide whether a heterogeneous setting of deep oscillator reservoirs retains more information.
+
+In the figure \ref{fig:mc_\DCR_layers} below we can see the MC curves for \DCR\@ as we increase the number of layers, in this example we fixed $\rho=0.5$ to ensure contractivity, for what we said in \ref{sec:method:cycle_architecture} a too high 
+spectral radius can lead to a global system which is unstable ($\rho > 1$).
+The 100 units in cyclically connected perfectly recall the input up to a delay $99$, as soon as we halve the number of layers, having 2 units in each layer (yellow line in the figure), the performances drop but still remains high, yielding a test of $MC = 67.3$.
 
 \begin{figure}[htbp!]
     \centering
     \includegraphics[width=0.9\textwidth]{images/memory_capacity_vs_delay_esn.png}
-    \caption{Memory Capacity curves for DCR with different number of layers.}
-    \label{fig:mc_dcr_layers}
+    \caption{Memory Capacity curves for \DCR\@ with different number of layers.}
+    \label{fig:mc_\DCR_layers}
 \end{figure}
 
-Finally considering the case where we take in "edge of chaos" regime, the DCR architecture, by setting a spectral radius of about $\rho = 0.7$, we get a $\rho_\text{global} \approx 0.99$, in the figure below we 
-can see both MC curve and a plot of the Jacobian eigenvalues distribution.
+\subsubsection{Memory Capacity in Edge of Chaos regime}
+
+Finally, considering the case where we move in \textit{edge of chaos} regime, the \DCR\@ architecture, by setting a spectral radius of about $\rho = 0.7$, we get a $\rho_\text{global} \approx 0.99$, and the memory capacity increases up to $MC = 74.3$ for the 2 units per layer modularity. In the figures below we can see both the MC curve and a plot of the Jacobian eigenvalues distribution.
 % insert figure with the curve up and below the eigenvalues give a lot of space to both the images
-\begin{figure}[htbp!]
+\begin{figure}[ht!]
     \centering
     \includegraphics[width=0.9\textwidth]{images/memory_capacity_vs_delay_DCR_Edgeofchaos.png}
-    \caption{Memory Capacity curve for DCR in edge of chaos regime.}
-    \label{fig:mc_dcr_eoc}
+    \caption{Memory Capacity curve for \DCR\@ in edge of chaos regime.}
+    \label{fig:mc_\DCR_eoc}
 \end{figure}
-
 % eigenvalues
-\begin{figure}[htbp!]
+
+(and reducing the number of units per layer accordingly), the eigenvalues of the Jacobian tend to spread more and more around the unit circle,
+ this is due to the fact that each layer has a spectral radius less than 1, but when we compose multiple layers, the global system tends to have eigenvalues with modulus very close to 1.
+\begin{figure}[ht!]
     \centering
-    \includegraphics[width=0.9\textwidth]{images/eigenvalue_distributions_esn_edgeofchaos.png}
-    \caption{Jacobian eigenvalues distribution for DCR in edge of chaos regime.}
-    \label{fig:mc_dcr_eoc_eigenvalues}
+    \includegraphics[width=0.8\textwidth]{images/eigenvalue_distributions_esn_edgeofchaos.png}
+    \caption{Jacobian eigenvalues distribution for \DCR\@ in edge of chaos regime.}
+    \label{fig:mc_\DCR_eoc_eigenvalues}
 \end{figure}
 
 \section{Long temporal dependencies tasks}  
 This set of experiments aims to evaluate the ability of 
-different reservoir to capture in different ways long temporal dependancies,
+different reservoirs to capture in different ways long temporal dependancies,
  we consider three different sequential image classification 
 tasks on two dataset MNIST and CIFAR-10.
 
-
-\begin{comment}
-We cast image classification as a sequence modeling problem by feeding pixels (or small patches) sequentially.
-
-\subsection{MNIST}
-\label{sec:exp:mnist}
-
-MNIST images are $28\times 28$ grayscale. We consider:
-\begin{itemize}
-    \item \textbf{sMNIST (sequential MNIST):} pixels are streamed row-wise as a length-$784$ sequence, $u(t)\in[0,1]$.
-    \item \textbf{pMNIST (permuted sequential MNIST):} a fixed random permutation $\pi$ of $\{1,\dots,784\}$ is applied to the pixel order, yielding $u(t)=\mathrm{vec}(I)_{\pi(t)}$. The permutation is fixed across all samples and splits.
-\end{itemize}
-The label is provided at the end of the sequence; the model output is taken from the final state (or pooled states) and passed through a classifier.
-
-\paragraph{Metric.}
-We report test accuracy (\%).
-
-\subsection{npCIFAR-10 (sequential CIFAR-10 variant)}
-\label{sec:exp:npcifar}
-
-CIFAR-10 images are $32\times 32$ with 3 channels. We define a sequential variant tailored to stress long-range dependencies:
-\begin{itemize}
-    \item \textbf{Sequence construction:} flatten the image into a sequence of length $32\cdot 32=1024$ tokens, where each token is a 3D vector (RGB) or a scalar after luminance projection.
-    \item \textbf{Permutation (P):} apply a fixed random permutation of token indices to destroy locality.
-    \item \textbf{Noise (N):} optionally add i.i.d.\ Gaussian noise $\epsilon\sim\mathcal{N}(0,\sigma^2)$ to inputs during training (and optionally testing) to assess robustness.
-\end{itemize}
-We refer to this setting as \emph{npCIFAR-10}. Exact choices (RGB vs.\ scalar, permutation seed, noise level $\sigma$) are specified in Sec.~\ref{sec:exp:details}.
-\end{comment}
-
 \subsection{Sequential MNIST (sMNIST)}
 The Sequential MNIST task treats each $28 \times 28$ grayscale image as a sequence of 784 scalar values, by flattening the image matrix,
- thus destorying spacial information in favor of temporal structure. The pixels are presented in a fixed order (row-wise). Data is presented one pixel at a time, so the model must classify the digit (0--9) after observing the entire sequence. 
+ thus destroying spatial information in favor of temporal structure. The pixels are presented in a fixed order (row-wise). Data is presented one pixel at a time, so the model must classify the digit (0--9) after observing the entire sequence. 
  This task evaluates a model's ability to retain information over long temporal horizons while processing one-dimensional sequential inputs.
 % add example of smnist image as sequence
 
@@ -176,11 +155,22 @@ Each image is flattened row-wise into a sequence representation of 32 rows, wher
 We fed 96-dimensional vectors sequentially over 32 timesteps, then for the remaining 968 timesteps we add uniform random noise in the range $[-1, 1]$, resulting in sequences of length 1000. 
 This setup tests the model's ability to extract and maintain relevant information while being exposed to subsequent irrelevant noise.
 
-\subsection{Results}
-In the table below we report results for the three sequential image classification tasks, comparing the best test accuracy over 3 trials achieved by each architecture across the datasets.
-% use ligh color blue for evidencing new model put an underline for the best result in each column
-% use light color orange for evidencing the baselines
+\section{Experimental Setting}
+\subsection{Parameter matching}
+To ensure fair comparison across architectures,
+ we employed a parameter matching strategy that adjusts the number of hidden units 
+ per layer to achieve approximately 100,000 reservoir parameters. 
+For the readout we keep all the layer states concatenated, resulting in readout dimension equal the the number of units per layer multiplied by the number of layers. 
+The number of units depends on:
+\begin{itemize}
+    \item The number of layers
+    \item The input dimensionality (1 for univariate tasks, 96 for npCIFAR-10)
+    \item The architecture type (ie. \DCR\@ with no recurrence blocks have fewer parameters due to zero recurrence, so we increase unit in cycle blocks)
+\end{itemize}
 
+\subsection{Results}
+In the table below, we report results for the three sequential image classification tasks for each architecture across the datasets.
+We use a the entire dataset consisting of 60,000 
 \begin{table}[ht!]
     \centering
     \caption{Performance Summary. Comparison of the best test accuracy over 3 trials achieved by each architecture across the three datasets.
@@ -189,48 +179,85 @@ In the table below we report results for the three sequential image classificati
     \label{tab:performance_summary}
     \begin{tabular}{lccc}
         \toprule
-        \textbf{Architecture} & \textbf{sMNIST} & \textbf{psMNIST} & \textbf{npCIFAR-10} \\
+        \textbf{Architecture} & \textbf{sMNIST $\uparrow$} & \textbf{psMNIST $\uparrow$} & \textbf{npCIFAR-10 $\uparrow$} \\
         \midrule
         \rowcolor{baseline}
         ESN                 &$82.93\% \pm 0.89$& $78.87\% \pm 1.82$ & $32.06\% \pm 0.19$ \\
         \rowcolor{baseline}
         DeepESN             &$85.94\% \pm 0.46$& $ 80.62\% \pm 0.95$ & $\underline{\mathbf{39.83\%}} \pm 0.19$ \\
         \rowcolor{newmodel}
-        DCR     & $86.81\% \pm 0.49$ & $75.92\% \pm 0.90$ & $32.28\% \pm 0.19$ \\
+        \DCR     & $86.81\% \pm 0.49$ & $75.92\% \pm 0.90$ & $32.28\% \pm 0.19$ \\
         \rowcolor{newmodel}
-        DCR (No Recurrence) & $86.32\% \pm 0.35$  & $79.31\% \pm 1.62$ & $33.91\%  \pm 0.39$ \\
+        \DCR\@ (No Recurrence) & $86.32\% \pm 0.35$  & $79.31\% \pm 1.62$ & $33.91\%  \pm 0.39$ \\
         \rowcolor{newmodel}
-        DAR & $\underline{\textbf{88.29\%}} \pm 0.89$ & $\underline{\textbf{81.33\%}} \pm 0.65$ & $34.37\% \pm 0.16$ \\
+        \DAR & $\underline{\textbf{88.29\%}} \pm 0.89$ & $\underline{\textbf{81.33\%}} \pm 0.65$ & $34.37\% \pm 0.16$ \\
         \midrule 
         \midrule
         \rowcolor{baseline}
         RON                 & $\underline{\textbf{90.7\%}} \pm 0.51$ & $\underline{\textbf{86.5\%}} \pm 1.23$ & $28.42\% \pm 0.21$ \\
         \rowcolor{baseline}
-        DeepRON             & $84.8\% \pm 1.4$ & $82.1\% \pm 4.5$ & $26.82\% \pm 0.1$ \\
+        DeepRON             & $84.8\% \pm 1.4$ & $81.6\% \pm 1.3$ & $26.82\% \pm 0.1$ \\
         \rowcolor{newmodel}
-        DCO     & $89.17\% \pm 0.8$ & $51.03\% \pm 0.8$ & $26.36\% \pm 0.23$ \\
+        \DCO     & $89.17\% \pm 0.8$ & $51.03\% \pm 0.8$ & $26.36\% \pm 0.23$ \\
         \rowcolor{newmodel}
-        DCO (No Recurrence) & $61.25\% \pm 0.51$ & $39.6\% \pm 1.4$ & $26.87\% \pm 0.12$ \\
+        \DCO\@ (No Recurrence) & $61.25\% \pm 0.51$ & $39.6\% \pm 1.4$ & $26.87\% \pm 0.12$ \\
         \rowcolor{newmodel}
-        DAO & $88.7\% \pm 0.62$ & $83.32\% \pm 2.1$ & $\underline{\textbf{32.12\%}} \pm 0.15$ \\
+        \DAO & $88.7\% \pm 0.62$ & $83.32\% \pm 2.1$ & $\underline{\textbf{32.12\%}} \pm 0.15$ \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-\todo{discutere risultati}
-- DeepESN seems to be better thna other architectures on npCIFAR-10, this can be attributed to the
- fact that in DeepESNs layer act as filter banks, so they can ignore all the irrelevant frequency components 
- introduced by noise padding, focussing only on the relevant part of the sequence that contains the image information.
- The reason behind the worse performance of modules architectures on the task could be also attributed in how the information is propagated,
- probably the inter-layer connections trade the irrelevant information across timestep (the noise padding part), making more difficult 
- to extract the relevant features at the first steps of the sequence.
- - However on sMNIST ans psMNIST we can se that the antisymmetric coupling improves performances, also the DCR with and without recurrence 
- show improvements with respect to DeepESN on the first two tasks
+DeepESNs achieve substantially higher accuracy than the other architectures on the npCIFAR-10 task. 
+This behavior can be attributed to their hierarchical structure, where,
+successive layers operate as filters, progressively transforming the input representation.
+The selective filter bank is attenuating irrelevant components introduced by noise padding while preserving informative
+features contained in the initial portion of the sequence.
+
+In contrast, modular architectures such as \DCR\@ and \DAO\@ show weaker performances on npCIFAR-10. 
+In these models, information is continuously recirculated between the last and first layers, or, in the case of \DAR\@, between near modules.
+Preventing a clear hierarchical separation of representations. This global mixing may facilitate the propagation 
+of noise introduced during the padding phase, making it more difficult for the system to isolate and preserve the
+ informative portion of the sequence.
+
+On the other hand, the behavior observed on sMNIST and psMNIST is markedly different. 
+In these tasks, antisymmetric coupling consistently improves performance.
+ Notably, \DCR\@ both with and without intra-layer recurrence performs better than DeepESN.
+  This suggests that cyclic transport mechanisms alone may be sufficient to preserve long-term information in purely sequential tasks,
+   possibly by extending the effective memory horizon of the system.
+
+This do not translates to oscillator architectures, in fact, 
+in the latter, oscillatory dynamics appear to rely strongly on intra-layer recurrent connections.
+Removing recurrence in these systems leads to a significant drop in performance, particularly on psMNIST, 
+indicating that, unlike ESN architectures where structured transport can compensate for reduced recurrence,
+ oscillator reservoirs fundamentally depend on their internal recurrent structure to sustain meaningful temporal dynamics.
 
 \section{Time Series Classification and Regression Tasks}
 
 \subsection{FordA and FordB}
-The Ford datasets are binary classification tasks from the UCR Time Series Archive. FordA contains 3601 training and 1320 test samples, while FordB contains 3636 training and 810 test samples. Each sample is a univariate time series of length 500, representing sensor measurements from automotive engine systems. The task is to classify whether a specific symptom is present.
+The Ford datasets are binary classification tasks from the UCR Time Series Archive. 
+FordA contains 3601 training and 1320 test samples, while FordB contains 3636 training and 810 test samples. 
+Each sample is a univariate time series of length 500, representing sensor measurements from automotive engine 
+systems. The task is to classify whether a specific symptom is present.
+The Ford datasets are challenging due to their long temporal dependencies and subtle class differences.
+% PUT Forda and Fordb in subplot
+\begin{figure}[ht!]
+    \centering
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/forda.png}
+        \caption{Example from FordA dataset}
+        \label{fig:fordA_example}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/fordb.png}
+        \caption{Example from FordB dataset.}
+        \label{fig:fordB_example}
+    \end{subfigure}
+    \caption{Examples of time series from FordA and FordB datasets. Each series has a length of 500, and the task is to classify the presence of a specific symptom.}
+    \label{fig:ford_datasets}
+\end{figure}
 
 \subsection{Mackey-Glass Time Series Prediction}
 The Mackey-Glass (MG) system is a classical chaotic time series benchmark defined by the delay differential equation:
@@ -244,63 +271,169 @@ We employ a washout period of 200 timesteps to allow the reservoir state to stab
 \text{NRMSE} = \frac{\sqrt{\frac{1}{N}\sum_{i=1}^{N}(\hat{y}_i - y_i)^2}}{\sigma_y}
 \end{equation}
 where $\sigma_y$ is the standard deviation of the target signal.
+Predicting MG time series requires modeling long‑term dependencies and 
+chaotic dynamics. Because the system’s evolution depends on delayed past values,
+ models must remember inputs many steps back, we use this tasks for assessing the stability of our architectures in long-term prediction.   
+
+ % image of mg exampel
+\begin{comment}
+ \begin{figure}[ht!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/mg84.png}
+    \caption{Example of Mackey-Glass time series. The task is to predict the value 84 steps ahead based on past observations.}
+    \label{fig:mackey_glass_example}
+\end{figure}
+\end{comment}
+
+\begin{comment}
+% create a subfigure with mg84 put in the same sub figure also  images/mg17.png (3d plot of the attractor)
+\begin{figure}[ht!]
+    %now subfigures
+    \centering
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/mackey_glass_3d.png}
+        \caption{Mackey-Glass attractor for $\tau=17$.}
+        \label{fig:mg17_attractor}
+    \end{subfigure}
+    \hfill
+    % move up the second subfigure a bit
+    \begin{subfigure}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/mg84.png}
+        \caption{Mackey-Glass time series for $\tau=17$.}
+        \label{fig:mg84_time_series}
+    \end{subfigure}
+\end{figure}
+\end{comment}
+% change the plot such that the mackeyglass 3d is above and below across the x axis of the plot you put the time series a little bit smaller
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/mackey_glass_3d.png}
+    \includegraphics[width=0.6\textwidth]{images/mg84.png}
+    \caption{Mackey-Glass attractor (top) and time series (bottom) for $\tau=17$.}
+    \label{fig:mg84_attractor_timeseries}
+\end{figure}
+
+
+ In figure \ref{fig:mg84_attractor} we have a plot of the 3D Mackey-Glass attractor 
+consisting the state evolution over time, the three axis represent $x(t)$, $x(t-\tau)$ 
+and $x(t-2\tau)$. While in \ref{fig:mg84_time_series} we have the 1D time series of MG showing how the signal is reconstructed after 84 steps.
+Predicting this a very high lag as we do is a difficult task, that requires the model to retreive information from long past memory, this is also harder for
+MG system with chaotic dynamics, our chosen $\tau=17$ is a standard setting from ESN literature. 
 
 \subsection{Results}
+In table \ref{tab:ford_results} below we report classification accuracy for FordA and FordB datasets.
 
-
-% make a table for fordA and fordb
 \begin{table}[ht!]
     \centering
     \caption{FordA and FordB classification accuracy (\%) for different architectures.}
     \label{tab:ford_results}
     \begin{tabular}{lcc}
         \toprule
-        \textbf{Architecture} & \textbf{FordA Accuracy} & \textbf{FordB Accuracy} \\
+        \textbf{Architecture} & \textbf{FordA $\uparrow$} & \textbf{FordB $\uparrow$} \\
         \midrule
-        ESN                 & $ 67\% \pm 0.2$ & $57.32\% \pm 0.146\%$ \\
-        DeepESN             & $75.2\% \pm 0.016$ & $0.65 \pm 0.13$ \\
-        DCR     & $0 \pm 0.9$ & $0 \pm 1.1$ \\
-        DCR (No Recurrence) & $4$ & $0.4 \pm 1.2$ \\
-        DAR & $\mathbf{0.6929 \pm 0.02}$ & $\mathbf{0 \pm 1.0}$ \\
+        \rowcolor{baseline}
+        ESN                 & $ 67.5\% \pm 0.2$ & $58.2\% \pm 0.4$ \\
+        \rowcolor{baseline}
+        DeepESN             & $71.2\% \pm 0.16$ & $62.9\% \pm 0.3$ \\
+        \rowcolor{newmodel}
+        \DCR     & $69.8\% \pm 0.3$ & $63.3\% \pm 0.2$ \\
+        \rowcolor{newmodel}
+        \DCR\@ (No Recurrence) & $70.5\% \pm 0.9$ & $62.9\% \pm 0.2$ \\
+        \rowcolor{newmodel}
+        \DAR & $\underline{\mathbf{72.3 \pm 0.84}}$ & $\underline{\mathbf{63.7\% \pm 0.1}}$ \\
         \midrule
-        RON                 & $0.69 \pm 0.02 $ & $0.73 \pm 0.04$ \\
-        DeepRON             & $66.3\% \pm 0.11 $ & $0.5 \pm 1.3$ \\
-        DCO     & $65.2\% \pm 0.3$ & $0. \pm 1.1$ \\
-        DCO (No Recurrence) & $0.55 \pm 0.03$ & $0.4 \pm 1.2$ \\
-        DAO & $\mathbf{0.6821 \pm 0.02}$ & $\mathbf{0.5 \pm 1.0}$ \\
+        \midrule
+        \rowcolor{baseline}
+        RON                 & $\underline{\mathbf{71\% \pm 0.2}}$ & $64\% \pm 0.7$ \\
+        \rowcolor{baseline}
+        DeepRON             & $66.3\% \pm 1.1 $ & $\underline{\mathbf{69\% \pm 1.3}}$ \\
+        \rowcolor{newmodel}
+        \DCO     & $65.2\% \pm 0.6$ & $67.1\% \pm 0.3$ \\
+        \rowcolor{newmodel}
+        \DCO\@ (No Recurrence) & $55.5\% \pm 0.03$ & $57.1\% \pm 0.01$ \\
+        \rowcolor{newmodel}
+        \DAO & $69\% \pm 0.02$ & $67.8\% \pm 0.8$ \\
         \bottomrule
     \end{tabular}
 \end{table}
 
-Commenting results about FordA and FordB...
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
- incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, 
- quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. 
- Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
-  Excepteur sint occaecat cupidatat non proident...
-% make a table for mackey glass
+Within the ESN family, \DAR\@ achieves the best performance on both FordA and FordB. 
+This confirms that antisymmetric coupling may improve stability and information propagation without
+excessively mixing representations across modules. DeepESN also performs competitively, 
+supporting the idea that hierarchical processing contributes positively to structured time-series classification. 
+\DCR\@ without intra-layer recurrence remains competitive, further reinforcing 
+the observation that pure cycle mechanisms alone can preserve sufficient temporal information for
+these tasks. So introducing structured connectivity can compensate the reduction of recurrence blocks.
+
+The oscillator architectures exhibit a different behavior. 
+On FordA, the original RON achieves the highest accuracy within its family, while removing recurrence 
+in \DCO leads to a substantial performance drop, confirming that oscillatory reservoirs
+ rely on intra-layer recurrent dynamics to sustain meaningful temporal representations. 
+
+On FordB, however, DeepRON achieves the best performance among all models, 
+indicating that hierarchical stacking of oscillatory modules can provide additional representational
+ capacity when the task benefits from multi-scale temporal processing.
+
+Overall, these results highlight a structural distinction between the two reservoir families:
+ while ESN architectures can maintain competitive performance through structured modularity,
+  oscillator reservoirs remain strongly dependent on their intrinsic recurrent dynamics.
+
+The table \ref{tab:mackeyglass_results} below reports Mackey-Glass 84-step ahead prediction NRMSE 
+for different architectures.
+
 \begin{table}[ht!]
     \centering
     \caption{MG84 prediction NRMSE for different architectures. Lower is better. }
     \label{tab:mackeyglass_results}
     \begin{tabular}{lc}
         \toprule
-        \textbf{Architecture} & \textbf{MG84 NRMSE} \\
+        \textbf{Architecture} & \textbf{MG84 NRMSE $\downarrow$} \\
         \midrule
+        \rowcolor{baseline}
         ESN                 & $3\times 10^{-2} \pm 2.4\times 10^{-3}$ \\
-        DeepESN             & $0.198 \pm 0.009$ \\
-        DCR     & $0.205 \pm 0.01$ \\
-        DCR (No Recurrence) & $0.210 \pm 0.01$ \\
-        DAR & $\mathbf{0.185 \pm 0.008}$ \\
+        \rowcolor{baseline}
+        DeepESN             & $\underline{\mathbf{1.2\times 10^{-2}}} \pm 4\times 10^{-3}$ \\ 
+        \rowcolor{newmodel}
+        \DCR     & $ 2.3\times 10^{-2} \pm 4\times 10^{-3}$ \\
+        \rowcolor{newmodel}
+        \DCR\@ (No Recurrence) & $ 5.1 \times 10^{-2} \pm 4\times 10^{-3}$ \\
+        \rowcolor{newmodel}
+        \DAR & $2 \times 10^{-2} \pm 1 \times 10^{-2}$ \\ %check 
         \midrule
-        RON                 & $1.8 \times 10^{-2} \pm 6\times 10^{-3}$\\
-        DeepRON             & $0.215 \pm 0.011$ \\
-        DCO     & $0.220 \pm 0.01$ \\
-        DCO (No Recurrence) & $0.218 \pm 0.01$ \\
-        DAO & $\mathbf{0.1850 \pm 0.009}$ \\
+        \midrule
+        \rowcolor{baseline}
+        RON                 & $\underline{\mathbf{1.8 \times 10^{-2}}} \pm 6\times 10^{-3}$\\
+        \rowcolor{baseline}
+        DeepRON             & $2.2 \times 10^{-2} \pm 5\times 10^{-3}$ \\ %% riguarda i risultati qui
+        \rowcolor{newmodel}
+        \DCO     & $4 \times 10^{-1} \pm 2\times 10^{-3}$ \\ % fa schifo
+        \rowcolor{newmodel}
+        \DCO\@ (No Recurrence) & $4.5 \times 10^{-1} \pm 3.6 \times 10^{-3}$ \\ 
+        \rowcolor{newmodel}
+        \DAO & ${1.8 \times 10^{-1} \pm 3.3 \times 10^{-2}}$ \\ %repeat this
         \bottomrule
     \end{tabular}
 \end{table}
+
+The Mackey–Glass (MG84) time series prediction task provides insights into the ability 
+of different reservoir architectures to model chaotic dynamics.
+
+DeepESN achieves the lowest prediction error, compared to shallow and other modular variants. 
+This suggests that hierarchical recurrence enhances the reconstruction of complex temporal dependencies by
+ progressively transforming and stabilizing internal representations. 
+In contrast, \DCR\@ without intra-layer
+recurrence exhibits a significant performance degradation, indicating that cyclic transport 
+alone is insufficient for accurate chaotic prediction. This implies that \DCR\@ can rely more on it's memory
+capabilities than the richness of reservoir dynamics.
+
+The oscillator architectures display an even more pronounced dependency on recurrence. 
+While RON and DeepRON achieve competitive errors, the \DCO variants suffer a dramatic increase in prediction error.
+This could be attributed to the unstable behaviour we observed in Deep variants of oscillator reservoirs.
+
+\todo{forse dovrei scrivere qualcos'altro...}
+
 \clearpage
 \section{Experimental details}
 
@@ -326,7 +459,7 @@ is the density formed by observations with objective values below $y^*$, and $g(
 
 \subsubsection{Echo State Network Hyperparameters}
 
-Table \ref{tab:esn_hyperparams} presents the hyperparameter search space for ESN-based models: DeepESN, DCR and DAR.
+Table \ref{tab:esn_hyperparams} presents the hyperparameter search space for ESN-based models: DeepESN, \DCR\@ and \DAR.
 
 \begin{table}[ht!]
 \centering
@@ -338,18 +471,18 @@ Table \ref{tab:esn_hyperparams} presents the hyperparameter search space for ESN
 \midrule
 $\rho$ & $[0.1, 9.0]$ & Log &  Spectral radius \\
 $\omega_{\text{in}}$ & $[0.1, 1.0]$ & Log &  Input scaling \\
+$\omega_{\text{inter}}$ & $1.0$ & Fixed & Inter-layer scaling \\
 $\alpha$ & $[0.001, 1.0]$ & Log & Leaky integrator coefficient \\
 $\gamma$ & $[0.0001, 0.5]$ & Log & Diffusion regularizer \\
 $\epsilon$ & $20.0$ & Fixed & Inter-layer coupling strength \\
-Number of layers & $\{1\}$ or $\{5, 10\}$ & Categorical & Architecture-dependent \\
-$\omega_{\text{inter}}$ & $[0.1, 1.0]$ & Fixed & Inter-layer scaling \\
+Number of layers & $\{1\}$ or $\{5, 10\}$ & Categorical & Number of Modules \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsubsection{Randomized Oscillators Network Hyperparameters}
 
-Table \ref{tab:ron_hyperparams} presents the hyperparameter search space for RON-based models: DeepRON, DCO and DAO.
+Table \ref{tab:ron_hyperparams} presents the hyperparameter search space for RON-based models: DeepRON, \DCO and \DAO.
 
 \todo{questa tabella forse posso togliere la descrizione e metterla anche nell'appendice...}
 \begin{table}[ht!]
@@ -363,12 +496,12 @@ Table \ref{tab:ron_hyperparams} presents the hyperparameter search space for RON
 $\tau$ & $[10^{-4}, 1.0]$ & Log & Integration time step \\
 $\rho$ & $[0.1, 9.0]$ & Log & Spectral Radius \\
 $\omega_{\text{in}}$ & $[0.05, 2.0]$ & Log & Input scaling \\
+$\omega_{\text{inter}}$ & Set to $\omega_{\text{in}}$ & Fixed & Inter-layer scaling \\
 $\epsilon_c$ & $[0.01, 5.0]$ & Log & Inter-layer coupling \\
 $\gamma_c$ & $[0.0001, 0.5]$ & Log & Diffusive strength \\
 $\gamma$ (damping) & $1.0 \pm 0.05$ & Fixed &  Damping  \\
 $\epsilon$ (stiffness) & $1.0 \pm 0.05$ & Fixed &  Stiffness \\
 Number of layers & $\{5, 10\}$ & Categorical & Architecture-dependent \\
-$\omega_{\text{inter}}$ & $[0.1, 1.0]$ & Fixed & Inter-layer scaling \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -379,76 +512,9 @@ For the sequential image classification tasks (sMNIST, psMNIST, npCIFAR-10), we 
 All experiments used:
 \begin{itemize}
     \item Random seed: 42 (for TPE sampler reproducibility)
-    \item Training batch size: 828 (image tasks) / 64 (UCR tasks)
     \item Validation split: 20\% holdout from training data
     \item Readout: Ridge regression (Mackey-Glass) or Logistic regression (classification tasks)
     \item Feature scaling: StandardScaler applied to reservoir activations
 \end{itemize}
 
-
-\subsection{Parameter Budget Matching}
-\todo{questa parte dovrebbe essere scritta prima...}
-To ensure fair comparison across architectures,
- we employed a parameter matching strategy that adjusts the number of hidden units 
- per layer to achieve approximately 100,000 reservoir parameters.
-  The exact number of units depends on:
-\begin{itemize}
-    \item The number of layers
-    \item The input dimensionality (1 for univariate tasks, 96 for npCIFAR-10)
-    \item The architecture type (DCR with no recurrence blocks have fewer parameters due to zero recurrence, so more units are used)
-\end{itemize}
-
-\begin{comment}
-\subsection{Readout Training}
-
-For classification tasks, a logistic regression classifier was trained on the final reservoir state.
- For the Mackey-Glass regression task, Ridge regression was used. In both cases, reservoir activations were standardized using normalization before training the readout.
-\end{comment}
-
-\section{Summary of Experiments}
-
-Table~\ref{tab:experiment_summary} summarizes the experimental configurations across all datasets.
-
-\begin{table}[htbp]
-\centering
-\caption{Summary of experimental configurations by dataset.}
-\label{tab:experiment_summary}
-\begin{tabular}{@{}lcccccc@{}}
-\toprule
-\textbf{Dataset} & \textbf{Seq. Length} & \textbf{Input Dim.} & \textbf{Classes} & \textbf{Trials} & \textbf{Metric} & \textbf{Direction} \\
-\midrule
-sMNIST & 784 & 1 & 10 & 100 & Accuracy & Maximize \\
-psMNIST & 784 & 1 & 10 & 100 & Accuracy & Maximize \\
-npCIFAR-10 & 1000 & 96 & 10 & 100 & Accuracy & Maximize \\
-FordA & 500 & 1 & 2 & 50 & Accuracy & Maximize \\
-FordB & 500 & 1 & 2 & 50 & Accuracy & Maximize \\
-Mackey-Glass & Variable & 1 & --- & 50 & NRMSE & Minimize \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\paragraph{Protocol.}
-We generate a long sequence, discard $T_{\mathrm{wash}}$ steps, train on $T_{\mathrm{train}}$, validate on $T_{\mathrm{val}}$, and report performance on a disjoint test segment of length $T_{\mathrm{test}}$.
-
-\section{Summary of reported results}
-\label{sec:exp:summary}
-
-Table~\ref{tab:exp:summary} summarizes the tasks, outputs, and metrics.
-
-\begin{table}[t]
-\centering
-\begin{tabular}{lll}
-\hline
-\textbf{Task} & \textbf{Type} & \textbf{Metric} \\
-\hline
-Memory Capacity & intrinsic / linear readout & $\mathrm{MC}=\sum_k \mathrm{MC}_k$ \\
-Mackey--Glass & regression & NRMSE \\
-sMNIST & classification & accuracy (\%) \\
-psMNIST & classification & accuracy (\%) \\
-npCIFAR-10 & classification / robustness & accuracy (\%), accuracy vs.\ noise \\
-\hline
-\end{tabular}
-\caption{Overview of experimental tasks and evaluation metrics.}
-\label{tab:exp:summary}
-\end{table}
-
+\section{Summary}\todo{se serve...}

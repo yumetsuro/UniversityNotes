@@ -13,7 +13,6 @@ headsepline, % Uncomment to get a line under the header
 %chapterinoneline, % Uncomment to place the chapter title next to the number on one line
 %consistentlayout, % Uncomment to change the layout of the declaration, abstract and acknowledgements pages to match the default layout
 ]{MastersDoctoralThesis} % The class file specifying the document structure
-
 \usepackage[utf8]{inputenc} % Required for inputting international characters
 \usepackage{csquotes}
 \usepackage[T1]{fontenc} % Output font encoding for international characters
@@ -163,20 +162,21 @@ headsepline, % Uncomment to get a line under the header
 	\\[0.5cm]
 	\normalsize
 % Enter abstract of your thesis here, this will appear on the title page
-In this thesis, we present a two novel architecture for Reservoir Computing (RC) called Deep Cycle Reservoir (DCR)
-and Deep Antisymmetric Reservoir (DAR).
- Both architectures are inspired by recent advances in RC field and use deep layer construction with 
+(Da rivedere è solo un draft)
+In this work, we present two novel architectures, Deep Cycle Echo State Network (DeepCycleESN) and Deep Antisymmetric Echo State Networks (DeepAntisymESN) in the field of Reservoir Computing (RC). By changing the usual deep hierarchical setting to a structured one that relies on information flow across networks.
+Subsequentily we extend these structured modularities to a promising RC model: Recurrent Oscillator Networks (RON), which offer a richer dynamical pool than simple ESNs.
+ Both novel architectures are inspired by recent advances in the RC field and use deep-layer construction with 
  a structured modular topology.
  We evaluate the proposed models on several benchmark tests for RC, showing that they are able to
- outperform on memory capacity and long term prediction tasks the comparing state-of-the-art shallow and deep RC architectures.
- Extensive analysis is carried out to compare the performance of the proposed models with other RC architectures,
- providing insights on the role of modularity and depth in RC.
+ outperform on memory capacity and long-term prediction tasks by comparing state-of-the-art shallow and deep RC architectures.
+ We briefly analyse their linearized behaviour in order to
+ provide insights into the role of modularity and depth in RC.
 \end{center}
-...
+
 \vfill
-\hypersetup{linkcolor=purple}
+%\hypersetup{linkcolor=red}
 {
-	\hypersetup{linkcolor=black}
+	\hypersetup{linkcolor=purple!30!black, linktoc=all}
 	\tableofcontents
 }
 
@@ -190,7 +190,7 @@ and Deep Antisymmetric Reservoir (DAR).
 \chapter{Methodology}\label{ch:methodology}
 \input{chapters/methodology}
 
-\chapter{Implementation and Experimental results}\label{ch:experiments}
+\chapter{Experimental results}\label{ch:experiments}
 \input{chapters/experiments}
 
 \chapter{Conclusion and Future Works}\label{ch:conclusion}
@@ -202,7 +202,7 @@ and Deep Antisymmetric Reservoir (DAR).
 
 % appendix
 \begin{appendices}
-\chapter{Jacobian derivation of DCR}\label{ch:appendix}
+\chapter{Jacobian derivation of Deep Cycle Echo State Network}\label{ch:appendix}
 \input{chapters/appendix2}
 \end{appendices}
 
